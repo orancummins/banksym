@@ -1,0 +1,8 @@
+BankSym - A general Banking simulator
+
+Features:
+* Core banking capability (like users, accounts, balances, ledger, money movement)
+* Protocol support (e.g. PSD2, Open Banking UK)
+* Test data: ability to create test users / personas and transaction data that looks realistic
+* Bank instantiation: instantly create a bank with various types of accounts available, test data, locale / language etc.
+* Fully pluggable so can implement new ways to create test data, add protocols etc.
