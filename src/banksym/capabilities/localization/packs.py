@@ -111,6 +111,23 @@ _PACKS: dict[str, LocalePack] = {
             "Abonnement",
         ],
     ),
+    "PL": LocalePack(
+        country="PL",
+        language="pl",
+        currency="PLN",
+        income_label="Wynagrodzenie",
+        iban_prefix="PL",
+        merchant_categories=[
+            "Zakupy spożywcze (Biedronka)",
+            "Restauracja",
+            "Transport (PKP)",
+            "Media i opłaty",
+            "Zakupy online",
+            "Rozrywka",
+            "Apteka",
+            "Subskrypcja",
+        ],
+    ),
 }
 
 _FALLBACK = LocalePack(

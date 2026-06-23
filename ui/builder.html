@@ -86,6 +86,10 @@
     }
     button:hover { filter: brightness(.95); box-shadow: 0 6px 18px color-mix(in srgb, var(--brand, #067647) 30%, transparent); }
     button:active { transform: translateY(1px); }
+    .form-actions { display: flex; gap: 10px; margin-top: 22px; }
+    .form-actions button { margin-top: 0; }
+    button.secondary { width: auto; background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    button.secondary:hover { background: #f3f5f8; filter: none; box-shadow: none; }
     h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin-top: 0; }
     pre { background: #0d1117; border: 1px solid var(--border); border-radius: 10px; padding: 14px; overflow-x: auto; font-size: 12.5px; color: #c9d1d9; margin-top: 18px; }
     .created-link { margin: 12px 0 0; padding: 12px 14px; background: color-mix(in srgb, var(--brand, #067647) 8%, var(--surface)); border: 1px solid color-mix(in srgb, var(--brand, #067647) 22%, var(--border)); border-radius: 10px; font-size: 13.5px; }
@@ -99,7 +103,9 @@
     .swatch { width: 28px; height: 28px; border-radius: 8px; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
     .bank strong { font-weight: 600; font-size: 14px; }
     .bank .meta { color: var(--muted); font-size: 12px; }
-    .bank .del { margin: 0 0 0 auto; width: auto; background: var(--surface); border: 1px solid var(--border); color: var(--mc-red); padding: 6px 13px; font-size: 12px; font-weight: 600; border-radius: 8px; }
+    .bank .edit { margin: 0 0 0 auto; width: auto; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 6px 13px; font-size: 12px; font-weight: 600; border-radius: 8px; }
+    .bank .edit:hover { background: #f3f5f8; border-color: #d4dae3; box-shadow: none; filter: none; }
+    .bank .del { margin: 0; width: auto; background: var(--surface); border: 1px solid var(--border); color: var(--mc-red); padding: 6px 13px; font-size: 12px; font-weight: 600; border-radius: 8px; }
     .bank .del:hover { background: #fff4f1; border-color: #ffd9cc; box-shadow: none; filter: none; }
     .meta { color: var(--muted); font-size: 13px; }
   </style>
@@ -139,8 +145,8 @@
 
       <div class="panel">
         <div class="panel-head">
-          <h2>Create a bank</h2>
-          <p>Spin up a new tenant with its own branding and capabilities.</p>
+          <h2 id="form-title">Create a bank</h2>
+          <p id="form-desc">Spin up a new tenant with its own branding and capabilities.</p>
         </div>
         <form id="form">
           <div class="form-section">
@@ -203,7 +209,10 @@
             </div>
           </div>
 
-          <button type="submit">Create bank</button>
+          <div class="form-actions">
+            <button type="submit" id="submit-btn">Create bank</button>
+            <button type="button" id="cancel-edit" class="secondary" style="display:none">Cancel edit</button>
+          </div>
         </form>
         <pre id="result" style="display:none"></pre>
       </div>
@@ -219,10 +228,12 @@
   </main>
 
   <script>
-    const COUNTRY_NAMES = { DE: "Germany", ES: "Spain", FR: "France", GB: "United Kingdom", IE: "Ireland", NL: "Netherlands" };
-    const LANGUAGES = { en: "English", de: "German (Deutsch)", es: "Spanish (Espa\u00f1ol)", fr: "French (Fran\u00e7ais)", nl: "Dutch (Nederlands)" };
-    const COUNTRY_LANG = { DE: "de", ES: "es", FR: "fr", GB: "en", IE: "en", NL: "nl" };
+    const COUNTRY_NAMES = { DE: "Germany", ES: "Spain", FR: "France", GB: "United Kingdom", IE: "Ireland", NL: "Netherlands", PL: "Poland" };
+    const LANGUAGES = { en: "English", de: "German (Deutsch)", es: "Spanish (Espa\u00f1ol)", fr: "French (Fran\u00e7ais)", nl: "Dutch (Nederlands)", pl: "Polish (Polski)" };
+    const COUNTRY_LANG = { DE: "de", ES: "es", FR: "fr", GB: "en", IE: "en", NL: "nl", PL: "pl" };
     let localeTouched = false;
+    // When set, the form edits this existing bank instead of creating a new one.
+    let editingId = null;
     const flagUrl = (code) => `https://flagcdn.com/${(code || "").toLowerCase()}.svg`;
 
     async function fill(id, values, includeBlank) {
@@ -271,7 +282,7 @@
       fill("auth", caps.auth);
       // Countries come from the localization provider packs.
       const arch = await (await fetch("/architecture")).json();
-      const countries = ["DE", "ES", "FR", "GB", "IE", "NL"];
+      const countries = ["DE", "ES", "FR", "GB", "IE", "NL", "PL"];
       fillCountries(countries);
       fillLanguages();
       updatePreviewTags();
@@ -294,7 +305,12 @@
           `<span class="swatch" style="background:${b.primary_color}"></span>` +
           `<strong>${b.display_name}</strong>` +
           `<span class="meta"><img class="flag-sm" src="${flagUrl(b.country)}" alt="" />${b.country} · ${b.base_currency} · ${b.id}</span>` +
+          `<button class="edit" title="Edit bank">Edit</button>` +
           `<button class="del" data-id="${b.id}" data-name="${b.display_name}" title="Delete bank">Delete</button>`;
+        div.querySelector(".edit").addEventListener("click", (e) => {
+          e.stopPropagation();
+          startEdit(b);
+        });
         div.querySelector(".del").addEventListener("click", (e) => {
           e.stopPropagation();
           deleteBank(b.id, b.display_name);
@@ -335,6 +351,50 @@
       document.querySelectorAll("#result + p.created-link").forEach(p => p.remove());
     }
 
+    // Load an existing bank's configuration into the form and switch into edit mode.
+    function startEdit(b) {
+      editingId = b.id;
+      const f = document.getElementById("form");
+      f.display_name.value = b.display_name;
+      f.primary_color.value = b.primary_color;
+      document.getElementById("primary_color_hex").value = (b.primary_color || "").toUpperCase();
+      f.country.value = b.country;
+      f.base_currency.value = b.base_currency;
+      f.locale.value = b.locale || "en";
+      localeTouched = true;
+      const caps = b.capabilities || {};
+      f.protocol.value = (b.enabled_protocols && b.enabled_protocols[0]) || "";
+      f.txgen.value = caps.txgen || "";
+      f.settlement.value = caps.settlement || "";
+      f.auth.value = caps.auth || "";
+      document.getElementById("form-title").textContent = "Edit bank";
+      document.getElementById("form-desc").textContent = `Updating “${b.display_name}”.`;
+      document.getElementById("submit-btn").textContent = "Save changes";
+      document.getElementById("cancel-edit").style.display = "";
+      document.querySelectorAll("#result + p.created-link").forEach(p => p.remove());
+      document.getElementById("result").style.display = "none";
+      updateLogoPreview();
+      updateCountryFlag();
+      updatePreviewTags();
+      f.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    // Leave edit mode and restore the form to its "create a bank" state.
+    function cancelEdit() {
+      editingId = null;
+      localeTouched = false;
+      document.getElementById("form-title").textContent = "Create a bank";
+      document.getElementById("form-desc").textContent =
+        "Spin up a new tenant with its own branding and capabilities.";
+      document.getElementById("submit-btn").textContent = "Create bank";
+      document.getElementById("cancel-edit").style.display = "none";
+      document.getElementById("result").style.display = "none";
+      document.querySelectorAll("#result + p.created-link").forEach(p => p.remove());
+      syncLanguageToCountry();
+    }
+
+    document.getElementById("cancel-edit").addEventListener("click", cancelEdit);
+
     document.getElementById("form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const f = e.target;
@@ -352,36 +412,40 @@
         enabled_protocols: f.protocol.value ? [f.protocol.value] : [],
         capabilities,
       };
-      const res = await fetch("/banks", {
-        method: "POST",
+      const res = await fetch(editingId ? `/banks/${editingId}` : "/banks", {
+        method: editingId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const created = await res.json();
+      const saved = await res.json();
       document.querySelectorAll("#result + p.created-link").forEach(p => p.remove());
       const out = document.getElementById("result");
       out.style.display = "block";
-      if (res.ok && created.id) {
+      if (res.ok && saved.id) {
+        const wasEditing = editingId !== null;
         out.style.color = "";
-        out.textContent = JSON.stringify(created, null, 2);
-        // The just-created bank becomes the one the console opens with.
-        selectBankForConsole(created.id);
+        out.textContent = JSON.stringify(saved, null, 2);
+        // The just-saved bank becomes the one the console opens with.
+        selectBankForConsole(saved.id);
         const link = document.createElement("p");
         link.className = "created-link";
-        link.innerHTML = `Bank created. <a href="/console?bank=${created.id}">Open “${created.display_name}” in the Bank console →</a>`;
+        const verb = wasEditing ? "Bank updated" : "Bank created";
+        link.innerHTML = `${verb}. <a href="/console?bank=${saved.id}">Open “${saved.display_name}” in the Bank console →</a>`;
         out.after(link);
-        // Keep the created bank's details in the form (and on the generated preview card)
+        // Keep the saved bank's details in the form (and on the generated preview card)
         // rather than reverting to the "Bank Of Banksy" defaults.
-        f.display_name.value = created.display_name;
-        f.country.value = created.country;
-        if (created.locale) { f.locale.value = created.locale; localeTouched = true; }
-        f.base_currency.value = created.base_currency;
-        f.primary_color.value = created.primary_color;
+        f.display_name.value = saved.display_name;
+        f.country.value = saved.country;
+        if (saved.locale) { f.locale.value = saved.locale; localeTouched = true; }
+        f.base_currency.value = saved.base_currency;
+        f.primary_color.value = saved.primary_color;
+        if (wasEditing) cancelEdit();
         updateLogoPreview();
         updateCountryFlag();
       } else {
         out.style.color = "#f85149";
-        out.textContent = created.message || created.detail || "Failed to create bank.";
+        out.textContent = saved.message || saved.detail ||
+          (editingId ? "Failed to update bank." : "Failed to create bank.");
       }
       loadBanks();
     });

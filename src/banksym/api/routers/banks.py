@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 
 from banksym.api.deps import ContainerDep
-from banksym.api.schemas import BankResponse, CreateBankRequest
+from banksym.api.schemas import BankResponse, CreateBankRequest, UpdateBankRequest
 from banksym.capabilities.auth.base import auth_registry, sca_registry
 from banksym.capabilities.localization.base import localization_registry
 from banksym.capabilities.protocols.base import protocol_registry
@@ -67,6 +67,32 @@ def get_bank(bank_id: str, container: ContainerDep) -> BankResponse:
         return _to_response(container.bank_service.get_bank(bank_id))
     except BankNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.put("/{bank_id}", response_model=BankResponse, summary="Update a bank tenant")
+def update_bank(
+    bank_id: str, body: UpdateBankRequest, container: ContainerDep
+) -> BankResponse:
+    """Update an existing bank tenant's branding, locale and capability configuration.
+
+    Only the fields present in the request body are changed. Responds 404 if the bank does not
+    exist and 400 if the new display name is empty or collides with another bank.
+    """
+    try:
+        bank = container.bank_service.update_bank(
+            bank_id,
+            display_name=body.display_name,
+            country=body.country,
+            locale=body.locale,
+            base_currency=body.base_currency,
+            logo_url=body.logo_url,
+            primary_color=body.primary_color,
+            enabled_protocols=body.enabled_protocols,
+            capabilities=body.capabilities,
+        )
+    except BankNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return _to_response(bank)
 
 
 @router.delete("/{bank_id}", status_code=204, summary="Delete a bank tenant")

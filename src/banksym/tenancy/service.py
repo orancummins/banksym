@@ -55,6 +55,53 @@ class BankService:
         self._repo.add(bank)
         return bank
 
+    def update_bank(
+        self,
+        bank_id: str,
+        *,
+        display_name: str | None = None,
+        country: str | None = None,
+        locale: str | None = None,
+        base_currency: str | None = None,
+        logo_url: str | None = None,
+        primary_color: str | None = None,
+        enabled_protocols: list[str] | None = None,
+        capabilities: dict[str, str] | None = None,
+    ) -> Bank:
+        """Update an existing bank tenant's branding, locale and capability configuration.
+
+        Only the supplied fields are changed; ``None`` leaves a field untouched. Raises
+        :class:`BankNotFoundError` if the bank does not exist and :class:`DuplicateBankNameError`
+        if the new display name is empty or collides with another bank.
+        """
+        bank = self.get_bank(bank_id)
+        if display_name is not None:
+            name = display_name.strip()
+            if not name:
+                raise DuplicateBankNameError("Display name must not be empty")
+            if any(
+                b.id != bank_id and b.branding.display_name.casefold() == name.casefold()
+                for b in self._repo.list()
+            ):
+                raise DuplicateBankNameError(f"A bank named {name!r} already exists")
+            bank.branding.display_name = name
+        if logo_url is not None:
+            bank.branding.logo_url = logo_url
+        if primary_color is not None:
+            bank.branding.primary_color = primary_color
+        if country is not None:
+            bank.country = country
+        if locale is not None:
+            bank.locale = locale
+        if base_currency is not None:
+            bank.base_currency = base_currency
+        if enabled_protocols is not None:
+            bank.enabled_protocols = list(enabled_protocols)
+        if capabilities is not None:
+            bank.capabilities = CapabilitySelection(selected=dict(capabilities))
+        self._repo.add(bank)
+        return bank
+
     def get_bank(self, bank_id: str) -> Bank:
         bank = self._repo.get(bank_id)
         if bank is None:
