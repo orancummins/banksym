@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Virtual environment
+.venv/
+
+# BankSym runtime artifacts
+.banksym.pid
+banksym.log
+banksym.log.err

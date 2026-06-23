@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>BankSym — API docs</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --border: #e3e8ee;
+      --text: #1a1f36;
+      --muted: #697386;
+      --mc-red: #eb001b;
+      --mc-yellow: #f79e1b;
+    }
+    * { box-sizing: border-box; }
+    /* Always reserve the scrollbar gutter so the fixed header doesn't shift between pages. */
+    html { scrollbar-gutter: stable; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; display: flex; flex-direction: column;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
+    }
+    header {
+      position: sticky; top: 0; z-index: 50;
+      background: #000; color: #fff;
+      padding: 14px 32px; display: flex; align-items: center; gap: 14px;
+      border-bottom: 1px solid #1d1d1d;
+    }
+    header .brand { display: flex; align-items: center; gap: 11px; }
+    header h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em; color: #fff; }
+    header .desc { margin: 2px 0 0; color: rgba(255,255,255,.6); font-size: 13px; }
+    header nav { margin-left: auto; display: flex; gap: 4px; }
+    header nav a {
+      color: rgba(255,255,255,.8); text-decoration: none; font-size: 13px; font-weight: 500;
+      padding: 7px 12px; border-radius: 8px;
+    }
+    header nav a:hover { background: rgba(255,255,255,.1); color: #fff; }
+    header nav a.active { color: #fff; background: rgba(255,255,255,.14); }
+    .docframe { flex: 1; border: 0; width: 100%; background: #fff; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <svg width="38" height="24" viewBox="0 0 48 30" aria-hidden="true">
+        <circle cx="19" cy="15" r="13" fill="#eb001b"></circle>
+        <circle cx="29" cy="15" r="13" fill="#f79e1b" style="mix-blend-mode:screen"></circle>
+      </svg>
+      <div>
+        <h1>BankSym</h1>
+        <p class="desc">API reference — interactive Swagger UI</p>
+      </div>
+    </div>
+    <nav>
+      <a href="/">Architecture</a>
+      <a href="/builder">Bank builder</a>
+      <a href="/console">Bank console</a>
+      <a href="/psd2">Open Banking</a>
+      <a href="/live">Live</a>
+      <a href="/docs" class="active">API docs</a>
+    </nav>
+  </header>
+  <iframe class="docframe" src="/swagger" title="BankSym API documentation"></iframe>
+</body>
+</html>

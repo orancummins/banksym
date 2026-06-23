@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>BankSym — Logical Design</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --surface: #ffffff;
+      --border: #e3e8ee;
+      --text: #1a1f36;
+      --muted: #697386;
+      --mc-red: #eb001b;
+      --mc-orange: #ff5f00;
+      --mc-yellow: #f79e1b;
+      --accent: #eb001b;
+      --core: #1a1f36;
+      --planned: #8792a2;
+      --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.05);
+    }
+    * { box-sizing: border-box; }
+    /* Always reserve the scrollbar gutter so the fixed header doesn't shift between pages. */
+    html { scrollbar-gutter: stable; }
+    body {
+      margin: 0;
+      padding-top: 64px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 60px;
+      padding: 0 32px;
+      border-bottom: 1px solid #1d1d1d;
+      background: #000;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .brand { display: flex; align-items: center; gap: 11px; }
+    .brand .mark { flex: none; }
+    .brand h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em; color: #fff; }
+    header .desc { margin: 2px 0 0; color: rgba(255,255,255,.6); font-size: 13px; }
+    header nav { margin-left: auto; display: flex; gap: 4px; }
+    header nav a {
+      color: rgba(255,255,255,.8); text-decoration: none; font-size: 13px; font-weight: 500;
+      padding: 7px 12px; border-radius: 8px;
+    }
+    header nav a:hover { background: rgba(255,255,255,.1); color: #fff; }
+    header nav a.active { color: #fff; background: rgba(255,255,255,.14); }
+    main { padding: 28px 32px; max-width: 1120px; margin: 0 auto; }
+    .diagram {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 32px;
+      overflow-x: auto;
+      box-shadow: var(--shadow);
+    }
+    h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin: 0 0 14px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      transition: box-shadow .15s, transform .15s;
+    }
+    .card:hover { box-shadow: 0 4px 12px rgba(16,24,40,.08); transform: translateY(-1px); }
+    .card.core { border-top: 3px solid var(--mc-red); }
+    .card h3 { margin: 0 0 4px; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .kind { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+    .desc { color: var(--muted); font-size: 13px; margin: 10px 0 14px; line-height: 1.5; }
+    .impls { display: flex; flex-wrap: wrap; gap: 6px; }
+    .pill {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: #fff4f1;
+      border: 1px solid #ffd9cc;
+      color: #c2410c;
+    }
+    .pill.empty { background: var(--bg); border-color: var(--border); color: var(--muted); }
+    .badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 9px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .badge.implemented { background: #ecfdf3; color: #067647; border: 1px solid #abefc6; }
+    .badge.planned { background: var(--bg); color: var(--planned); border: 1px solid var(--border); }
+    a { color: var(--mc-red); }
+    .err { color: var(--mc-red); }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <svg class="mark" width="38" height="24" viewBox="0 0 48 30" aria-hidden="true">
+        <circle cx="19" cy="15" r="13" fill="#eb001b"></circle>
+        <circle cx="29" cy="15" r="13" fill="#f79e1b" style="mix-blend-mode:screen"></circle>
+      </svg>
+      <div>
+        <h1>BankSym</h1>
+        <p class="desc">Logical design — one core, everything else pluggable</p>
+      </div>
+    </div>
+    <nav>
+      <a href="/" class="active">Architecture</a>
+      <a href="/builder">Bank builder</a>
+      <a href="/console">Bank console</a>
+      <a href="/psd2">Open Banking</a>
+      <a href="/live">Live</a>
+      <a href="/docs">API docs</a>
+    </nav>
+  </header>
+  <main>
+    <h2>Capability map</h2>
+    <div class="diagram"><pre class="mermaid" id="diagram">graph TD</pre></div>
+
+    <h2>Core banking</h2>
+    <div class="grid" id="core-grid"></div>
+
+    <h2 style="margin-top:32px">Pluggable capabilities</h2>
+    <div class="grid" id="cap-grid"></div>
+  </main>
+
+  <script>
+    mermaid.initialize({ startOnLoad: false, theme: "neutral" });
+
+    function nodeId(s) { return s.replace(/[^a-zA-Z0-9]/g, "_"); }
+
+    function buildDiagram(arch) {
+      const lines = ["graph TD"];
+      const coreId = nodeId(arch.core.interface);
+      lines.push(`  CORE["Core Banking<br/>Customers · Accounts<br/>Ledger · Tx history"]`);
+      lines.push(`  ${coreId}(["${arch.core.interface}"])`);
+      lines.push(`  ${coreId} --> CORE`);
+      for (const cap of arch.capabilities) {
+        const cid = nodeId(cap.interface);
+        const label = cap.status === "planned" ? `${cap.interface}<br/><i>(planned)</i>` : cap.interface;
+        lines.push(`  ${cid}["${label}"] --> ${coreId}`);
+        for (const impl of cap.implementations) {
+          const iid = nodeId(cap.kind + "_" + impl);
+          lines.push(`  ${iid}(["${impl}"]) --> ${cid}`);
+        }
+      }
+      lines.push(`  classDef core fill:#fff0ed,stroke:#eb001b,color:#1a1f36;`);
+      lines.push(`  class CORE,${coreId} core;`);
+      return lines.join("\n");
+    }
+
+    function card(item, isCore) {
+      const badge = item.status
+        ? `<span class="badge ${item.status}">${item.status}</span>` : "";
+      const kind = item.kind ? `<span class="kind">${item.kind}</span>` : "";
+      const impls = (item.implementations || []);
+      const pills = impls.length
+        ? impls.map(i => `<span class="pill">${i}</span>`).join("")
+        : `<span class="pill empty">none yet</span>`;
+      return `
+        <div class="card ${isCore ? "core" : ""}">
+          <h3>${item.interface} ${badge}</h3>
+          ${kind}
+          <p class="desc">${item.description || ""}</p>
+          <div class="impls">${pills}</div>
+        </div>`;
+    }
+
+    async function load() {
+      try {
+        const arch = await (await fetch("/architecture")).json();
+        document.getElementById("core-grid").innerHTML = card(
+          { ...arch.core, status: "implemented" }, true);
+        document.getElementById("cap-grid").innerHTML =
+          arch.capabilities.map(c => card(c, false)).join("");
+
+        const def = buildDiagram(arch);
+        const el = document.getElementById("diagram");
+        const { svg } = await mermaid.render("graphSvg", def);
+        el.outerHTML = `<div>${svg}</div>`;
+      } catch (e) {
+        document.getElementById("core-grid").innerHTML =
+          `<p class="err">Failed to load architecture: ${e}</p>`;
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

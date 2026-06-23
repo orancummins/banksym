@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>BankSym — Open Banking (PSD2)</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --surface: #ffffff;
+      --border: #e3e8ee;
+      --text: #1a1f36;
+      --muted: #697386;
+      --brand: #0B5FFF;
+      --mc-red: #eb001b;
+      --mc-orange: #ff5f00;
+      --mc-yellow: #f79e1b;
+      --accent: #eb001b;
+      --core: #067647;
+      --danger: #eb001b;
+      --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.05);
+    }
+    * { box-sizing: border-box; }
+    /* Always reserve the scrollbar gutter so the fixed header doesn't shift between pages. */
+    html { scrollbar-gutter: stable; }
+    body {
+      margin: 0;
+      padding-top: 64px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; padding: 0 32px; border-bottom: 1px solid #1d1d1d; background: #000; color: #fff; display: flex; align-items: center; gap: 14px; }
+    header .mark { flex: none; }
+    header h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em; color: #fff; }
+    header .sub { color: rgba(255,255,255,.6); font-size: 13px; }
+    header nav { margin-left: auto; display: flex; gap: 4px; }
+    header nav a { color: rgba(255,255,255,.8); text-decoration: none; font-size: 13px; font-weight: 500; padding: 7px 12px; border-radius: 8px; }
+    header nav a:hover { background: rgba(255,255,255,.1); color: #fff; }
+    header nav a.active { color: #fff; background: rgba(255,255,255,.14); }
+    main { padding: 24px 32px; max-width: 1240px; margin: 0 auto; }
+    .bankbar { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; }
+    .bankbar label { margin: 0; font-weight: 600; font-size: 13px; }
+    .bankbar select { min-width: 320px; }
+    /* Custom bank dropdown (grouped by country, with brand logo chips) */
+    .bank-dd { position: relative; min-width: 340px; }
+    .bank-dd-trigger { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 11px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text); text-align: left; transition: border-color .15s, box-shadow .15s; }
+    /* Keep the trigger light on hover — the generic dark button:hover must not apply here. */
+    .bank-dd-trigger:hover { background: var(--surface); border-color: var(--brand); box-shadow: none; }
+    .bank-dd-trigger:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent); }
+    .bank-dd-current { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+    .bank-dd-trigger .caret { margin-left: auto; color: var(--muted); transition: transform .15s; flex: none; }
+    .bank-dd.open .bank-dd-trigger .caret { transform: rotate(180deg); }
+    .bank-chip { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 7px; background: var(--brand); color: #fff; font-weight: 700; font-size: 11px; letter-spacing: -.02em; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.1); }
+    .bank-dd-flag { width: 20px; height: 14px; border-radius: 2px; object-fit: cover; box-shadow: 0 0 0 1px rgba(0,0,0,.12); flex: none; }
+    .bank-dd-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bank-dd-panel { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 200; max-height: 360px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 10px 30px rgba(16,24,40,.16); padding: 6px; display: none; scrollbar-width: thin; }
+    .bank-dd.open .bank-dd-panel { display: block; }
+    .bank-dd-group { padding: 9px 10px 4px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); display: flex; align-items: center; gap: 7px; }
+    .bank-dd-group img { width: 18px; height: 12px; border-radius: 2px; object-fit: cover; box-shadow: 0 0 0 1px rgba(0,0,0,.12); }
+    .bank-dd-opt { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: background .12s; }
+    .bank-dd-opt:hover { background: #f3f4f6; }
+    .bank-dd-opt.selected { background: #e5e7eb; }
+    .bank-dd-opt .bank-dd-name { font-size: 13px; }
+    .bank-dd-opt .bank-dd-meta { margin-left: auto; color: var(--muted); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+    select, input {
+      padding: 8px 11px; background: var(--surface); color: var(--text);
+      border: 1px solid var(--border); border-radius: 8px; font-size: 13px;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    select:focus, input:focus { outline: none; border-color: var(--mc-orange); box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc-orange) 18%, transparent); }
+    .cols { display: grid; grid-template-columns: 1.05fr 1fr; gap: 18px; align-items: start; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 18px; box-shadow: var(--shadow); }
+    .panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin: 0 0 14px; }
+
+    /* Stepper */
+    .step { display: flex; gap: 14px; }
+    .step .rail { display: flex; flex-direction: column; align-items: center; }
+    .step .dot { width: 28px; height: 28px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex: none; }
+    .step .line { width: 2px; flex: 1; background: var(--border); margin: 6px 0; }
+    .step:last-child .line { display: none; }
+    .step .body { padding-bottom: 22px; flex: 1; }
+    .step .title { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+    .step .desc { color: var(--muted); font-size: 12.5px; margin-bottom: 10px; }
+    .step.done .dot { background: var(--brand); border-color: var(--brand); color: #fff; }
+    .step.active .dot { background: var(--brand); border-color: var(--brand); color: #fff; box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 16%, transparent); }
+    .step.locked { opacity: .5; }
+    .step.locked .controls { pointer-events: none; }
+
+    label { display: block; font-size: 12px; font-weight: 500; color: var(--text); margin: 10px 0 5px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .radio { display: flex; gap: 8px; flex-wrap: wrap; }
+    .radio label { display: flex; align-items: center; gap: 7px; margin: 0; padding: 8px 11px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 12.5px; }
+    .radio label:hover { border-color: #d4dae3; }
+    .radio input { width: auto; }
+    button { padding: 9px 15px; background: #374151; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s, box-shadow .15s; }
+    button:hover { background: #1f2937; box-shadow: 0 2px 8px rgba(31,41,55,.28); }
+    button:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
+    button.ghost { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+    button.ghost:hover { background: var(--bg); box-shadow: none; }
+    button.small { padding: 7px 12px; font-size: 12px; }
+    .controls { margin-top: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; border: 1px solid; }
+    .badge.received { background: #fff7ed; border-color: #fed7aa; color: #c2410c; }
+    .badge.valid, .badge.finalised, .badge.ACSC { background: #ecfdf3; border-color: #abefc6; color: #067647; }
+    .badge.rejected, .badge.RJCT, .badge.failed { background: #fef3f2; border-color: #fecdca; color: #b42318; }
+    .badge.muted { background: var(--bg); border-color: var(--border); color: var(--muted); }
+
+    .kv { font-size: 12px; color: var(--muted); margin-top: 8px; }
+    .kv code { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; color: var(--text); font-size: 11.5px; }
+
+    .list { display: flex; flex-direction: column; gap: 8px; }
+    .item { padding: 11px 13px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: border-color .15s, background .15s; }
+    .item:hover { border-color: #d4dae3; }
+    .item.active { border-color: var(--mc-orange); background: color-mix(in srgb, var(--mc-orange) 7%, #fff); }
+    .item .name { font-weight: 600; font-size: 13px; }
+    .item .meta { color: var(--muted); font-size: 12px; margin-top: 3px; font-variant-numeric: tabular-nums; }
+    .pill { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 9px; border-radius: 999px; background: #fff4f1; border: 1px solid #ffd9cc; color: #c2410c; }
+
+    .bal { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+    .tx-scroll { max-height: 320px; overflow: auto; border: 1px solid color-mix(in srgb, var(--brand) 22%, var(--border)); border-radius: 10px; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--brand) 35%, transparent) transparent; }
+    .tx-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .tx-scroll::-webkit-scrollbar-track { background: transparent; }
+    .tx-scroll::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--brand) 28%, transparent); border-radius: 8px; }
+    .tx-scroll::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--brand) 48%, transparent); }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; font-size: 11px; }
+    .tx-scroll thead th { position: sticky; top: 0; z-index: 1; background: color-mix(in srgb, var(--brand) 10%, var(--surface)); color: color-mix(in srgb, var(--brand) 70%, var(--text)); box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--brand) 25%, var(--border)); }
+    .tx-scroll tbody tr:hover { background: color-mix(in srgb, var(--brand) 6%, var(--surface)); }
+    tbody tr:hover { background: var(--bg); }
+    td.amt { text-align: right; font-variant-numeric: tabular-nums; }
+    .debit { color: var(--danger); }
+    .credit { color: var(--core); }
+    .empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
+
+    /* XS2A call log */
+    .log { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; max-height: 320px; overflow: auto; }
+    .log-row { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 7px; background: var(--surface); }
+    .log-row .head { display: flex; align-items: center; gap: 8px; }
+    .method { font-weight: 700; font-size: 11px; padding: 1px 7px; border-radius: 5px; }
+    .method.GET { background: #eef4ff; color: #1f51c4; }
+    .method.POST { background: #ecfdf3; color: #067647; }
+    .method.PUT { background: #fff7ed; color: #c2410c; }
+    .method.DELETE { background: #fef3f2; color: #b42318; }
+    .log-row .path { color: var(--text); word-break: break-all; }
+    .log-row .status { margin-left: auto; font-weight: 700; }
+    .log-row .status.ok { color: var(--core); }
+    .log-row .status.err { color: var(--danger); }
+
+    .toast { position: fixed; bottom: 18px; right: 18px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--mc-orange); padding: 12px 16px; border-radius: 10px; font-size: 13px; max-width: 360px; opacity: 0; transform: translateY(8px); transition: .2s; box-shadow: 0 8px 24px rgba(16,24,40,.12); z-index: 10; }
+    .toast.show { opacity: 1; transform: none; }
+    .toast.err { border-left-color: var(--mc-red); }
+    .muted { color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <svg class="mark" width="38" height="24" viewBox="0 0 48 30" aria-hidden="true">
+      <circle cx="19" cy="15" r="13" fill="#eb001b"></circle>
+      <circle cx="29" cy="15" r="13" fill="#f79e1b" style="mix-blend-mode:screen"></circle>
+    </svg>
+    <div>
+      <h1>Open Banking · PSD2 (XS2A)</h1>
+      <div class="sub">A Third-Party Provider consuming the bank's Berlin Group interfaces, end to end.</div>
+    </div>
+    <nav>
+      <a href="/">Architecture</a>
+      <a href="/builder">Bank builder</a>
+      <a href="/console">Bank console</a>
+      <a href="/psd2" class="active">Open Banking</a>
+      <a href="/live">Live</a>
+      <a href="/docs">API docs</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="bankbar">
+      <label>ASPSP (bank)</label>
+      <select id="bank-select" hidden></select>
+      <div class="bank-dd" id="bank-dd">
+        <button type="button" class="bank-dd-trigger" id="bank-dd-trigger" aria-haspopup="listbox" aria-expanded="false">
+          <span class="bank-dd-current" id="bank-dd-current"><span class="bank-dd-name">Select a bank…</span></span>
+          <span class="caret">▾</span>
+        </button>
+        <div class="bank-dd-panel" id="bank-dd-panel" role="listbox"></div>
+      </div>
+      <button class="ghost small" id="refresh">Refresh</button>
+      <button class="ghost small" id="reset">Restart flow</button>
+      <span class="muted" id="bank-meta"></span>
+    </div>
+
+    <div class="cols">
+      <!-- LEFT: the TPP consent journey -->
+      <div class="panel">
+        <h2>Consent journey (AIS)</h2>
+
+        <!-- Step 1: Consent -->
+        <div class="step active" id="step-1">
+          <div class="rail"><div class="dot">1</div><div class="line"></div></div>
+          <div class="body">
+            <div class="title">Request account-access consent</div>
+            <div class="desc">The TPP asks the bank (ASPSP) for the PSU's permission to read account data. No credentials are collected here.</div>
+            <label>Access scope</label>
+            <div class="radio">
+              <label><input type="radio" name="scope" value="allPsd2" checked /> All accounts (allPsd2)</label>
+              <label><input type="radio" name="scope" value="availableAccounts" /> Available accounts</label>
+            </div>
+            <div class="controls">
+              <button id="btn-consent">Request consent →</button>
+              <span id="consent-state"></span>
+            </div>
+            <div class="kv" id="consent-info" style="display:none"></div>
+          </div>
+        </div>
+
+        <!-- Step 2: Bank authorisation (OAuth redirect SCA) -->
+        <div class="step locked" id="step-2">
+          <div class="rail"><div class="dot">2</div><div class="line"></div></div>
+          <div class="body">
+            <div class="title">Authorise at your bank (OAuth redirect)</div>
+            <div class="desc">The TPP redirects the PSU to the <strong>bank's own login page</strong>. The customer authenticates there and approves the consent — the TPP never sees the password. The bank returns an authorization code, which the TPP exchanges for an access token.</div>
+            <div class="controls">
+              <button id="btn-authorise">Open bank login ↗</button>
+              <span id="oauth-state"></span>
+            </div>
+            <div class="kv" id="oauth-info" style="display:none"></div>
+          </div>
+        </div>
+
+        <!-- Step 3: Access -->
+        <div class="step locked" id="step-3">
+          <div class="rail"><div class="dot">3</div><div class="line"></div></div>
+          <div class="body">
+            <div class="title">Access account information</div>
+            <div class="desc">With a valid consent the TPP lists accounts and reads balances &amp; transactions.</div>
+            <div class="controls">
+              <button id="btn-list">List accounts (GET /accounts)</button>
+            </div>
+            <div class="list" id="accounts" style="margin-top:12px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: account detail + call log -->
+      <div>
+        <div class="panel">
+          <h2>Account information</h2>
+          <div id="acct-detail">
+            <div class="empty">Complete the consent journey, then select an account to view its balance and transactions.</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>XS2A call log</h2>
+          <div class="log" id="log"><div class="empty">API calls to the bank's PSD2 interface appear here.</div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API = "";
+    const state = {
+      bankId: null, country: "DE",
+      consentId: null, accessToken: null, oauthState: null, accountId: null,
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const COUNTRY_NAMES = { DE: "Germany", ES: "Spain", FR: "France", GB: "United Kingdom", IE: "Ireland", NL: "Netherlands" };
+    const flagUrl = (code) => `https://flagcdn.com/${(code || "").toLowerCase()}.svg`;
+    function bankInitials(name) {
+      const words = (name || "").trim().split(/\s+/).filter(Boolean);
+      if (!words.length) return "B";
+      if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+      return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    }
+    function bankChipHTML(b) {
+      return `<span class="bank-chip" style="background:${b.primary_color || 'var(--brand)'}">${bankInitials(b.display_name)}</span>`;
+    }
+    function toast(msg, isErr) {
+      const t = $("toast");
+      t.textContent = msg;
+      t.className = "toast show" + (isErr ? " err" : "");
+      setTimeout(() => (t.className = "toast"), 3200);
+    }
+
+    function logCall(method, path, status, ok) {
+      const log = $("log");
+      if (log.querySelector(".empty")) log.innerHTML = "";
+      const row = document.createElement("div");
+      row.className = "log-row";
+      row.innerHTML =
+        `<div class="head"><span class="method ${method}">${method}</span>` +
+        `<span class="path">${path}</span>` +
+        `<span class="status ${ok ? "ok" : "err"}">${status}</span></div>`;
+      log.insertBefore(row, log.firstChild);
+    }
+
+    async function call(method, path, { headers = {}, body } = {}) {
+      const opts = { method, headers: { ...headers } };
+      if (body !== undefined) {
+        opts.headers["Content-Type"] = "application/json";
+        opts.body = JSON.stringify(body);
+      }
+      let res;
+      try {
+        res = await fetch(API + path, opts);
+      } catch (e) {
+        logCall(method, path, "network", false);
+        throw new Error("Network error");
+      }
+      logCall(method, path, res.status, res.ok);
+      if (res.status === 204) return null;
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || data.message || `HTTP ${res.status}`);
+      return data;
+    }
+
+    function xs2a(path) {
+      return `/xs2a/${state.bankId}/v1${path}`;
+    }
+    function consentHeaders() {
+      return { "Consent-ID": state.consentId };
+    }
+    function badge(text, cls) {
+      return `<span class="badge ${cls}">${text}</span>`;
+    }
+
+    // -- Bank selection -------------------------------------------------------
+    async function loadBanks() {
+      const banks = await call("GET", "/banks");
+      const sel = $("bank-select");
+      sel.innerHTML = "";
+      if (!banks.length) {
+        sel.innerHTML = '<option value="">No banks — create one in the Bank builder</option>';
+        $("bank-meta").textContent = "";
+        renderBankDropdown([], null);
+        return;
+      }
+      for (const b of banks) {
+        const o = document.createElement("option");
+        o.value = b.id;
+        o.textContent = `${b.display_name} (${b.country})`;
+        o.dataset.country = b.country;
+        o.dataset.protocols = (b.enabled_protocols || []).join(",");
+        o.dataset.color = b.primary_color || "#0B5FFF";
+        sel.appendChild(o);
+      }
+      // Default to the bank selected in the console: honour ?bank=<id>, then the last bank used
+      // in the console (persisted in localStorage), else the first bank.
+      let preferred = new URLSearchParams(location.search).get("bank");
+      if (!preferred) {
+        try { preferred = localStorage.getItem("banksym.bankId"); } catch (_) {}
+      }
+      if (preferred && banks.some((b) => b.id === preferred)) sel.value = preferred;
+      renderBankDropdown(banks, sel.value || banks[0].id);
+      onBankChange();
+    }
+
+    // Render the custom bank dropdown, grouping banks by country and showing brand logo chips.
+    function renderBankDropdown(banks, selectedId) {
+      const panel = $("bank-dd-panel");
+      const groups = {};
+      banks.forEach((b) => { (groups[b.country] ||= []).push(b); });
+      const countries = Object.keys(groups).sort(
+        (a, b) => (COUNTRY_NAMES[a] || a).localeCompare(COUNTRY_NAMES[b] || b)
+      );
+      let html = "";
+      for (const c of countries) {
+        html += `<div class="bank-dd-group"><img src="${flagUrl(c)}" alt="" />${COUNTRY_NAMES[c] || c}</div>`;
+        groups[c].sort((a, b) => a.display_name.localeCompare(b.display_name)).forEach((b) => {
+          html += `<div class="bank-dd-opt${b.id === selectedId ? ' selected' : ''}" role="option" data-id="${b.id}">`
+            + bankChipHTML(b)
+            + `<span class="bank-dd-name">${b.display_name}</span>`
+            + `<span class="bank-dd-meta">${b.base_currency}</span></div>`;
+        });
+      }
+      panel.innerHTML = html || '<div class="bank-dd-opt">No banks yet</div>';
+      panel.querySelectorAll(".bank-dd-opt[data-id]").forEach((el) => {
+        el.addEventListener("click", () => {
+          const id = el.dataset.id;
+          const sel = $("bank-select");
+          sel.value = id;
+          setDropdownTrigger(banks.find((b) => b.id === id));
+          panel.querySelectorAll(".bank-dd-opt").forEach((o) => o.classList.toggle("selected", o.dataset.id === id));
+          closeBankDropdown();
+          onBankChange();
+        });
+      });
+      setDropdownTrigger(banks.find((b) => b.id === selectedId) || banks[0] || null);
+    }
+    function setDropdownTrigger(b) {
+      const cur = $("bank-dd-current");
+      if (!b) { cur.innerHTML = '<span class="bank-dd-name">Select a bank…</span>'; return; }
+      cur.innerHTML = bankChipHTML(b)
+        + `<img class="bank-dd-flag" src="${flagUrl(b.country)}" alt="" />`
+        + `<span class="bank-dd-name">${b.display_name}</span>`;
+    }
+    function openBankDropdown() {
+      $("bank-dd").classList.add("open");
+      $("bank-dd-trigger").setAttribute("aria-expanded", "true");
+    }
+    function closeBankDropdown() {
+      $("bank-dd").classList.remove("open");
+      $("bank-dd-trigger").setAttribute("aria-expanded", "false");
+    }
+
+    // Tint the page accents with the selected bank's brand colour. The main (black) header is
+    // deliberately left unchanged.
+    function applyBankTheme(color) {
+      const root = document.documentElement;
+      root.style.setProperty("--brand", color);
+      root.style.setProperty("--accent", color);
+      root.style.setProperty("--mc-red", color);
+      root.style.setProperty("--mc-orange", color);
+      document.body.style.background =
+        `color-mix(in srgb, ${color} 6%, var(--bg))`;
+    }
+
+    function onBankChange() {
+      const sel = $("bank-select");
+      const opt = sel.options[sel.selectedIndex];
+      if (!opt || !opt.value) return;
+      state.bankId = opt.value;
+      state.country = opt.dataset.country || "DE";
+      applyBankTheme(opt.dataset.color || "#0B5FFF");
+      const protocols = opt.dataset.protocols || "";
+      const hasBg = protocols.includes("berlin_group");
+      $("bank-meta").innerHTML = hasBg
+        ? `Berlin Group XS2A at <code>/xs2a/${state.bankId}/v1</code>`
+            .replace("<code>", '<code style="background:#f6f8fb;border:1px solid #e3e8ee;border-radius:6px;padding:1px 6px">')
+        : '<span style="color:#b42318">This bank does not enable the berlin_group protocol — endpoints may 404.</span>';
+      resetFlow();
+    }
+
+    // -- Step state machine ---------------------------------------------------
+    function setStep(n, cls) {
+      const el = $(`step-${n}`);
+      el.classList.remove("active", "done", "locked");
+      el.classList.add(cls);
+    }
+
+    function resetFlow() {
+      state.consentId = null;
+      state.accessToken = null;
+      state.oauthState = null;
+      state.accountId = null;
+      setStep(1, "active");
+      setStep(2, "locked");
+      setStep(3, "locked");
+      $("consent-state").innerHTML = "";
+      $("consent-info").style.display = "none";
+      $("oauth-state").innerHTML = "";
+      $("oauth-info").style.display = "none";
+      $("btn-authorise").disabled = false;
+      $("btn-consent").disabled = false;
+      $("accounts").innerHTML = "";
+      $("acct-detail").innerHTML =
+        '<div class="empty">Complete the consent journey, then select an account to view its balance and transactions.</div>';
+    }
+
+    // -- Step 1: request consent ---------------------------------------------
+    async function requestConsent() {
+      if (!state.bankId) return toast("Select a bank first", true);
+      const scope = document.querySelector('input[name="scope"]:checked').value;
+      const access = scope === "allPsd2"
+        ? { allPsd2: "allAccounts" }
+        : { availableAccounts: "allAccounts" };
+      try {
+        $("btn-consent").disabled = true;
+        const data = await call("POST", xs2a("/consents"), {
+          body: { access, recurringIndicator: true, frequencyPerDay: 4 },
+        });
+        state.consentId = data.consentId;
+        $("consent-state").innerHTML = badge(data.consentStatus, data.consentStatus);
+        $("consent-info").style.display = "";
+        $("consent-info").innerHTML = `Consent <code>${data.consentId}</code> created · scope <code>${scope}</code>`;
+        setStep(1, "done");
+        setStep(2, "active");
+        toast("Consent created — authorise at the bank");
+      } catch (e) {
+        $("btn-consent").disabled = false;
+        toast(e.message, true);
+      }
+    }
+
+    // -- Step 2: OAuth redirect SCA (bank-hosted login) -----------------------
+    function authoriseAtBank() {
+      if (!state.consentId) return toast("Request consent first", true);
+      state.oauthState = "st_" + Math.random().toString(36).slice(2, 12);
+      const redirectUri = `${location.origin}/psd2-callback`;
+      const scopeLabel = document.querySelector('input[name="scope"]:checked').value === "allPsd2"
+        ? "All accounts" : "Available accounts";
+      const url =
+        `/banks/${state.bankId}/oauth/authorize` +
+        `?consent_id=${encodeURIComponent(state.consentId)}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&state=${encodeURIComponent(state.oauthState)}` +
+        `&scope=${encodeURIComponent(scopeLabel)}`;
+      logCall("GET", url, "redirect", true);
+      const w = 460, h = 640;
+      const left = window.screenX + (window.outerWidth - w) / 2;
+      const top = window.screenY + (window.outerHeight - h) / 2;
+      const popup = window.open(url, "banksym-bank-login",
+        `width=${w},height=${h},left=${left},top=${top}`);
+      $("oauth-state").innerHTML = badge("redirected", "received");
+      if (!popup) toast("Pop-up blocked — allow pop-ups to authorise at the bank.", true);
+    }
+
+    async function onOAuthReturn(payload) {
+      if (!payload || payload.type !== "banksym-oauth") return;
+      if (payload.state && state.oauthState && payload.state !== state.oauthState) return;
+      if (payload.error || !payload.code) {
+        $("oauth-state").innerHTML = badge("failed", "failed");
+        return toast(payload.error || "Authorisation was not completed", true);
+      }
+      try {
+        // Exchange the authorization code for an access token (OAuth2).
+        const redirectUri = `${location.origin}/psd2-callback`;
+        const tok = await call("POST", `/banks/${state.bankId}/oauth/token`, {
+          body: { grant_type: "authorization_code", code: payload.code, redirect_uri: redirectUri },
+        });
+        state.accessToken = tok.access_token;
+        // The consent is now active; confirm its status.
+        const st = await call("GET", xs2a(`/consents/${state.consentId}/status`));
+        $("consent-state").innerHTML = badge(st.consentStatus, st.consentStatus);
+        $("oauth-state").innerHTML = badge("authorised", "valid");
+        $("oauth-info").style.display = "";
+        $("oauth-info").innerHTML =
+          `Access token <code>${tok.access_token.slice(0, 12)}…</code> · consent <code>${st.consentStatus}</code>`;
+        setStep(2, "done");
+        setStep(3, "active");
+        toast("Authorised at the bank — consent is valid");
+      } catch (e) {
+        $("oauth-state").innerHTML = badge("failed", "failed");
+        toast(e.message, true);
+      }
+    }
+
+    // -- Step 3: account information -----------------------------------------
+    async function listAccounts() {
+      try {
+        const data = await call("GET", xs2a("/accounts"), { headers: consentHeaders() });
+        const wrap = $("accounts");
+        wrap.innerHTML = "";
+        if (!data.accounts.length) {
+          wrap.innerHTML = '<div class="empty">No customer accounts visible. Add accounts in the Bank console first.</div>';
+          return;
+        }
+        for (const a of data.accounts) {
+          const div = document.createElement("div");
+          div.className = "item";
+          div.innerHTML =
+            `<div class="name">${a.name || a.iban} <span class="pill">${a.cashAccountType}</span></div>` +
+            `<div class="meta">${a.iban} · ${a.currency}</div>`;
+          div.onclick = () => selectAccount(a, div);
+          wrap.appendChild(div);
+        }
+      } catch (e) {
+        toast(e.message, true);
+      }
+    }
+
+    async function selectAccount(acct, el) {
+      document.querySelectorAll("#accounts .item").forEach((n) => n.classList.remove("active"));
+      el.classList.add("active");
+      state.accountId = acct.resourceId;
+      $("acct-detail").innerHTML = '<div class="empty">Loading…</div>';
+      try {
+        const [bal, tx] = await Promise.all([
+          call("GET", xs2a(`/accounts/${acct.resourceId}/balances`), { headers: consentHeaders() }),
+          call("GET", xs2a(`/accounts/${acct.resourceId}/transactions`), { headers: consentHeaders() }),
+        ]);
+        renderAccount(acct, bal, tx);
+      } catch (e) {
+        $("acct-detail").innerHTML = `<div class="empty">${e.message}</div>`;
+        toast(e.message, true);
+      }
+    }
+
+    function renderAccount(acct, bal, tx) {
+      const b = bal.balances[0];
+      const amount = b ? `${b.balanceAmount.amount} ${b.balanceAmount.currency}` : "—";
+      const booked = (tx.transactions && tx.transactions.booked) || [];
+      let rows = "";
+      if (!booked.length) {
+        rows = '<tr><td colspan="3" class="empty">No booked transactions.</td></tr>';
+      } else {
+        for (const t of booked) {
+          const v = parseFloat(t.transactionAmount.amount);
+          const cls = v < 0 ? "debit" : "credit";
+          rows +=
+            `<tr><td>${t.bookingDate}</td>` +
+            `<td>${t.remittanceInformationUnstructured || "—"}</td>` +
+            `<td class="amt ${cls}">${t.transactionAmount.amount} ${t.transactionAmount.currency}</td></tr>`;
+        }
+      }
+      $("acct-detail").innerHTML =
+        `<div class="meta muted">${acct.iban} · ${acct.name || ""}</div>` +
+        `<div class="bal">${amount}</div>` +
+        `<div class="muted" style="margin:2px 0 14px">${b ? b.balanceType : ""} balance · ${booked.length} transactions</div>` +
+        `<div class="tx-scroll"><table><thead><tr><th>Booked</th><th>Remittance</th><th style="text-align:right">Amount</th></tr></thead>` +
+        `<tbody>${rows}</tbody></table></div>`;
+    }
+
+    // -- Wiring ---------------------------------------------------------------
+    $("bank-select").addEventListener("change", onBankChange);
+    $("bank-dd-trigger").addEventListener("click", () => {
+      $("bank-dd").classList.contains("open") ? closeBankDropdown() : openBankDropdown();
+    });
+    document.addEventListener("click", (e) => { if (!e.target.closest("#bank-dd")) closeBankDropdown(); });
+    $("refresh").addEventListener("click", loadBanks);
+    $("reset").addEventListener("click", resetFlow);
+    $("btn-consent").addEventListener("click", requestConsent);
+    $("btn-authorise").addEventListener("click", authoriseAtBank);
+    $("btn-list").addEventListener("click", listAccounts);
+
+    // The bank-hosted login popup posts the authorization code back here.
+    window.addEventListener("message", (ev) => {
+      if (ev.origin !== location.origin) return;
+      onOAuthReturn(ev.data);
+    });
+
+    loadBanks().catch((e) => toast(e.message, true));
+  </script>
+</body>
+</html>

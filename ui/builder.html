@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>BankSym — Bank Builder</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --surface: #ffffff;
+      --border: #e3e8ee;
+      --text: #1a1f36;
+      --muted: #697386;
+      --mc-red: #eb001b;
+      --mc-orange: #ff5f00;
+      --mc-yellow: #f79e1b;
+      --accent: #eb001b;
+      --danger: #eb001b;
+      --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.05);
+    }
+    * { box-sizing: border-box; }
+    /* Always reserve the scrollbar gutter so the fixed header doesn't shift between pages. */
+    html { scrollbar-gutter: stable; }
+    body {
+      margin: 0;
+      padding-top: 64px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; padding: 0 32px; border-bottom: 1px solid #1d1d1d; background: #000; color: #fff; display: flex; align-items: center; gap: 14px; }
+    .brand { display: flex; align-items: center; gap: 11px; }
+    .brand h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+    header h1 { color: #fff; }
+    header .desc { margin: 2px 0 0; color: rgba(255,255,255,.6); font-size: 13px; }
+    header nav { margin-left: auto; display: flex; gap: 4px; }
+    header nav a { color: rgba(255,255,255,.8); text-decoration: none; font-size: 13px; font-weight: 500; padding: 7px 12px; border-radius: 8px; }
+    header nav a:hover { background: rgba(255,255,255,.1); color: #fff; }
+    header nav a.active { color: #fff; background: rgba(255,255,255,.14); }
+    main { padding: 28px 32px; max-width: 940px; margin: 0 auto; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow); }
+    .panel-head { margin: 0 0 20px; }
+    .panel-head h2 { margin: 0; font-size: 16px; font-weight: 650; letter-spacing: -.01em; color: var(--text); text-transform: none; }
+    .panel-head p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+
+    /* Two-column builder: live preview + form */
+    .builder-grid { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 760px) { .builder-grid { grid-template-columns: 1fr; } }
+
+    .preview-card { position: sticky; top: 84px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; box-shadow: var(--shadow); text-align: center; overflow: hidden; }
+    .preview-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 84px; background: linear-gradient(135deg, var(--brand, #067647), color-mix(in srgb, var(--brand, #067647) 60%, #000)); }
+    .preview-logo { position: relative; display: flex; align-items: center; justify-content: center; min-height: 64px; margin: 18px auto 0; padding: 12px 18px; max-width: 220px; border-radius: 14px; background: var(--brand, #067647); color: #fff; font-weight: 700; font-size: 19px; letter-spacing: -.01em; line-height: 1.15; word-break: break-word; box-shadow: 0 8px 22px color-mix(in srgb, var(--brand, #067647) 30%, transparent); }
+    .preview-name { margin-top: 16px; font-size: 16px; font-weight: 650; letter-spacing: -.01em; }
+    .preview-loc { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; color: var(--muted); font-size: 13px; }
+    .preview-loc .flag { width: 22px; height: 15px; border-radius: 2px; object-fit: cover; box-shadow: 0 0 0 1px rgba(0,0,0,.12); }
+    .preview-tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 16px; }
+    .preview-tags span { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: color-mix(in srgb, var(--brand, #067647) 9%, var(--surface)); border: 1px solid color-mix(in srgb, var(--brand, #067647) 22%, var(--border)); color: color-mix(in srgb, var(--brand, #067647) 72%, var(--text)); }
+
+    .form-section { padding: 18px 0; border-top: 1px solid var(--border); }
+    .form-section:first-of-type { padding-top: 2px; border-top: none; }
+    .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0 0 4px; }
+    label { display: block; font-size: 13px; font-weight: 550; color: var(--text); margin: 14px 0 6px; }
+    input, select {
+      width: 100%; padding: 10px 12px; background: var(--surface); color: var(--text);
+      border: 1px solid var(--border); border-radius: 9px; font-size: 14px;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23697386' d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; cursor: pointer; }
+    input:focus, select:focus { outline: none; border-color: var(--brand, #067647); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand, #067647) 16%, transparent); }
+    input[type=color] { width: 46px; height: 40px; padding: 4px; cursor: pointer; flex: none; }
+    .color-row { display: flex; align-items: center; gap: 12px; }
+    .color-row .field-hint { margin: 0; }
+    .color-hex { width: 92px; flex: none; font-variant-numeric: tabular-nums; text-transform: uppercase; }
+    .flag-row { display: flex; align-items: center; gap: 10px; }
+    .flag-row .flag { width: 32px; height: 22px; border-radius: 3px; object-fit: cover; box-shadow: 0 0 0 1px rgba(0,0,0,.12); flex: none; display: block; }
+    .flag-row select { flex: 1; }
+    .bank .flag-sm { width: 20px; height: 14px; border-radius: 2px; object-fit: cover; box-shadow: 0 0 0 1px rgba(0,0,0,.12); vertical-align: -2px; margin-right: 4px; }
+    .field-hint { color: var(--muted); font-size: 12px; margin: 6px 0 0; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    button {
+      margin-top: 22px; width: 100%; padding: 12px 18px; background: var(--brand, #067647); color: #fff;
+      border: none; border-radius: 10px; font-size: 14.5px; font-weight: 650; cursor: pointer;
+      transition: filter .15s, box-shadow .15s, transform .05s;
+    }
+    button:hover { filter: brightness(.95); box-shadow: 0 6px 18px color-mix(in srgb, var(--brand, #067647) 30%, transparent); }
+    button:active { transform: translateY(1px); }
+    h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin-top: 0; }
+    pre { background: #0d1117; border: 1px solid var(--border); border-radius: 10px; padding: 14px; overflow-x: auto; font-size: 12.5px; color: #c9d1d9; margin-top: 18px; }
+    .created-link { margin: 12px 0 0; padding: 12px 14px; background: color-mix(in srgb, var(--brand, #067647) 8%, var(--surface)); border: 1px solid color-mix(in srgb, var(--brand, #067647) 22%, var(--border)); border-radius: 10px; font-size: 13.5px; }
+    .created-link a { color: var(--brand, #067647); font-weight: 650; text-decoration: none; }
+    .created-link a:hover { text-decoration: underline; }
+    .banks { display: flex; flex-direction: column; gap: 8px; }
+    .bank { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 11px; cursor: pointer; transition: border-color .15s, box-shadow .15s, background .15s; }
+    .bank:hover { border-color: #d4dae3; box-shadow: var(--shadow); }
+    .bank.selected { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 7%, #fff); }
+    .bank.selected strong::after { content: "Selected"; margin-left: 8px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--brand); vertical-align: middle; }
+    .swatch { width: 28px; height: 28px; border-radius: 8px; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+    .bank strong { font-weight: 600; font-size: 14px; }
+    .bank .meta { color: var(--muted); font-size: 12px; }
+    .bank .del { margin: 0 0 0 auto; width: auto; background: var(--surface); border: 1px solid var(--border); color: var(--mc-red); padding: 6px 13px; font-size: 12px; font-weight: 600; border-radius: 8px; }
+    .bank .del:hover { background: #fff4f1; border-color: #ffd9cc; box-shadow: none; filter: none; }
+    .meta { color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <svg width="38" height="24" viewBox="0 0 48 30" aria-hidden="true">
+        <circle cx="19" cy="15" r="13" fill="#eb001b"></circle>
+        <circle cx="29" cy="15" r="13" fill="#f79e1b" style="mix-blend-mode:screen"></circle>
+      </svg>
+      <div>
+        <h1>BankSym</h1>
+        <p class="desc">Bank builder — instantiate a tenant with branding & capabilities</p>
+      </div>
+    </div>
+    <nav>
+      <a href="/">Architecture</a>
+      <a href="/builder" class="active">Bank builder</a>
+      <a href="/console" id="nav-console">Bank console</a>
+      <a href="/psd2">Open Banking</a>
+      <a href="/live">Live</a>
+      <a href="/docs">API docs</a>
+    </nav>
+  </header>
+  <main>
+    <div class="builder-grid">
+      <aside class="preview-card">
+        <div class="preview-logo" id="logo-preview">Bank Of Banksy</div>
+        <div class="preview-name" id="preview-name">Bank Of Banksy</div>
+        <div class="preview-loc">
+          <img class="flag" id="preview-flag" alt="" />
+          <span id="preview-loc-text">Germany · EUR</span>
+        </div>
+        <div class="preview-tags" id="preview-tags"></div>
+      </aside>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Create a bank</h2>
+          <p>Spin up a new tenant with its own branding and capabilities.</p>
+        </div>
+        <form id="form">
+          <div class="form-section">
+            <div class="section-title">Identity</div>
+            <label>Display name</label>
+            <input name="display_name" value="Bank Of Banksy" required />
+            <label>Primary colour</label>
+            <div class="color-row">
+              <input name="primary_color" type="color" value="#067647" id="primary_color" />
+              <input class="color-hex" id="primary_color_hex" value="#067647" aria-label="Primary colour hex" />
+              <span class="field-hint">The logo is generated from the name and this colour.</span>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">Localisation</div>
+            <div class="row">
+              <div>
+                <label>Country</label>
+                <div class="flag-row">
+                  <img class="flag" id="country-flag" alt="" />
+                  <select name="country" id="country"></select>
+                </div>
+              </div>
+              <div>
+                <label>Base currency</label>
+                <input name="base_currency" value="EUR" />
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label>Language</label>
+                <select name="locale" id="locale"></select>
+              </div>
+              <div></div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">Capabilities</div>
+            <div class="row">
+              <div>
+                <label>Protocol</label>
+                <select name="protocol" id="protocol"></select>
+              </div>
+              <div>
+                <label>Transaction generator</label>
+                <select name="txgen" id="txgen"></select>
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label>Settlement engine</label>
+                <select name="settlement" id="settlement"></select>
+              </div>
+              <div>
+                <label>Auth provider</label>
+                <select name="auth" id="auth"></select>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit">Create bank</button>
+        </form>
+        <pre id="result" style="display:none"></pre>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Existing banks</h2>
+        <p>Tenants currently running in this BankSym instance.</p>
+      </div>
+      <div class="banks" id="banks"></div>
+    </div>
+  </main>
+
+  <script>
+    const COUNTRY_NAMES = { DE: "Germany", ES: "Spain", FR: "France", GB: "United Kingdom", IE: "Ireland", NL: "Netherlands" };
+    const LANGUAGES = { en: "English", de: "German (Deutsch)", es: "Spanish (Espa\u00f1ol)", fr: "French (Fran\u00e7ais)", nl: "Dutch (Nederlands)" };
+    const COUNTRY_LANG = { DE: "de", ES: "es", FR: "fr", GB: "en", IE: "en", NL: "nl" };
+    let localeTouched = false;
+    const flagUrl = (code) => `https://flagcdn.com/${(code || "").toLowerCase()}.svg`;
+
+    async function fill(id, values, includeBlank) {
+      const sel = document.getElementById(id);
+      sel.innerHTML = "";
+      if (includeBlank) sel.append(new Option("(none)", ""));
+      values.forEach(v => sel.append(new Option(v, v)));
+    }
+
+    function fillCountries(codes) {
+      const sel = document.getElementById("country");
+      sel.innerHTML = "";
+      codes.forEach(c => sel.append(new Option(COUNTRY_NAMES[c] || c, c)));
+      updateCountryFlag();
+    }
+
+    function fillLanguages() {
+      const sel = document.getElementById("locale");
+      sel.innerHTML = "";
+      Object.entries(LANGUAGES).forEach(([code, label]) => sel.append(new Option(label, code)));
+      syncLanguageToCountry();
+    }
+
+    // Default the language to the selected country's primary language until the user picks one.
+    function syncLanguageToCountry() {
+      if (localeTouched) return;
+      const code = document.getElementById("country").value;
+      const lang = COUNTRY_LANG[code] || "en";
+      document.getElementById("locale").value = lang;
+      updatePreviewLoc();
+    }
+
+    function updateCountryFlag() {
+      const code = document.getElementById("country").value;
+      const img = document.getElementById("country-flag");
+      if (code) { img.src = flagUrl(code); img.alt = code; img.style.display = ""; }
+      else { img.removeAttribute("src"); img.style.display = "none"; }
+      updatePreviewLoc();
+    }
+
+    async function loadMeta() {
+      const caps = await (await fetch("/banks/_meta/capabilities")).json();
+      fill("protocol", caps.protocol, true);
+      fill("txgen", caps.txgen);
+      fill("settlement", caps.settlement);
+      fill("auth", caps.auth);
+      // Countries come from the localization provider packs.
+      const arch = await (await fetch("/architecture")).json();
+      const countries = ["DE", "ES", "FR", "GB", "IE", "NL"];
+      fillCountries(countries);
+      fillLanguages();
+      updatePreviewTags();
+    }
+
+    async function loadBanks() {
+      const banks = await (await fetch("/banks")).json();
+      const el = document.getElementById("banks");
+      el.innerHTML = banks.length ? "" : '<span class="meta">No banks yet.</span>';
+      // The bank the console will open with: last selected anywhere, else the first one.
+      let selectedId = null;
+      try { selectedId = localStorage.getItem("banksym.bankId"); } catch (_) {}
+      if (!banks.some(b => b.id === selectedId)) selectedId = banks.length ? banks[0].id : null;
+      banks.forEach(b => {
+        const div = document.createElement("div");
+        div.className = "bank" + (b.id === selectedId ? " selected" : "");
+        div.dataset.id = b.id;
+        div.title = "Select this bank for the Bank console";
+        div.innerHTML =
+          `<span class="swatch" style="background:${b.primary_color}"></span>` +
+          `<strong>${b.display_name}</strong>` +
+          `<span class="meta"><img class="flag-sm" src="${flagUrl(b.country)}" alt="" />${b.country} · ${b.base_currency} · ${b.id}</span>` +
+          `<button class="del" data-id="${b.id}" data-name="${b.display_name}" title="Delete bank">Delete</button>`;
+        div.querySelector(".del").addEventListener("click", (e) => {
+          e.stopPropagation();
+          deleteBank(b.id, b.display_name);
+        });
+        div.addEventListener("click", () => selectBankForConsole(b.id));
+        el.append(div);
+      });
+      if (selectedId) selectBankForConsole(selectedId);
+    }
+
+    // Persist the bank to open in the Bank console (shared with the console + Open Banking pages)
+    // and reflect the choice in the list and the "Bank console" nav link.
+    function selectBankForConsole(bankId) {
+      try { localStorage.setItem("banksym.bankId", bankId); } catch (_) {}
+      document.querySelectorAll("#banks .bank").forEach(row =>
+        row.classList.toggle("selected", row.dataset.id === bankId));
+      const nav = document.getElementById("nav-console");
+      if (nav) nav.href = `/console?bank=${encodeURIComponent(bankId)}`;
+    }
+
+    async function deleteBank(id, name) {
+      if (!confirm(`Delete "${name}"? This permanently removes the bank and all its customers, accounts and transactions.`)) return;
+      const res = await fetch(`/banks/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        showMessage(`Deleted "${name}".`, false);
+        loadBanks();
+      } else {
+        const body = await res.json().catch(() => ({}));
+        showMessage(body.message || body.detail || "Failed to delete bank.", true);
+      }
+    }
+
+    function showMessage(text, isError) {
+      const out = document.getElementById("result");
+      out.style.display = "block";
+      out.style.color = isError ? "#f85149" : "";
+      out.textContent = text;
+      document.querySelectorAll("#result + p.created-link").forEach(p => p.remove());
+    }
+
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const f = e.target;
+      const capabilities = {};
+      if (f.txgen.value) capabilities.txgen = f.txgen.value;
+      if (f.settlement.value) capabilities.settlement = f.settlement.value;
+      if (f.auth.value) capabilities.auth = f.auth.value;
+      const body = {
+        display_name: f.display_name.value,
+        country: f.country.value,
+        locale: f.locale.value,
+        base_currency: f.base_currency.value,
+        logo_url: null,
+        primary_color: f.primary_color.value,
+        enabled_protocols: f.protocol.value ? [f.protocol.value] : [],
+        capabilities,
+      };
+      const res = await fetch("/banks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const created = await res.json();
+      document.querySelectorAll("#result + p.created-link").forEach(p => p.remove());
+      const out = document.getElementById("result");
+      out.style.display = "block";
+      if (res.ok && created.id) {
+        out.style.color = "";
+        out.textContent = JSON.stringify(created, null, 2);
+        // The just-created bank becomes the one the console opens with.
+        selectBankForConsole(created.id);
+        const link = document.createElement("p");
+        link.className = "created-link";
+        link.innerHTML = `Bank created. <a href="/console?bank=${created.id}">Open “${created.display_name}” in the Bank console →</a>`;
+        out.after(link);
+        // Keep the created bank's details in the form (and on the generated preview card)
+        // rather than reverting to the "Bank Of Banksy" defaults.
+        f.display_name.value = created.display_name;
+        f.country.value = created.country;
+        if (created.locale) { f.locale.value = created.locale; localeTouched = true; }
+        f.base_currency.value = created.base_currency;
+        f.primary_color.value = created.primary_color;
+        updateLogoPreview();
+        updateCountryFlag();
+      } else {
+        out.style.color = "#f85149";
+        out.textContent = created.message || created.detail || "Failed to create bank.";
+      }
+      loadBanks();
+    });
+
+    function updateLogoPreview() {
+      const f = document.getElementById("form");
+      const name = (f.display_name.value || "Bank").trim() || "Bank";
+      const color = f.primary_color.value;
+      document.documentElement.style.setProperty("--brand", color);
+      document.getElementById("logo-preview").textContent = name;
+      document.getElementById("preview-name").textContent = name;
+      const hex = document.getElementById("primary_color_hex");
+      if (hex.value.toLowerCase() !== color.toLowerCase()) hex.value = color.toUpperCase();
+      updatePreviewLoc();
+      updatePreviewTags();
+    }
+
+    function updatePreviewLoc() {
+      const f = document.getElementById("form");
+      const code = f.country.value;
+      const cur = (f.base_currency.value || "").trim().toUpperCase();
+      const name = COUNTRY_NAMES[code] || code || "—";
+      const lang = LANGUAGES[f.locale.value] ? f.locale.value.toUpperCase() : "";
+      const parts = [name, cur, lang].filter(Boolean);
+      document.getElementById("preview-loc-text").textContent = parts.join(" \u00b7 ");
+      const flag = document.getElementById("preview-flag");
+      if (code) { flag.src = flagUrl(code); flag.style.display = ""; } else { flag.style.display = "none"; }
+    }
+
+    function updatePreviewTags() {
+      const f = document.getElementById("form");
+      const tags = [f.protocol.value, f.txgen.value, f.settlement.value, f.auth.value].filter(Boolean);
+      document.getElementById("preview-tags").innerHTML =
+        tags.map(t => `<span>${t}</span>`).join("");
+    }
+
+    const hexInput = document.getElementById("primary_color_hex");
+    hexInput.addEventListener("input", () => {
+      const v = hexInput.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+        document.getElementById("primary_color").value = v;
+        updateLogoPreview();
+      }
+    });
+    document.querySelector('input[name="display_name"]').addEventListener("input", updateLogoPreview);
+    document.getElementById("primary_color").addEventListener("input", updateLogoPreview);
+    document.querySelector('input[name="base_currency"]').addEventListener("input", updatePreviewLoc);
+    ["protocol", "txgen", "settlement", "auth"].forEach(id =>
+      document.getElementById(id).addEventListener("change", updatePreviewTags));
+    document.getElementById("country").addEventListener("change", () => { updateCountryFlag(); syncLanguageToCountry(); });
+    document.getElementById("locale").addEventListener("change", () => { localeTouched = true; updatePreviewLoc(); });
+    document.getElementById("form").addEventListener("reset", () => setTimeout(() => { updateLogoPreview(); updateCountryFlag(); }, 0));
+
+    updateLogoPreview();
+    loadMeta();
+    loadBanks();
+  </script>
+</body>
+</html>

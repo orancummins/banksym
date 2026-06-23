@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>Sign in</title>
+  <style>
+    :root {
+      --brand: #0B5FFF;
+      --bg: #eef1f6;
+      --surface: #ffffff;
+      --border: #e3e8ee;
+      --text: #1a1f36;
+      --muted: #697386;
+      --danger: #b42318;
+    }
+    * { box-sizing: border-box; }
+    /* Subtle, slim scrollbars that pick up the bank's brand colour. */
+    * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--brand) 35%, transparent) transparent; }
+    *::-webkit-scrollbar { width: 8px; height: 8px; }
+    *::-webkit-scrollbar-track { background: transparent; }
+    *::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--brand) 30%, transparent); border-radius: 8px; }
+    *::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--brand) 50%, transparent); }
+    body {
+      margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
+    }
+    .topbar { background: var(--brand); color: #fff; padding: 16px 28px; display: flex; align-items: center; gap: 12px; }
+    .topbar .name { font-weight: 700; font-size: 16px; letter-spacing: -.01em; }
+    .topbar .tag { margin-left: auto; font-size: 12px; opacity: .85; }
+    main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 28px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 400px; padding: 28px; box-shadow: 0 10px 30px rgba(16,24,40,.10); border-top: 4px solid var(--brand); }
+    .brand-logo { display: flex; align-items: center; justify-content: center; text-align: center; margin: 0 auto 18px; padding: 16px 24px; min-height: 60px; max-width: 320px; border-radius: 14px; background: var(--brand); color: #fff; font-weight: 700; font-size: 22px; letter-spacing: -.01em; line-height: 1.15; word-break: break-word; }
+    .card h1 { font-size: 19px; margin: 0 0 4px; letter-spacing: -.01em; }
+    .card .lead { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
+    .consent { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 12.5px; color: var(--muted); margin-bottom: 18px; }
+    .consent strong { color: var(--text); }
+    .consent .scope { margin-top: 6px; display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: #fff; border: 1px solid var(--border); color: var(--text); }
+    label { display: block; font-size: 12px; font-weight: 600; margin: 12px 0 5px; }
+    input { width: 100%; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; font-size: 14px; transition: border-color .15s, box-shadow .15s; }
+    input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent); }
+    button { width: 100%; margin-top: 20px; padding: 12px 16px; background: var(--brand); color: #fff; border: none; border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; transition: filter .15s; }
+    button:hover { filter: brightness(.94); }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .error { display: none; margin-top: 14px; background: #fef3f2; border: 1px solid #fecdca; color: var(--danger); border-radius: 9px; padding: 10px 12px; font-size: 12.5px; }
+    .error.show { display: block; }
+    .secure { margin-top: 16px; text-align: center; color: var(--muted); font-size: 11.5px; }
+    .footer { text-align: center; color: var(--muted); font-size: 11px; padding: 16px; }
+    .hint { margin-top: 8px; color: var(--muted); font-size: 11.5px; }
+    /* Account selection screen */
+    .acct-tools { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 10px; }
+    .acct-tools .count { font-size: 12px; color: var(--muted); }
+    .link-btn { background: none; border: none; color: var(--brand); font-weight: 600; font-size: 12.5px; width: auto; margin: 0; padding: 0; cursor: pointer; }
+    .link-btn:hover { filter: none; text-decoration: underline; }
+    .acct-list { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow: auto; padding: 2px; }
+    .acct { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: border-color .15s, background .15s; }
+    .acct:hover { border-color: color-mix(in srgb, var(--brand) 40%, var(--border)); }
+    .acct.checked { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 6%, var(--surface)); }
+    .acct input { width: 18px; height: 18px; flex: none; accent-color: var(--brand); cursor: pointer; }
+    .acct .info { flex: 1; min-width: 0; }
+    .acct .a-name { font-weight: 600; font-size: 13.5px; }
+    .acct .a-meta { color: var(--muted); font-size: 11.5px; margin-top: 2px; word-break: break-all; }
+    .acct .a-bal { font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .a-type { display: inline-block; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--brand) 10%, #fff); border: 1px solid color-mix(in srgb, var(--brand) 25%, var(--border)); color: color-mix(in srgb, var(--brand) 70%, var(--text)); margin-right: 6px; }
+    .step-back { background: none; border: 1px solid var(--border); color: var(--text); width: auto; margin: 14px auto 0; display: block; padding: 8px 14px; font-size: 12.5px; font-weight: 600; }
+    .step-back:hover { filter: none; background: var(--bg); }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="name" id="bank-name">Your bank</div>
+    <div class="tag" id="secure-tag">Secure sign-in</div>
+  </div>
+
+  <main>
+    <div class="card">
+      <div class="brand-logo" id="logo">Your bank</div>
+
+      <!-- Screen 1: authenticate -->
+      <div id="screen-auth">
+        <h1 id="auth-title">Sign in to authorise</h1>
+        <p class="lead" id="auth-lead">A third-party provider is requesting access to your account information.</p>
+
+        <div class="consent" id="consent-box">
+          <div><span id="consent-label">Consent reference</span> <strong id="consent-ref">—</strong></div>
+          <span class="scope" id="scope-pill">Account information access</span>
+        </div>
+
+        <form id="login-form">
+          <label for="username" id="username-label">Online banking username</label>
+          <input id="username" autocomplete="username" placeholder="you@example.com" required />
+          <label for="password" id="password-label">Password</label>
+          <input id="password" type="password" autocomplete="current-password" value="foobar!" required />
+          <div class="hint" id="cred-hint">Demo credentials are pre-filled. The third party never sees them — you authenticate directly with your bank.</div>
+          <button type="submit" id="submit">Authenticate</button>
+          <div class="error" id="error"></div>
+        </form>
+
+        <div class="secure" id="secure-note">🔒 Authentication is performed on the bank's own page.</div>
+      </div>
+
+      <!-- Screen 2: choose which accounts to share -->
+      <div id="screen-accounts" style="display:none">
+        <h1 id="accounts-title">Choose accounts to share</h1>
+        <p class="lead" id="accounts-lead">Select the accounts the third party may access. Only the accounts you tick will be shared.</p>
+
+        <div class="acct-tools">
+          <span class="count" id="acct-count">0 of 0 selected</span>
+          <button type="button" class="link-btn" id="select-all">Select all</button>
+        </div>
+        <div class="acct-list" id="acct-list"></div>
+
+        <button type="button" id="grant" disabled>Allow access to selected accounts</button>
+        <button type="button" class="step-back" id="back">Back</button>
+        <div class="error" id="error2"></div>
+      </div>
+    </div>
+  </main>
+  <div class="footer" id="footer">Powered by BankSym · Berlin Group XS2A redirect SCA</div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    // Translations for the bank-hosted login/consent screen, keyed by the bank's language code.
+    // The bank's `locale` (fetched with its branding) selects which set to apply.
+    const I18N = {
+      en: {
+        title: "Sign in", secureTag: "Secure sign-in",
+        authTitle: "Sign in to authorise",
+        authLead: "A third-party provider is requesting access to your account information.",
+        consentLabel: "Consent reference", scopeDefault: "Account information access",
+        usernameLabel: "Online banking username", passwordLabel: "Password",
+        credHint: "Demo credentials are pre-filled. The third party never sees them \u2014 you authenticate directly with your bank.",
+        authBtn: "Authenticate", authBtnBusy: "Authenticating\u2026",
+        secureNote: "\ud83d\udd12 Authentication is performed on the bank's own page.",
+        accountsTitle: "Choose accounts to share",
+        accountsLead: "Select the accounts the third party may access. Only the accounts you tick will be shared.",
+        selectAll: "Select all", clearAll: "Clear all",
+        grantBtn: "Allow access to selected accounts", grantBtnBusy: "Granting access\u2026",
+        back: "Back", selectedCount: "{c} of {t} selected",
+        noAccounts: "You have no shareable accounts at this bank.",
+        typeCurrent: "Current", typeSavings: "Savings", typeCredit: "Credit card", typeLoan: "Loan",
+        errAuth: "Authentication failed", errNetwork: "Network error contacting the bank.",
+        errAuthz: "Authorisation failed",
+      },
+      de: {
+        title: "Anmelden", secureTag: "Sichere Anmeldung",
+        authTitle: "Zur Autorisierung anmelden",
+        authLead: "Ein Drittanbieter fordert Zugriff auf Ihre Kontoinformationen an.",
+        consentLabel: "Einwilligungsreferenz", scopeDefault: "Zugriff auf Kontoinformationen",
+        usernameLabel: "Online-Banking-Benutzername", passwordLabel: "Passwort",
+        credHint: "Demo-Zugangsdaten sind vorausgef\u00fcllt. Der Drittanbieter sieht sie nie \u2014 Sie authentifizieren sich direkt bei Ihrer Bank.",
+        authBtn: "Authentifizieren", authBtnBusy: "Authentifizierung\u2026",
+        secureNote: "\ud83d\udd12 Die Authentifizierung erfolgt auf der Seite der Bank.",
+        accountsTitle: "Konten zum Teilen ausw\u00e4hlen",
+        accountsLead: "W\u00e4hlen Sie die Konten, auf die der Drittanbieter zugreifen darf. Nur angekreuzte Konten werden geteilt.",
+        selectAll: "Alle ausw\u00e4hlen", clearAll: "Alle abw\u00e4hlen",
+        grantBtn: "Zugriff auf ausgew\u00e4hlte Konten erlauben", grantBtnBusy: "Zugriff wird gew\u00e4hrt\u2026",
+        back: "Zur\u00fcck", selectedCount: "{c} von {t} ausgew\u00e4hlt",
+        noAccounts: "Sie haben keine teilbaren Konten bei dieser Bank.",
+        typeCurrent: "Girokonto", typeSavings: "Sparkonto", typeCredit: "Kreditkarte", typeLoan: "Darlehen",
+        errAuth: "Authentifizierung fehlgeschlagen", errNetwork: "Netzwerkfehler bei der Verbindung zur Bank.",
+        errAuthz: "Autorisierung fehlgeschlagen",
+      },
+      es: {
+        title: "Iniciar sesi\u00f3n", secureTag: "Inicio de sesi\u00f3n seguro",
+        authTitle: "Inicie sesi\u00f3n para autorizar",
+        authLead: "Un proveedor externo solicita acceso a la informaci\u00f3n de su cuenta.",
+        consentLabel: "Referencia de consentimiento", scopeDefault: "Acceso a informaci\u00f3n de cuentas",
+        usernameLabel: "Usuario de banca en l\u00ednea", passwordLabel: "Contrase\u00f1a",
+        credHint: "Las credenciales de demostraci\u00f3n est\u00e1n rellenadas. El tercero nunca las ve: usted se autentica directamente con su banco.",
+        authBtn: "Autenticar", authBtnBusy: "Autenticando\u2026",
+        secureNote: "\ud83d\udd12 La autenticaci\u00f3n se realiza en la propia p\u00e1gina del banco.",
+        accountsTitle: "Elija las cuentas para compartir",
+        accountsLead: "Seleccione las cuentas a las que el tercero puede acceder. Solo se compartir\u00e1n las cuentas que marque.",
+        selectAll: "Seleccionar todo", clearAll: "Borrar todo",
+        grantBtn: "Permitir acceso a las cuentas seleccionadas", grantBtnBusy: "Concediendo acceso\u2026",
+        back: "Atr\u00e1s", selectedCount: "{c} de {t} seleccionadas",
+        noAccounts: "No tiene cuentas que pueda compartir en este banco.",
+        typeCurrent: "Cuenta corriente", typeSavings: "Cuenta de ahorro", typeCredit: "Tarjeta de cr\u00e9dito", typeLoan: "Pr\u00e9stamo",
+        errAuth: "Error de autenticaci\u00f3n", errNetwork: "Error de red al contactar con el banco.",
+        errAuthz: "Error de autorizaci\u00f3n",
+      },
+      fr: {
+        title: "Connexion", secureTag: "Connexion s\u00e9curis\u00e9e",
+        authTitle: "Connectez-vous pour autoriser",
+        authLead: "Un prestataire tiers demande l'acc\u00e8s aux informations de votre compte.",
+        consentLabel: "R\u00e9f\u00e9rence de consentement", scopeDefault: "Acc\u00e8s aux informations de compte",
+        usernameLabel: "Identifiant de banque en ligne", passwordLabel: "Mot de passe",
+        credHint: "Les identifiants de d\u00e9monstration sont pr\u00e9remplis. Le tiers ne les voit jamais : vous vous authentifiez directement aupr\u00e8s de votre banque.",
+        authBtn: "S'authentifier", authBtnBusy: "Authentification\u2026",
+        secureNote: "\ud83d\udd12 L'authentification est effectu\u00e9e sur la page de la banque.",
+        accountsTitle: "Choisissez les comptes \u00e0 partager",
+        accountsLead: "S\u00e9lectionnez les comptes auxquels le tiers peut acc\u00e9der. Seuls les comptes coch\u00e9s seront partag\u00e9s.",
+        selectAll: "Tout s\u00e9lectionner", clearAll: "Tout effacer",
+        grantBtn: "Autoriser l'acc\u00e8s aux comptes s\u00e9lectionn\u00e9s", grantBtnBusy: "Octroi de l'acc\u00e8s\u2026",
+        back: "Retour", selectedCount: "{c} sur {t} s\u00e9lectionn\u00e9s",
+        noAccounts: "Vous n'avez aucun compte partageable dans cette banque.",
+        typeCurrent: "Compte courant", typeSavings: "Compte d'\u00e9pargne", typeCredit: "Carte de cr\u00e9dit", typeLoan: "Pr\u00eat",
+        errAuth: "\u00c9chec de l'authentification", errNetwork: "Erreur r\u00e9seau lors de la connexion \u00e0 la banque.",
+        errAuthz: "\u00c9chec de l'autorisation",
+      },
+      nl: {
+        title: "Inloggen", secureTag: "Veilig inloggen",
+        authTitle: "Log in om te autoriseren",
+        authLead: "Een externe aanbieder vraagt toegang tot uw rekeninggegevens.",
+        consentLabel: "Toestemmingsreferentie", scopeDefault: "Toegang tot rekeninginformatie",
+        usernameLabel: "Gebruikersnaam internetbankieren", passwordLabel: "Wachtwoord",
+        credHint: "Demo-inloggegevens zijn vooraf ingevuld. De derde partij ziet ze nooit \u2014 u authenticeert rechtstreeks bij uw bank.",
+        authBtn: "Authenticeren", authBtnBusy: "Authenticeren\u2026",
+        secureNote: "\ud83d\udd12 Authenticatie vindt plaats op de eigen pagina van de bank.",
+        accountsTitle: "Kies rekeningen om te delen",
+        accountsLead: "Selecteer de rekeningen waartoe de derde partij toegang mag krijgen. Alleen aangevinkte rekeningen worden gedeeld.",
+        selectAll: "Alles selecteren", clearAll: "Alles wissen",
+        grantBtn: "Toegang tot geselecteerde rekeningen toestaan", grantBtnBusy: "Toegang verlenen\u2026",
+        back: "Terug", selectedCount: "{c} van {t} geselecteerd",
+        noAccounts: "U heeft geen deelbare rekeningen bij deze bank.",
+        typeCurrent: "Betaalrekening", typeSavings: "Spaarrekening", typeCredit: "Creditcard", typeLoan: "Lening",
+        errAuth: "Authenticatie mislukt", errNetwork: "Netwerkfout bij het verbinden met de bank.",
+        errAuthz: "Autorisatie mislukt",
+      },
+    };
+    let T = I18N.en;
+
+    // Path: /banks/<bankId>/oauth/authorize
+    const parts = location.pathname.split("/").filter(Boolean);
+    const bankId = parts[1];
+    const qs = new URLSearchParams(location.search);
+    const consentId = qs.get("consent_id") || "";
+    const redirectUri = qs.get("redirect_uri") || "";
+    const stateParam = qs.get("state") || "";
+    const scopeParam = qs.get("scope") || "";
+
+    $("consent-ref").textContent = consentId || "\u2014";
+
+    // Apply all static (non-dynamic) labels for the active language.
+    function applyTranslations() {
+      document.documentElement.lang = T === I18N.en ? "en" : Object.keys(I18N).find((k) => I18N[k] === T) || "en";
+      $("secure-tag").textContent = T.secureTag;
+      $("auth-title").textContent = T.authTitle;
+      $("auth-lead").textContent = T.authLead;
+      $("consent-label").textContent = T.consentLabel;
+      $("scope-pill").textContent = scopeParam || T.scopeDefault;
+      $("username-label").textContent = T.usernameLabel;
+      $("password-label").textContent = T.passwordLabel;
+      $("cred-hint").textContent = T.credHint;
+      $("submit").textContent = T.authBtn;
+      $("secure-note").textContent = T.secureNote;
+      $("accounts-title").textContent = T.accountsTitle;
+      $("accounts-lead").textContent = T.accountsLead;
+      $("grant").textContent = T.grantBtn;
+      $("back").textContent = T.back;
+      // Re-render any dynamic, already-shown content.
+      if (accounts.length) { renderAccounts(); } else { updateCount(); }
+    }
+
+    function showError(msg) {
+      const e = $("error");
+      e.textContent = msg;
+      e.classList.add("show");
+    }
+
+    function showError2(msg) {
+      const e = $("error2");
+      e.textContent = msg;
+      e.classList.add("show");
+    }
+
+    async function loadBranding() {
+      try {
+        const bank = await fetch(`/banks/${bankId}`).then((r) => (r.ok ? r.json() : null));
+        if (!bank) return;
+        // Switch the whole page to the bank's configured language.
+        if (bank.locale && I18N[bank.locale]) { T = I18N[bank.locale]; applyTranslations(); }
+        document.title = `${T.title} \u00b7 ${bank.display_name}`;
+        $("bank-name").textContent = bank.display_name;
+        if (bank.primary_color) document.documentElement.style.setProperty("--brand", bank.primary_color);
+        // Logo is generated from the bank's name + brand colour (no uploaded image).
+        $("logo").textContent = bank.display_name || "Your bank";
+      } catch (_) { /* branding is best-effort */ }
+    }
+
+    // Credentials are held only in this bank-hosted page's memory between the two steps.
+    const creds = { username: "", password: "" };
+    let accounts = [];
+
+    function typeLabel(t) {
+      return ({
+        current: T.typeCurrent, savings: T.typeSavings, credit_card: T.typeCredit, loan: T.typeLoan,
+      })[t] || t;
+    }
+
+    function updateCount() {
+      const boxes = [...document.querySelectorAll(".acct input[type=checkbox]")];
+      const checked = boxes.filter((b) => b.checked);
+      $("acct-count").textContent = T.selectedCount.replace("{c}", checked.length).replace("{t}", boxes.length);
+      $("grant").disabled = checked.length === 0;
+      $("select-all").textContent = checked.length === boxes.length && boxes.length ? T.clearAll : T.selectAll;
+      boxes.forEach((b) => b.closest(".acct").classList.toggle("checked", b.checked));
+    }
+
+    function renderAccounts() {
+      const list = $("acct-list");
+      if (!accounts.length) {
+        list.innerHTML = `<div class="hint">${T.noAccounts}</div>`;
+        $("grant").disabled = true;
+        return;
+      }
+      list.innerHTML = "";
+      accounts.forEach((a) => {
+        const row = document.createElement("label");
+        row.className = "acct";
+        row.innerHTML =
+          `<input type="checkbox" value="${a.id}" checked />` +
+          `<div class="info">` +
+          `<div class="a-name">${a.name || a.iban}</div>` +
+          `<div class="a-meta"><span class="a-type">${typeLabel(a.type)}</span>${a.iban} · ${a.currency}</div>` +
+          `</div>` +
+          `<div class="a-bal">${a.balance} ${a.currency}</div>`;
+        row.querySelector("input").addEventListener("change", updateCount);
+        list.appendChild(row);
+      });
+      updateCount();
+    }
+
+    function showAccountsScreen() {
+      $("screen-auth").style.display = "none";
+      $("screen-accounts").style.display = "";
+    }
+
+    function showAuthScreen() {
+      $("screen-accounts").style.display = "none";
+      $("screen-auth").style.display = "";
+    }
+
+    $("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      $("error").classList.remove("show");
+      const btn = $("submit");
+      btn.disabled = true;
+      btn.textContent = T.authBtnBusy;
+      creds.username = $("username").value.trim();
+      creds.password = $("password").value;
+      try {
+        const res = await fetch(`/banks/${bankId}/oauth/accounts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            consent_id: consentId,
+            username: creds.username,
+            password: creds.password,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          showError(data.detail || `${T.errAuth} (HTTP ${res.status})`);
+          btn.disabled = false;
+          btn.textContent = T.authBtn;
+          return;
+        }
+        accounts = data.accounts || [];
+        renderAccounts();
+        showAccountsScreen();
+        btn.disabled = false;
+        btn.textContent = T.authBtn;
+      } catch (err) {
+        showError(T.errNetwork);
+        btn.disabled = false;
+        btn.textContent = T.authBtn;
+      }
+    });
+
+    $("select-all").addEventListener("click", () => {
+      const boxes = [...document.querySelectorAll(".acct input[type=checkbox]")];
+      const target = !boxes.every((b) => b.checked);
+      boxes.forEach((b) => (b.checked = target));
+      updateCount();
+    });
+
+    $("back").addEventListener("click", showAuthScreen);
+
+    $("grant").addEventListener("click", async () => {
+      $("error2").classList.remove("show");
+      const selected = [...document.querySelectorAll(".acct input[type=checkbox]:checked")].map((b) => b.value);
+      if (!selected.length) return;
+      const btn = $("grant");
+      btn.disabled = true;
+      btn.textContent = T.grantBtnBusy;
+      try {
+        const res = await fetch(`/banks/${bankId}/oauth/authorize`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            consent_id: consentId,
+            username: creds.username,
+            password: creds.password,
+            redirect_uri: redirectUri,
+            state: stateParam,
+            account_ids: selected,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          showError2(data.detail || `${T.errAuthz} (HTTP ${res.status})`);
+          btn.disabled = false;
+          btn.textContent = T.grantBtn;
+          return;
+        }
+        // Return to the third party with the authorization code.
+        window.location = data.redirect_to;
+      } catch (err) {
+        showError2(T.errNetwork);
+        btn.disabled = false;
+        btn.textContent = T.grantBtn;
+      }
+    });
+
+    loadBranding();
+  </script>
+</body>
+</html>

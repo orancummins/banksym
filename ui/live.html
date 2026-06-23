@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>BankSym — Live</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --surface: #ffffff;
+      --border: #e3e8ee;
+      --text: #1a1f36;
+      --muted: #697386;
+      --mc-red: #eb001b;
+      --mc-orange: #ff5f00;
+      --brand: #0B5FFF;
+      --core: #067647;
+      --danger: #eb001b;
+      --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.05);
+    }
+    * { box-sizing: border-box; }
+    /* Always reserve the scrollbar gutter so the fixed header doesn't shift between pages. */
+    html { scrollbar-gutter: stable; }
+    body {
+      margin: 0; padding-top: 64px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
+    }
+    header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; padding: 0 32px; border-bottom: 1px solid #1d1d1d; background: #000; color: #fff; display: flex; align-items: center; gap: 14px; }
+    header .brand { display: flex; align-items: center; gap: 11px; }
+    header h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em; color: #fff; }
+    header .sub { color: rgba(255,255,255,.6); font-size: 13px; }
+    header nav { margin-left: auto; display: flex; gap: 4px; }
+    header nav a { color: rgba(255,255,255,.8); text-decoration: none; font-size: 13px; font-weight: 500; padding: 7px 12px; border-radius: 8px; }
+    header nav a:hover { background: rgba(255,255,255,.1); color: #fff; }
+    header nav a.active { color: #fff; background: rgba(255,255,255,.14); }
+
+    main { padding: 24px 32px; max-width: 1320px; margin: 0 auto; }
+    .cols { display: grid; grid-template-columns: 400px 1fr; gap: 18px; align-items: start; }
+    @media (max-width: 980px) { .cols { grid-template-columns: 1fr; } }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 18px; box-shadow: var(--shadow); }
+    .panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin: 0 0 14px; display: flex; align-items: center; gap: 8px; }
+    .panel h2 .hint { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--muted); font-size: 11px; margin-left: auto; }
+    label { display: block; font-size: 12px; font-weight: 500; color: var(--text); margin: 12px 0 5px; }
+    select, input {
+      width: 100%; padding: 8px 11px; background: var(--surface); color: var(--text);
+      border: 1px solid var(--border); border-radius: 8px; font-size: 13px;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    select:focus, input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent); }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    button { padding: 9px 15px; background: var(--brand); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: filter .15s, box-shadow .15s; }
+    button:hover { filter: brightness(.95); }
+    button.ghost { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    button.ghost:hover { background: var(--bg); filter: none; }
+    button.small { padding: 6px 11px; font-size: 12px; }
+    button:disabled { opacity: .5; cursor: not-allowed; filter: none; }
+
+    /* Simulator bar */
+    .sim-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .sim-dot { width: 10px; height: 10px; border-radius: 999px; background: var(--muted); flex: none; }
+    .sim-dot.running { background: var(--core); box-shadow: 0 0 0 4px color-mix(in srgb, var(--core) 22%, transparent); animation: pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--core) 22%, transparent); } 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--core) 5%, transparent); } }
+    .sim-state { font-weight: 600; font-size: 14px; }
+    .sim-stats { margin-left: auto; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .rate-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+    .rate-row input[type=range] { flex: 1; padding: 0; }
+    .rate-val { min-width: 92px; text-align: right; font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 600; }
+    .presets { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+    .presets button { background: color-mix(in srgb, var(--brand) 9%, var(--surface)); color: color-mix(in srgb, var(--brand) 75%, var(--text)); border: 1px solid color-mix(in srgb, var(--brand) 22%, var(--border)); font-size: 12px; padding: 5px 11px; }
+    .presets button:hover { background: color-mix(in srgb, var(--brand) 16%, var(--surface)); filter: none; }
+    .sim-actions { display: flex; gap: 8px; margin-top: 16px; }
+    .sim-actions button { flex: 1; }
+    #sim-start { background: var(--core); }
+    #sim-stop { background: var(--danger); }
+
+    /* Scope tree */
+    .scope-tools { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .scope-tools .count { color: var(--muted); font-size: 12px; margin-left: auto; }
+    .link-btn { background: none; border: none; color: var(--brand); font-size: 12px; font-weight: 600; cursor: pointer; padding: 2px 4px; }
+    .tree { max-height: 320px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; padding: 6px; scrollbar-width: thin; }
+    .tnode { }
+    .trow { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 7px; cursor: pointer; }
+    .trow:hover { background: color-mix(in srgb, var(--brand) 7%, var(--surface)); }
+    .trow input[type=checkbox] { width: auto; flex: none; margin: 0; accent-color: var(--brand); cursor: pointer; }
+    .twist { width: 14px; flex: none; color: var(--muted); font-size: 10px; text-align: center; cursor: pointer; user-select: none; transition: transform .12s; }
+    .twist.open { transform: rotate(90deg); }
+    .twist.leaf { visibility: hidden; }
+    .bank-chip { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 6px; background: var(--brand); color: #fff; font-weight: 700; font-size: 10px; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.1); }
+    .tlabel { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tmeta { color: var(--muted); font-size: 11.5px; margin-left: auto; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .tchildren { margin-left: 18px; border-left: 1px solid var(--border); padding-left: 6px; display: none; }
+    .tchildren.open { display: block; }
+    .t-user .tlabel { font-weight: 550; }
+    .t-acct .tlabel { font-weight: 500; }
+    .flag-sm { width: 18px; height: 12px; border-radius: 2px; object-fit: cover; box-shadow: 0 0 0 1px rgba(0,0,0,.12); flex: none; }
+
+    /* Manual trigger */
+    .seg { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .seg label { flex: 1; margin: 0; text-align: center; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; background: var(--surface); color: var(--muted); }
+    .seg input { display: none; }
+    .seg label.credit-opt.on { background: #ecfdf3; color: #067647; }
+    .seg label.debit-opt.on { background: #fef3f2; color: #b42318; }
+
+    /* Live feed */
+    .feed-head { display: flex; align-items: center; gap: 10px; }
+    .feed-head .stats { margin-left: auto; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .feed { height: 620px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; scrollbar-width: thin; }
+    .feed::-webkit-scrollbar { width: 9px; }
+    .feed::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--brand) 25%, var(--border)); border-radius: 999px; }
+    .empty { padding: 40px 20px; text-align: center; color: var(--muted); font-size: 13px; }
+    .tx { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-bottom: 1px solid var(--border); border-left: 4px solid var(--txc, transparent); background: color-mix(in srgb, var(--txc, transparent) 6%, var(--surface)); animation: txIn .35s ease; }
+    @keyframes txIn { from { opacity: 0; transform: translateY(-6px); background: color-mix(in srgb, var(--txc, var(--brand)) 16%, var(--surface)); } to { opacity: 1; transform: none; } }
+    .tx-bank { display: flex; align-items: center; gap: 8px; min-width: 150px; }
+    .tx-where { overflow: hidden; }
+    .tx-where .who { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tx-where .acct { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tx-desc { flex: 1; min-width: 0; }
+    .tx-desc .d { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tx-desc .t { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .tx-bankname { color: var(--txc, var(--muted)); font-weight: 600; }
+    .tx-amt { text-align: right; min-width: 130px; flex: none; }
+    .tx-amt .v { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .tx-amt .v.credit { color: #067647; }
+    .tx-amt .v.debit { color: #b42318; }
+    .tx-amt .bal { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .tx-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 2px 7px; border-radius: 999px; flex: none; }
+    .tx-tag.manual { background: #eef2ff; color: #3538cd; border: 1px solid #c7d2fe; }
+    .tx-tag.sim { background: #f0f9ff; color: #026aa2; border: 1px solid #b9e6fe; }
+
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: #111; color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 13px; opacity: 0; pointer-events: none; transition: all .2s; z-index: 300; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.err { background: #b42318; }
+    .muted { color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <svg width="38" height="24" viewBox="0 0 48 30" aria-hidden="true">
+        <circle cx="19" cy="15" r="13" fill="#eb001b"></circle>
+        <circle cx="29" cy="15" r="13" fill="#f79e1b" style="mix-blend-mode:screen"></circle>
+      </svg>
+      <div>
+        <h1>BankSym</h1>
+        <div class="sub">Live — simulate transactions across banks in real time</div>
+      </div>
+    </div>
+    <nav>
+      <a href="/">Architecture</a>
+      <a href="/builder">Bank builder</a>
+      <a href="/console">Bank console</a>
+      <a href="/psd2">Open Banking</a>
+      <a href="/live" class="active">Live</a>
+      <a href="/docs">API docs</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="cols">
+      <!-- LEFT: controls -->
+      <div>
+        <!-- Simulator -->
+        <div class="panel">
+          <h2>Live simulator</h2>
+          <div class="sim-head">
+            <span class="sim-dot" id="sim-dot"></span>
+            <span class="sim-state" id="sim-state">Stopped</span>
+            <span class="sim-stats" id="sim-stats">0 generated</span>
+          </div>
+          <label>Average time between transactions</label>
+          <div class="rate-row">
+            <input type="range" id="rate" min="0.3" max="15" step="0.1" value="3" />
+            <span class="rate-val" id="rate-val">every 3.0 s</span>
+          </div>
+          <div class="presets">
+            <button type="button" data-rate="0.5">Fast (0.5s)</button>
+            <button type="button" data-rate="2">Brisk (2s)</button>
+            <button type="button" data-rate="5">Steady (5s)</button>
+            <button type="button" data-rate="10">Slow (10s)</button>
+          </div>
+          <div class="sim-actions">
+            <button id="sim-start">Start</button>
+            <button id="sim-stop" disabled>Stop</button>
+          </div>
+          <p class="muted" id="sim-note" style="margin:12px 0 0">Select accounts below to include them in the simulation.</p>
+        </div>
+
+        <!-- Scope -->
+        <div class="panel">
+          <h2>Participating accounts</h2>
+          <div class="scope-tools">
+            <button class="link-btn" id="select-all">Select all</button>
+            <button class="link-btn" id="clear-all">Clear</button>
+            <span class="count" id="scope-count">0 accounts selected</span>
+          </div>
+          <div class="tree" id="tree"><div class="empty">Loading…</div></div>
+        </div>
+
+        <!-- Manual trigger -->
+        <div class="panel">
+          <h2>Trigger a transaction</h2>
+          <label>Bank</label>
+          <select id="m-bank"></select>
+          <label>Customer</label>
+          <select id="m-customer"></select>
+          <label>Account</label>
+          <select id="m-account"></select>
+          <div class="row">
+            <div>
+              <label>Amount</label>
+              <input id="m-amount" type="number" min="0.01" step="0.01" value="25.00" />
+            </div>
+            <div>
+              <label>Currency</label>
+              <input id="m-currency" value="EUR" />
+            </div>
+          </div>
+          <label>Direction</label>
+          <div class="seg" id="m-side">
+            <label class="credit-opt on"><input type="radio" name="side" value="credit" checked />Credit (in)</label>
+            <label class="debit-opt"><input type="radio" name="side" value="debit" />Debit (out)</label>
+          </div>
+          <label>Description <span class="muted">(optional)</span></label>
+          <input id="m-desc" placeholder="e.g. Salary, Coffee shop…" />
+          <button id="m-post" style="width:100%; margin-top:16px">Post transaction</button>
+        </div>
+      </div>
+
+      <!-- RIGHT: live feed -->
+      <div class="panel">
+        <h2 class="feed-head">
+          Live transaction feed
+          <span class="hint">remembers last 200</span>
+        </h2>
+        <div class="scope-tools">
+          <span class="stats" id="feed-stats" style="margin-left:0;color:var(--muted);font-size:12px">0 shown</span>
+          <button class="ghost small" id="feed-clear" style="margin-left:auto">Clear feed</button>
+        </div>
+        <div class="feed" id="feed"><div class="empty">No transactions yet. Start the simulator or trigger one manually.</div></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const MAX_FEED = 200;
+    const COUNTRY_NAMES = { DE: "Germany", ES: "Spain", FR: "France", GB: "United Kingdom", NL: "Netherlands" };
+    const flagUrl = (code) => `https://flagcdn.com/${(code || "").toLowerCase()}.svg`;
+    const $ = (id) => document.getElementById(id);
+
+    const state = {
+      banks: [],
+      accounts: [],          // flat registry of customer accounts
+      accountsById: {},      // id -> account meta
+      active: new Set(),     // account ids participating in the sim
+      running: false,        // mirrors the server-side simulator state
+      lastSeq: 0,            // highest feed event seq seen so far
+      feedCount: 0,
+    };
+
+    function toast(msg, isErr) {
+      const t = $("toast");
+      t.textContent = msg;
+      t.className = "toast show" + (isErr ? " err" : "");
+      setTimeout(() => (t.className = "toast"), 3000);
+    }
+
+    function bankInitials(name) {
+      const w = (name || "").trim().split(/\s+/).filter(Boolean);
+      if (!w.length) return "B";
+      if (w.length === 1) return w[0].slice(0, 2).toUpperCase();
+      return (w[0][0] + w[w.length - 1][0]).toUpperCase();
+    }
+    function chip(color, name) {
+      return `<span class="bank-chip" style="background:${color || 'var(--brand)'}">${bankInitials(name)}</span>`;
+    }
+
+    async function api(path, opts) {
+      const res = await fetch(path, opts);
+      let body = null;
+      try { body = await res.json(); } catch (_) {}
+      if (!res.ok) {
+        const msg = body && (body.message || body.detail) ? (body.message || JSON.stringify(body.detail)) : res.statusText;
+        throw new Error(msg);
+      }
+      return body;
+    }
+
+    // ---- load all banks, customers, accounts -------------------------------
+    async function loadAll() {
+      const banks = await api("/banks");
+      state.banks = banks;
+      state.accounts = [];
+      state.accountsById = {};
+      for (const b of banks) {
+        const [customers, accounts] = await Promise.all([
+          api(`/banks/${b.id}/customers`).catch(() => []),
+          api(`/banks/${b.id}/accounts`).catch(() => []),
+        ]);
+        const custName = {};
+        customers.forEach((c) => (custName[c.id] = c.full_name));
+        b._customers = customers;
+        b._accounts = accounts;
+        accounts.filter((a) => a.customer_id).forEach((a) => {
+          const meta = {
+            bankId: b.id, bankName: b.display_name, bankColor: b.primary_color, country: b.country,
+            accountId: a.id, iban: a.iban, name: a.name, currency: a.currency,
+            type: a.type, customerId: a.customer_id, customerName: custName[a.customer_id] || a.customer_id,
+          };
+          state.accounts.push(meta);
+          state.accountsById[a.id] = meta;
+        });
+      }
+      // Everything participates by default.
+      state.active = new Set(state.accounts.map((a) => a.accountId));
+      renderTree();
+      renderManualBanks();
+      updateScopeCount();
+    }
+
+    // ---- scope tree --------------------------------------------------------
+    function renderTree() {
+      const root = $("tree");
+      if (!state.banks.length) { root.innerHTML = '<div class="empty">No banks. Create one in the Bank builder.</div>'; return; }
+      let html = "";
+      const withAccts = state.banks.filter((b) => (b._accounts || []).some((a) => a.customer_id));
+      if (!withAccts.length) { root.innerHTML = '<div class="empty">No customer accounts yet. Add some in the Bank console.</div>'; return; }
+      for (const b of withAccts) {
+        const custs = (b._customers || []).filter((c) => (b._accounts || []).some((a) => a.customer_id === c.id));
+        html += `<div class="tnode t-bank">`;
+        html += `<div class="trow">`
+          + `<span class="twist open" data-toggle="bank-${b.id}">▶</span>`
+          + `<input type="checkbox" class="cb-bank" data-bank="${b.id}" checked />`
+          + chip(b.primary_color, b.display_name)
+          + `<img class="flag-sm" src="${flagUrl(b.country)}" alt="" />`
+          + `<span class="tlabel">${b.display_name}</span>`
+          + `<span class="tmeta">${custs.length} cust</span></div>`;
+        html += `<div class="tchildren open" id="bank-${b.id}">`;
+        for (const c of custs) {
+          const accts = (b._accounts || []).filter((a) => a.customer_id === c.id);
+          html += `<div class="tnode t-user">`;
+          html += `<div class="trow">`
+            + `<span class="twist" data-toggle="user-${c.id}">▶</span>`
+            + `<input type="checkbox" class="cb-user" data-bank="${b.id}" data-user="${c.id}" checked />`
+            + `<span class="tlabel">${c.full_name}</span>`
+            + `<span class="tmeta">${accts.length} acct</span></div>`;
+          html += `<div class="tchildren" id="user-${c.id}">`;
+          for (const a of accts) {
+            html += `<div class="tnode t-acct"><div class="trow">`
+              + `<span class="twist leaf">·</span>`
+              + `<input type="checkbox" class="cb-acct" data-bank="${b.id}" data-user="${c.id}" data-acct="${a.id}" checked />`
+              + `<span class="tlabel">${a.name || a.type}</span>`
+              + `<span class="tmeta">${a.iban || a.id} · ${a.currency}</span></div></div>`;
+          }
+          html += `</div></div>`;
+        }
+        html += `</div></div>`;
+      }
+      root.innerHTML = html;
+
+      root.querySelectorAll(".twist[data-toggle]").forEach((el) => {
+        el.addEventListener("click", () => {
+          const box = $(el.dataset.toggle);
+          if (!box) return;
+          box.classList.toggle("open");
+          el.classList.toggle("open");
+        });
+      });
+      root.querySelectorAll(".cb-bank").forEach((cb) => cb.addEventListener("change", () => {
+        root.querySelectorAll(`.cb-user[data-bank="${cb.dataset.bank}"], .cb-acct[data-bank="${cb.dataset.bank}"]`)
+          .forEach((c) => (c.checked = cb.checked));
+        syncActive();
+      }));
+      root.querySelectorAll(".cb-user").forEach((cb) => cb.addEventListener("change", () => {
+        root.querySelectorAll(`.cb-acct[data-user="${cb.dataset.user}"]`).forEach((c) => (c.checked = cb.checked));
+        syncBankBoxes();
+        syncActive();
+      }));
+      root.querySelectorAll(".cb-acct").forEach((cb) => cb.addEventListener("change", () => {
+        syncUserBoxes();
+        syncBankBoxes();
+        syncActive();
+      }));
+    }
+
+    function syncUserBoxes() {
+      $("tree").querySelectorAll(".cb-user").forEach((u) => {
+        const kids = $("tree").querySelectorAll(`.cb-acct[data-user="${u.dataset.user}"]`);
+        u.checked = kids.length > 0 && [...kids].every((k) => k.checked);
+      });
+    }
+    function syncBankBoxes() {
+      $("tree").querySelectorAll(".cb-bank").forEach((b) => {
+        const kids = $("tree").querySelectorAll(`.cb-acct[data-bank="${b.dataset.bank}"]`);
+        b.checked = kids.length > 0 && [...kids].every((k) => k.checked);
+      });
+    }
+    function syncActive() {
+      state.active = new Set(
+        [...$("tree").querySelectorAll(".cb-acct:checked")].map((c) => c.dataset.acct)
+      );
+      updateScopeCount();
+      applyConfigIfRunning();   // push new target set to the server if it's running
+    }
+    function updateScopeCount() {
+      $("scope-count").textContent = `${state.active.size} of ${state.accounts.length} accounts selected`;
+    }
+
+    $("select-all").addEventListener("click", () => {
+      $("tree").querySelectorAll('input[type=checkbox]').forEach((c) => (c.checked = true));
+      syncActive();
+    });
+    $("clear-all").addEventListener("click", () => {
+      $("tree").querySelectorAll('input[type=checkbox]').forEach((c) => (c.checked = false));
+      syncActive();
+    });
+
+    // ---- manual trigger dropdowns ------------------------------------------
+    function renderManualBanks() {
+      const sel = $("m-bank");
+      sel.innerHTML = "";
+      const withAccts = state.banks.filter((b) => (b._accounts || []).some((a) => a.customer_id));
+      withAccts.forEach((b) => sel.append(new Option(`${b.display_name} (${b.country})`, b.id)));
+      if (withAccts.length) renderManualCustomers();
+      else { $("m-customer").innerHTML = ""; $("m-account").innerHTML = ""; }
+    }
+    function renderManualCustomers() {
+      const bank = state.banks.find((b) => b.id === $("m-bank").value);
+      const sel = $("m-customer");
+      sel.innerHTML = "";
+      const custs = (bank._customers || []).filter((c) => (bank._accounts || []).some((a) => a.customer_id === c.id));
+      custs.forEach((c) => sel.append(new Option(c.full_name, c.id)));
+      renderManualAccounts();
+    }
+    function renderManualAccounts() {
+      const bank = state.banks.find((b) => b.id === $("m-bank").value);
+      const sel = $("m-account");
+      sel.innerHTML = "";
+      const accts = (bank?._accounts || []).filter((a) => a.customer_id === $("m-customer").value);
+      accts.forEach((a) => sel.append(new Option(`${a.name || a.type} — ${a.iban || a.id} (${a.currency})`, a.id)));
+      const acct = accts[0];
+      if (acct) $("m-currency").value = acct.currency;
+    }
+    $("m-bank").addEventListener("change", renderManualCustomers);
+    $("m-customer").addEventListener("change", renderManualAccounts);
+    $("m-account").addEventListener("change", () => {
+      const meta = state.accountsById[$("m-account").value];
+      if (meta) $("m-currency").value = meta.currency;
+    });
+    $("m-side").addEventListener("change", () => {
+      const credit = document.querySelector('input[name="side"]:checked').value === "credit";
+      $("m-side").querySelector(".credit-opt").classList.toggle("on", credit);
+      $("m-side").querySelector(".debit-opt").classList.toggle("on", !credit);
+    });
+    $("m-post").addEventListener("click", async () => {
+      const accountId = $("m-account").value;
+      if (!accountId) { toast("Pick an account first", true); return; }
+      const amount = parseFloat($("m-amount").value);
+      if (!(amount > 0)) { toast("Enter a positive amount", true); return; }
+      const side = document.querySelector('input[name="side"]:checked').value;
+      const meta = state.accountsById[accountId];
+      const btn = $("m-post"); btn.disabled = true;
+      try {
+        await postTx(meta.bankId, accountId, {
+          amount: amount.toFixed(2), currency: $("m-currency").value, side,
+          description: $("m-desc").value || null,
+        });
+        toast("Transaction posted");
+        pollFeed();   // the server records it; pull it straight into the feed
+      } catch (e) { toast(e.message, true); }
+      finally { btn.disabled = false; }
+    });
+
+    async function postTx(bankId, accountId, body) {
+      return api(`/banks/${bankId}/accounts/${accountId}/transactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    }
+
+    // ---- live feed (server-fed) --------------------------------------------
+    function addFeedEvent(ev) {
+      const feed = $("feed");
+      const emptyEl = feed.querySelector(".empty");
+      if (emptyEl) emptyEl.remove();
+      const isCredit = ev.side === "credit";
+      const signed = isCredit ? "+" : "−";
+      const absAmt = String(ev.amount).replace(/^-/, "");
+      const t = new Date(ev.booked_at);
+      const time = isNaN(t) ? "" : t.toLocaleTimeString();
+      const row = document.createElement("div");
+      row.className = "tx";
+      // Colour-code the whole row to the bank's brand colour (accent stripe + subtle tint).
+      row.style.setProperty("--txc", ev.bank_color || "var(--brand)");
+      row.innerHTML =
+        `<span class="tx-tag ${ev.kind}">${ev.kind === "manual" ? "Manual" : "Sim"}</span>`
+        + `<div class="tx-bank">${chip(ev.bank_color, ev.bank_name)}`
+        + `<div class="tx-where"><div class="who">${ev.customer_name || "—"}</div>`
+        + `<div class="acct">${ev.iban || ev.account_id}</div></div></div>`
+        + `<div class="tx-desc"><div class="d">${ev.description || (isCredit ? "Credit" : "Debit")}</div>`
+        + `<div class="t">${time} · <span class="tx-bankname">${ev.bank_name}</span></div></div>`
+        + `<div class="tx-amt"><div class="v ${ev.side}">${signed}${absAmt}</div>`
+        + `<div class="bal">bal ${ev.balance_after}</div></div>`;
+      feed.prepend(row);
+      while (feed.children.length > MAX_FEED) feed.removeChild(feed.lastChild);
+      state.feedCount = feed.querySelectorAll(".tx").length;
+      $("feed-stats").textContent = `${state.feedCount} shown` + (state.feedCount >= MAX_FEED ? " (max)" : "");
+    }
+    $("feed-clear").addEventListener("click", () => {
+      // Clears only this browser view; the server keeps its rolling buffer.
+      $("feed").innerHTML = '<div class="empty">No transactions yet. Start the simulator or trigger one manually.</div>';
+      state.feedCount = 0;
+      $("feed-stats").textContent = "0 shown";
+    });
+
+    // ---- simulator controls (server-side) ----------------------------------
+    function avgSeconds() { return parseFloat($("rate").value); }
+    function updateRateLabel() { $("rate-val").textContent = `every ${avgSeconds().toFixed(1)} s`; }
+    $("rate").addEventListener("input", () => { updateRateLabel(); applyConfigIfRunning(); });
+    document.querySelectorAll(".presets button").forEach((b) => b.addEventListener("click", () => {
+      $("rate").value = b.dataset.rate; updateRateLabel(); applyConfigIfRunning();
+    }));
+
+    function currentTargets() {
+      return [...state.active]
+        .map((id) => { const m = state.accountsById[id]; return m ? { bank_id: m.bankId, account_id: id } : null; })
+        .filter(Boolean);
+    }
+
+    function applyStatus(st) {
+      if (!st) return;
+      if (typeof st.running === "boolean") {
+        state.running = st.running;
+        $("sim-dot").classList.toggle("running", st.running);
+        $("sim-state").textContent = st.running ? "Running" : "Stopped";
+        $("sim-start").disabled = st.running;
+        $("sim-stop").disabled = !st.running;
+      }
+      if (typeof st.generated === "number") $("sim-stats").textContent = `${st.generated} generated`;
+      if (typeof st.avg_seconds === "number") { $("rate").value = st.avg_seconds; updateRateLabel(); }
+    }
+
+    let cfgTimer = null;
+    function applyConfigIfRunning() {
+      if (!state.running) return;
+      clearTimeout(cfgTimer);
+      cfgTimer = setTimeout(() => {
+        api("/simulation/start", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ avg_seconds: avgSeconds(), targets: currentTargets() }),
+        }).then(applyStatus).catch(() => {});
+      }, 300);
+    }
+
+    async function startSim() {
+      if (!state.active.size) { toast("Select at least one account", true); return; }
+      try {
+        const st = await api("/simulation/start", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ avg_seconds: avgSeconds(), targets: currentTargets() }),
+        });
+        applyStatus(st);
+        toast("Simulation started — runs on the server");
+      } catch (e) { toast(e.message, true); }
+    }
+    async function stopSim() {
+      try { applyStatus(await api("/simulation/stop", { method: "POST" })); toast("Simulation stopped"); }
+      catch (e) { toast(e.message, true); }
+    }
+    $("sim-start").addEventListener("click", startSim);
+    $("sim-stop").addEventListener("click", stopSim);
+
+    // ---- feed polling ------------------------------------------------------
+    async function pollFeed() {
+      try {
+        const data = await api(`/simulation/feed?after=${state.lastSeq}`);
+        applyStatus({ running: data.running, generated: data.generated });
+        if (data.last_seq < state.lastSeq) state.lastSeq = 0;  // server feed was reset
+        if (data.events && data.events.length) {
+          for (const ev of data.events) addFeedEvent(ev);
+          state.lastSeq = data.last_seq;
+        }
+      } catch (_) { /* transient network error — try again next tick */ }
+    }
+
+    // ---- boot --------------------------------------------------------------
+    async function boot() {
+      updateRateLabel();
+      await loadAll();
+      try {
+        const st = await api("/simulation");
+        applyStatus(st);
+        const data = await api("/simulation/feed?after=0");
+        if (data.events) for (const ev of data.events) addFeedEvent(ev);
+        state.lastSeq = data.last_seq;
+      } catch (_) {}
+      setInterval(pollFeed, 1000);
+    }
+    boot().catch((e) => { toast(e.message, true); $("tree").innerHTML = `<div class="empty">${e.message}</div>`; });
+  </script>
+</body>
+</html>
+
