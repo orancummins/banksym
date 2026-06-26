@@ -40,6 +40,7 @@ class CoreBankingService:
         country: str | None = None,
         address: str | None = None,
         persona: str | None = None,
+        source: str = "manual",
     ) -> Customer:
         customer = Customer(
             bank_id=bank_id,
@@ -50,6 +51,7 @@ class CoreBankingService:
             country=country,
             address=address,
             persona=persona,
+            source=source,
         )
         self._repo.add_customer(customer)
         return customer
@@ -73,6 +75,7 @@ class CoreBankingService:
         type: AccountType = AccountType.CURRENT,
         iban: str | None = None,
         name: str | None = None,
+        metadata: dict | None = None,
     ) -> Account:
         if customer_id is not None and self._repo.get_customer(bank_id, customer_id) is None:
             raise CustomerNotFoundError(customer_id)
@@ -83,6 +86,7 @@ class CoreBankingService:
             type=type,
             iban=iban,
             name=name,
+            metadata=metadata or {},
         )
         self._repo.add_account(account)
         return account
@@ -93,8 +97,13 @@ class CoreBankingService:
             raise AccountNotFoundError(account_id)
         return account
 
-    def list_accounts(self, bank_id: str, customer_id: str | None = None) -> list[Account]:
-        return self._repo.list_accounts(bank_id, customer_id)
+    def list_accounts(
+        self,
+        bank_id: str,
+        customer_id: str | None = None,
+        limit: int | None = None,
+    ) -> list[Account]:
+        return self._repo.list_accounts(bank_id, customer_id, limit)
 
     def ensure_internal_account(
         self, bank_id: str, currency: str, type: AccountType, name: str

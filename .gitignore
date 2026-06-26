@@ -4,6 +4,7 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
+.DS_Store
 
 # Virtual environment
 .venv/
@@ -12,3 +13,11 @@ __pycache__/
 .banksym.pid
 banksym.log
 banksym.log.err
+banksym.db
+banksym.db-*
+*.sqlite
+*.sqlite3
+
+# Local image artifacts
+ui/banksym.png
+ui/banksym2.png

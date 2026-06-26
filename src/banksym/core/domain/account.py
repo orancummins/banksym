@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import enum
 from dataclasses import dataclass, field
+from typing import Any
 
 from banksym.core.kernel.ids import new_id
 
@@ -38,6 +39,7 @@ class Account:
     customer_id: str | None = None
     iban: str | None = None
     name: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
     id: str = field(default_factory=lambda: new_id("acc_"))
 
     @property

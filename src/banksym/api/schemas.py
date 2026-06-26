@@ -17,6 +17,7 @@ class CreateBankRequest(BaseModel):
     country: str
     locale: str = "en"
     base_currency: str = "EUR"
+    supported_currencies: list[str] = Field(default_factory=list)
     logo_url: str | None = None
     primary_color: str = "#0B5FFF"
     enabled_protocols: list[str] = Field(default_factory=list)
@@ -43,6 +44,7 @@ class BankResponse(BaseModel):
     country: str
     locale: str
     base_currency: str
+    supported_currencies: list[str]
     logo_url: str | None
     primary_color: str
     enabled_protocols: list[str]
@@ -73,6 +75,42 @@ class CustomerResponse(BaseModel):
     address: str | None = None
     # The online-banking username the customer uses to log in to Open Banking.
     username: str
+    # How this customer was created: "manual" (single POST) or "batch" (bulk seed).
+    source: str = "manual"
+
+
+# -- Batch customer creation -------------------------------------------------------
+class BatchCreateCustomersRequest(BaseModel):
+    count: int = Field(..., ge=1, le=10_000, description="Number of customers to create (1–10 000).")
+    persona_weights: dict[str, float] = Field(
+        default_factory=dict,
+        description="Persona ID → relative weight. Empty means equal weight across all personas.",
+    )
+    account_types: dict[str, float] = Field(
+        default_factory=dict,
+        description="Account type → relative weight. Empty means one current account per customer.",
+    )
+    accounts_per_customer: int = Field(
+        default=1, ge=1, le=5, description="How many accounts to open per customer (1–5)."
+    )
+
+
+class BatchCreateCustomersResponse(BaseModel):
+    customers_created: int
+    accounts_created: int
+    persona_breakdown: dict[str, int]
+    account_type_breakdown: dict[str, int]
+
+
+# -- Bank stats --------------------------------------------------------------------
+class BankStatsResponse(BaseModel):
+    customers: int
+    accounts: int
+    manual_customers: int
+    batch_customers: int
+    persona_breakdown: dict[str, int]
+    account_type_breakdown: dict[str, int]
+    transaction_count: int
 
 
 # -- Accounts ----------------------------------------------------------------------
@@ -82,6 +120,7 @@ class OpenAccountRequest(BaseModel):
     type: AccountType = AccountType.CURRENT
     iban: str | None = None
     name: str | None = None
+    metadata: dict = Field(default_factory=dict)
 
 
 class AccountResponse(BaseModel):
@@ -93,6 +132,7 @@ class AccountResponse(BaseModel):
     iban: str | None
     name: str | None
     balance: str
+    metadata: dict = Field(default_factory=dict)
 
 
 # -- Transactions ------------------------------------------------------------------
@@ -271,4 +311,22 @@ class SimulationFeedResponse(BaseModel):
     generated: int
     last_seq: int
     events: list[SimulationEventResponse]
+
+
+class SimulationParticipantResponse(BaseModel):
+    bank_id: str
+    bank_name: str
+    bank_color: str
+    country: str
+    customer_id: str | None = None
+    customer_name: str = ""
+    account_id: str
+    account_name: str
+    iban: str | None = None
+    currency: str
+    type: str
+
+
+class SimulationParticipantsResponse(BaseModel):
+    participants: list[SimulationParticipantResponse]
 

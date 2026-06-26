@@ -8,6 +8,7 @@
   <style>
     :root {
       --brand: #0B5FFF;
+      --on-brand: #ffffff;
       --bg: #eef1f6;
       --surface: #ffffff;
       --border: #e3e8ee;
@@ -27,12 +28,12 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
     }
-    .topbar { background: var(--brand); color: #fff; padding: 16px 28px; display: flex; align-items: center; gap: 12px; }
+    .topbar { background: var(--brand); color: var(--on-brand, #fff); padding: 16px 28px; display: flex; align-items: center; gap: 12px; }
     .topbar .name { font-weight: 700; font-size: 16px; letter-spacing: -.01em; }
     .topbar .tag { margin-left: auto; font-size: 12px; opacity: .85; }
     main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 28px; }
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 400px; padding: 28px; box-shadow: 0 10px 30px rgba(16,24,40,.10); border-top: 4px solid var(--brand); }
-    .brand-logo { display: flex; align-items: center; justify-content: center; text-align: center; margin: 0 auto 18px; padding: 16px 24px; min-height: 60px; max-width: 320px; border-radius: 14px; background: var(--brand); color: #fff; font-weight: 700; font-size: 22px; letter-spacing: -.01em; line-height: 1.15; word-break: break-word; }
+    .brand-logo { display: flex; align-items: center; justify-content: center; text-align: center; margin: 0 auto 18px; padding: 16px 24px; min-height: 60px; max-width: 320px; border-radius: 14px; background: var(--brand); color: var(--on-brand, #fff); font-weight: 700; font-size: 22px; letter-spacing: -.01em; line-height: 1.15; word-break: break-word; }
     .card h1 { font-size: 19px; margin: 0 0 4px; letter-spacing: -.01em; }
     .card .lead { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
     .consent { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 12.5px; color: var(--muted); margin-bottom: 18px; }
@@ -41,7 +42,7 @@
     label { display: block; font-size: 12px; font-weight: 600; margin: 12px 0 5px; }
     input { width: 100%; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; font-size: 14px; transition: border-color .15s, box-shadow .15s; }
     input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent); }
-    button { width: 100%; margin-top: 20px; padding: 12px 16px; background: var(--brand); color: #fff; border: none; border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; transition: filter .15s; }
+    button { width: 100%; margin-top: 20px; padding: 12px 16px; background: var(--brand); color: var(--on-brand, #fff); border: none; border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; transition: filter .15s; }
     button:hover { filter: brightness(.94); }
     button:disabled { opacity: .6; cursor: not-allowed; }
     .error { display: none; margin-top: 14px; background: #fef3f2; border: 1px solid #fecdca; color: var(--danger); border-radius: 9px; padding: 10px 12px; font-size: 12.5px; }
@@ -108,7 +109,7 @@
 
         <div class="acct-tools">
           <span class="count" id="acct-count">0 of 0 selected</span>
-          <button type="button" class="link-btn" id="select-all">Select all</button>
+          <button type="button" class="link-btn" id="select-all">Select All</button>
         </div>
         <div class="acct-list" id="acct-list"></div>
 
@@ -122,6 +123,16 @@
 
   <script>
     const $ = (id) => document.getElementById(id);
+
+    function textOnColor(hex) {
+      const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex || "");
+      if (!m) return "#ffffff";
+      const r = parseInt(m[1], 16);
+      const g = parseInt(m[2], 16);
+      const b = parseInt(m[3], 16);
+      const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+      return yiq >= 160 ? "#111827" : "#ffffff";
+    }
 
     // Translations for the bank-hosted login/consent screen, keyed by the bank's language code.
     // The bank's `locale` (fetched with its branding) selects which set to apply.
@@ -137,7 +148,7 @@
         secureNote: "\ud83d\udd12 Authentication is performed on the bank's own page.",
         accountsTitle: "Choose accounts to share",
         accountsLead: "Select the accounts the third party may access. Only the accounts you tick will be shared.",
-        selectAll: "Select all", clearAll: "Clear all",
+        selectAll: "Select All", clearAll: "Clear All",
         grantBtn: "Allow access to selected accounts", grantBtnBusy: "Granting access\u2026",
         back: "Back", selectedCount: "{c} of {t} selected",
         noAccounts: "You have no shareable accounts at this bank.",
@@ -276,7 +287,10 @@
         if (bank.locale && I18N[bank.locale]) { T = I18N[bank.locale]; applyTranslations(); }
         document.title = `${T.title} \u00b7 ${bank.display_name}`;
         $("bank-name").textContent = bank.display_name;
-        if (bank.primary_color) document.documentElement.style.setProperty("--brand", bank.primary_color);
+        if (bank.primary_color) {
+          document.documentElement.style.setProperty("--brand", bank.primary_color);
+          document.documentElement.style.setProperty("--on-brand", textOnColor(bank.primary_color));
+        }
         // Logo is generated from the bank's name + brand colour (no uploaded image).
         $("logo").textContent = bank.display_name || "Your bank";
       } catch (_) { /* branding is best-effort */ }

@@ -93,6 +93,11 @@ class SimulationEngine:
             "last_seq": last_seq,
         }
 
+    def targets(self) -> list[tuple[str, str]]:
+        """Return a snapshot of configured simulation targets as ``(bank_id, account_id)``."""
+        with self._lock:
+            return list(self._targets)
+
     def feed(self, after: int = 0, limit: int = _MAX_EVENTS) -> dict[str, Any]:
         """Return events with ``seq > after`` (oldest first), plus current status."""
         limit = max(1, min(limit, _MAX_EVENTS))

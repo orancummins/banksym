@@ -23,3 +23,5 @@ class Customer:
     """Plausible synthetic postal address, auto-generated for the customer's country."""
     persona: str | None = None
     """Optional archetype label this customer was generated from (e.g. ``"gig_worker"``)."""
+    source: str = "manual"
+    """Creation source: ``"manual"`` (single POST) or ``"batch"`` (bulk seed)."""

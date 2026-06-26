@@ -26,7 +26,12 @@ class CoreBankingRepository(Protocol):
 
     def get_account(self, bank_id: str, account_id: str) -> Account | None: ...
 
-    def list_accounts(self, bank_id: str, customer_id: str | None = None) -> list[Account]: ...
+    def list_accounts(
+        self,
+        bank_id: str,
+        customer_id: str | None = None,
+        limit: int | None = None,
+    ) -> list[Account]: ...
 
     def add_journal_entry(self, entry: JournalEntry) -> None: ...
 
@@ -60,10 +65,17 @@ class InMemoryCoreBankingRepository:
     def get_account(self, bank_id: str, account_id: str) -> Account | None:
         return self._accounts.get((bank_id, account_id))
 
-    def list_accounts(self, bank_id: str, customer_id: str | None = None) -> list[Account]:
+    def list_accounts(
+        self,
+        bank_id: str,
+        customer_id: str | None = None,
+        limit: int | None = None,
+    ) -> list[Account]:
         accounts = [a for (b, _), a in self._accounts.items() if b == bank_id]
         if customer_id is not None:
             accounts = [a for a in accounts if a.customer_id == customer_id]
+        if limit is not None:
+            accounts = accounts[: max(0, limit)]
         return accounts
 
     def add_journal_entry(self, entry: JournalEntry) -> None:

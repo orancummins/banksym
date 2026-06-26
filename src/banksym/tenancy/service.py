@@ -28,6 +28,7 @@ class BankService:
         country: str,
         locale: str = "en",
         base_currency: str = "EUR",
+        supported_currencies: list[str] | None = None,
         logo_url: str | None = None,
         primary_color: str = "#0B5FFF",
         enabled_protocols: list[str] | None = None,
@@ -40,6 +41,14 @@ class BankService:
             raise DuplicateBankNameError(
                 f"A bank named {name!r} already exists"
             )
+        base = (base_currency or "EUR").upper()
+        currencies = [c.upper() for c in (supported_currencies or []) if c]
+        if base not in currencies:
+            currencies.insert(0, base)
+        # Preserve order but remove duplicates.
+        seen: set[str] = set()
+        currencies = [c for c in currencies if not (c in seen or seen.add(c))]
+
         bank = Bank(
             branding=BankBranding(
                 display_name=name,
@@ -48,7 +57,8 @@ class BankService:
             ),
             country=country,
             locale=locale,
-            base_currency=base_currency,
+            base_currency=base,
+            supported_currencies=currencies,
             enabled_protocols=list(enabled_protocols or []),
             capabilities=CapabilitySelection(selected=dict(capabilities or {})),
         )

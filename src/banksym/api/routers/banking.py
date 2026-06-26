@@ -2,11 +2,19 @@
 
 from __future__ import annotations
 
+import math
+import random
+from collections import Counter
+from datetime import date, timedelta
+
 from fastapi import APIRouter, HTTPException
 
 from banksym.api.deps import BankIdDep, ContainerDep, to_http_error
 from banksym.api.schemas import (
     AccountResponse,
+    BatchCreateCustomersRequest,
+    BatchCreateCustomersResponse,
+    BankStatsResponse,
     CreateCustomerRequest,
     CustomerResponse,
     GenerateHistoryRequest,
@@ -17,10 +25,69 @@ from banksym.api.schemas import (
 )
 from banksym.capabilities.localization.address import random_address, random_phone
 from banksym.capabilities.txgen.base import GenerationRequest
-from banksym.core.domain.account import Account
+from banksym.capabilities.txgen.personas import PERSONAS
+from banksym.core.domain.account import Account, AccountType
+from banksym.core.domain.customer import Customer
 from banksym.core.kernel.errors import BankSymError
+from banksym.core.kernel.ids import new_id  # noqa: F401  (available for future use)
 
 router = APIRouter(prefix="/banks/{bank_id}", tags=["banking"])
+
+
+# ---------------------------------------------------------------------------
+# Account metadata helpers
+# ---------------------------------------------------------------------------
+
+def _rand_opened_at() -> str:
+    """Random open date within the last 3 years, as an ISO date string."""
+    days_ago = random.randint(0, 3 * 365)
+    return (date.today() - timedelta(days=days_ago)).isoformat()
+
+
+def _account_metadata(acct_type: AccountType, currency: str) -> dict:
+    """Return a dict of realistic, type-specific account attributes."""
+    opened = _rand_opened_at()
+    if acct_type == AccountType.CURRENT:
+        return {
+            "opened_at": opened,
+            "overdraft_limit": round(random.choice([0, -200, -500, -1000, -2000]), 2),
+            "interest_rate": 0.0,
+            "monthly_fee": random.choice([0.0, 0.0, 0.0, 5.0, 10.0]),
+        }
+    if acct_type == AccountType.SAVINGS:
+        rate = round(random.uniform(0.03, 0.06), 4)
+        return {
+            "opened_at": opened,
+            "interest_rate": rate,
+            "interest_paid_at": random.choice(["monthly", "annual"]),
+            "notice_period_days": random.choice([0, 0, 30, 60, 90]),
+        }
+    if acct_type == AccountType.CREDIT_CARD:
+        limit = round(random.choice([500, 1000, 1500, 2000, 3000, 5000, 7500, 10000]), 2)
+        apr = round(random.uniform(0.19, 0.39), 4)
+        return {
+            "opened_at": opened,
+            "credit_limit": limit,
+            "interest_rate": apr,
+            "statement_day": random.randint(1, 28),
+            "payment_due_days": random.choice([14, 28]),
+            "minimum_payment_pct": round(random.choice([0.01, 0.02, 0.025, 0.03]), 3),
+        }
+    if acct_type == AccountType.LOAN:
+        principal = round(random.choice([5000, 10000, 15000, 20000, 25000, 30000, 40000, 50000]), 2)
+        annual_rate = round(random.uniform(0.05, 0.15), 4)
+        term = random.choice([12, 24, 36, 48, 60])
+        # Monthly instalment via standard annuity formula.
+        r = annual_rate / 12
+        monthly = round(principal * r / (1 - (1 + r) ** -term), 2) if r > 0 else round(principal / term, 2)
+        return {
+            "opened_at": opened,
+            "principal": principal,
+            "interest_rate": annual_rate,
+            "term_months": term,
+            "monthly_payment": monthly,
+        }
+    return {"opened_at": opened}
 
 
 def _account_response(container: ContainerDep, bank_id: str, account: Account) -> AccountResponse:
@@ -34,6 +101,7 @@ def _account_response(container: ContainerDep, bank_id: str, account: Account) -
         iban=account.iban,
         name=account.name,
         balance=str(balance),
+        metadata=account.metadata,
     )
 
 
@@ -83,9 +151,10 @@ def create_customer(
 def list_customers(bank_id: BankIdDep, container: ContainerDep) -> list[CustomerResponse]:
     """List every customer of a bank together with their online-banking username."""
     customers = container.banking.list_customers(bank_id)
+    credentials_by_id = container.credential_store.list_by_bank(bank_id)
     responses: list[CustomerResponse] = []
     for c in customers:
-        credential = container.credential_store.find_by_customer(bank_id, c.id)
+        credential = credentials_by_id.get(c.id)
         username = credential.username if credential else (c.email or c.id)
         responses.append(
             CustomerResponse(
@@ -96,6 +165,7 @@ def list_customers(bank_id: BankIdDep, container: ContainerDep) -> list[Customer
                 persona=c.persona,
                 address=c.address,
                 username=username,
+                source=c.source,
             )
         )
     return responses
@@ -112,14 +182,23 @@ def open_account(
     An IBAN and display name may be supplied, otherwise sensible defaults are used. The response
     includes the opening balance.
     """
+    bank = container.bank_service.get_bank(bank_id)
+    currency = (body.currency or "").upper()
+    allowed = set(bank.supported_currencies or [bank.base_currency])
+    if currency not in allowed:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Currency {currency} is not enabled for this bank",
+        )
     try:
         account = container.banking.open_account(
             bank_id,
-            body.currency,
+            currency,
             customer_id=body.customer_id,
             type=body.type,
             iban=body.iban,
             name=body.name,
+            metadata=body.metadata,
         )
     except BankSymError as exc:
         raise to_http_error(exc) from exc
@@ -135,6 +214,18 @@ def list_accounts(
         _account_response(container, bank_id, a)
         for a in container.banking.list_accounts(bank_id, customer_id)
     ]
+
+
+@router.get("/accounts/{account_id}", response_model=AccountResponse, summary="Get account details")
+def get_account(
+    account_id: str, bank_id: BankIdDep, container: ContainerDep
+) -> AccountResponse:
+    """Fetch a single account by ID."""
+    try:
+        account = container.banking.get_account(bank_id, account_id)
+    except BankSymError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return _account_response(container, bank_id, account)
 
 
 @router.get(
@@ -253,3 +344,160 @@ def generate_history(
         raise to_http_error(exc) from exc
     balance = container.banking.balance(bank_id, account_id)
     return GenerateHistoryResponse(entries_booked=len(entries), balance=str(balance))
+
+
+# ---------------------------------------------------------------------------
+# Batch customer seeding
+# ---------------------------------------------------------------------------
+
+_FIRST_NAMES = [
+    "Alice", "Bob", "Carlos", "Diana", "Ethan", "Fatima", "George", "Hannah",
+    "Ivan", "Julia", "Kai", "Laura", "Marco", "Nadia", "Oscar", "Priya",
+    "Quinn", "Rafael", "Sofia", "Thomas", "Uma", "Victor", "Wendy", "Xian",
+    "Yuki", "Zara", "Adam", "Bella", "Chloe", "David", "Elena", "Felix",
+    "Grace", "Hugo", "Isla", "Jake", "Kira", "Liam", "Mia", "Noah",
+    "Olivia", "Pablo", "Rosa", "Sam", "Tina", "Uri", "Vera", "Will",
+]
+_LAST_NAMES = [
+    "Smith", "Müller", "Garcia", "Rossi", "Dubois", "Kowalski", "Nielsen",
+    "Santos", "Kim", "Tanaka", "Okafor", "Svensson", "Patel", "Ahmed",
+    "Williams", "Brown", "Johnson", "Jones", "Taylor", "Davis",
+    "Martin", "Thomas", "White", "Wilson", "Moore", "Jackson", "Harris",
+    "Clark", "Lewis", "Hall", "Robinson", "Walker", "Young", "Allen",
+]
+
+
+def _weighted_choice(weights: dict[str, float], population: list[str]) -> str:
+    if not weights:
+        return random.choice(population)
+    keys = [k for k in weights if k in population or k in {k for k in population}]
+    if not keys:
+        return random.choice(population)
+    w = [weights[k] for k in keys]
+    return random.choices(keys, weights=w, k=1)[0]
+
+
+@router.post(
+    "/customers/batch",
+    response_model=BatchCreateCustomersResponse,
+    status_code=201,
+    summary="Batch-create customers",
+)
+def batch_create_customers(
+    body: BatchCreateCustomersRequest,
+    bank_id: BankIdDep,
+    container: ContainerDep,
+) -> BatchCreateCustomersResponse:
+    """Create up to 10 000 customers with weighted persona and account-type distribution.
+
+    ``persona_weights`` maps persona IDs to relative weights (e.g. ``{"student": 3, "retiree": 1}``);
+    omit or leave empty for equal weighting. ``account_types`` maps account type names to weights;
+    omit for a single current account per customer. All customers are flagged as ``source="batch"``
+    and are collapsed in the Live feed tree rather than listed individually.
+    """
+    bank = container.bank_service.get_bank(bank_id)
+    country = bank.country
+    currency = bank.base_currency
+
+    persona_pool = list(PERSONAS.keys())
+    acct_type_pool = [t.value for t in AccountType if t != AccountType.INTERNAL]
+
+    # Normalise account-type weights — keep only valid types.
+    acct_weights: dict[str, float] = {
+        k: v for k, v in body.account_types.items() if k in acct_type_pool
+    } if body.account_types else {}
+    persona_weights: dict[str, float] = {
+        k: v for k, v in body.persona_weights.items() if k in persona_pool
+    } if body.persona_weights else {}
+
+    customers: list[Customer] = []
+    accounts: list[Account] = []
+    persona_tally: Counter = Counter()
+    acct_type_tally: Counter = Counter()
+
+    for i in range(body.count):
+        first = random.choice(_FIRST_NAMES)
+        last = random.choice(_LAST_NAMES)
+        full_name = f"{first} {last}"
+        idx = str(i + 1)
+        email = f"{first.lower()}.{last.lower()}{idx}@example.com"
+        persona = _weighted_choice(persona_weights, persona_pool)
+        address = random_address(country)
+        phone = random_phone(country)
+        customer = Customer(
+            bank_id=bank_id,
+            full_name=full_name,
+            email=email,
+            phone=phone,
+            country=country,
+            address=address,
+            persona=persona,
+            source="batch",
+        )
+        customers.append(customer)
+        persona_tally[persona] += 1
+
+        for _ in range(body.accounts_per_customer):
+            if acct_weights:
+                keys = list(acct_weights.keys())
+                w = [acct_weights[k] for k in keys]
+                acct_type_str = random.choices(keys, weights=w, k=1)[0]
+            else:
+                acct_type_str = AccountType.CURRENT.value
+            acct_type = AccountType(acct_type_str)
+            account = Account(
+                bank_id=bank_id,
+                currency=currency,
+                type=acct_type,
+                customer_id=customer.id,
+                metadata=_account_metadata(acct_type, currency),
+            )
+            accounts.append(account)
+            acct_type_tally[acct_type_str] += 1
+
+    # Persist all in one transaction.
+    container.banking_repository.add_customers_and_accounts_bulk(customers, accounts)
+
+    # Register credentials for every batch customer.
+    auth_provider = container.resolve_auth_provider(bank_id)
+    for customer in customers:
+        try:
+            auth_provider.register(
+                bank_id, customer.email, "foobar!", customer.id
+            )
+        except Exception:
+            pass  # skip duplicates (email collisions in very small batches)
+
+    return BatchCreateCustomersResponse(
+        customers_created=len(customers),
+        accounts_created=len(accounts),
+        persona_breakdown=dict(persona_tally),
+        account_type_breakdown=dict(acct_type_tally),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Bank population stats
+# ---------------------------------------------------------------------------
+
+
+@router.get("/stats", response_model=BankStatsResponse, summary="Bank population statistics")
+def bank_stats(bank_id: BankIdDep, container: ContainerDep) -> BankStatsResponse:
+    """Return aggregate counts and breakdowns for customers, accounts and transactions."""
+    customers = container.banking.list_customers(bank_id)
+    accounts = [
+        a for a in container.banking.list_accounts(bank_id) if not a.is_internal
+    ]
+    persona_tally: Counter = Counter(c.persona or "(none)" for c in customers)
+    acct_tally: Counter = Counter(a.type.value for a in accounts)
+    tx_count = container.banking_repository.count_journal_entries(bank_id)
+    manual = sum(1 for c in customers if getattr(c, "source", "manual") == "manual")
+    return BankStatsResponse(
+        customers=len(customers),
+        accounts=len(accounts),
+        manual_customers=manual,
+        batch_customers=len(customers) - manual,
+        persona_breakdown=dict(persona_tally),
+        account_type_breakdown=dict(acct_tally),
+        transaction_count=tx_count,
+    )
