@@ -330,6 +330,7 @@ class SimulationParticipantResponse(BaseModel):
     country: str
     customer_id: str | None = None
     customer_name: str = ""
+    customer_source: str = "manual"
     account_id: str
     account_name: str
     iban: str | None = None

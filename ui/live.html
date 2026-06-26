@@ -343,6 +343,7 @@
           type: p.type,
           customer_id: p.customer_id,
           customer_name: p.customer_name,
+          customer_source: p.customer_source || "manual",
         };
         bank._participants.push(item);
 
@@ -358,6 +359,7 @@
           type: p.type,
           customerId: p.customer_id,
           customerName: p.customer_name || p.customer_id || "Unassigned",
+          customerSource: p.customer_source || "manual",
         };
         state.accounts.push(meta);
         state.accountsById[p.account_id] = meta;
@@ -398,11 +400,12 @@
         const bankAccts = b._participants || [];
         const groups = new Map();
         for (const a of bankAccts) {
-          const key = a.customer_id || `__anon__:${a.id}`;
+          const isBatch = String(a.customer_source || "").toLowerCase() === "batch";
+          const key = isBatch ? "__batch__" : (a.customer_id || `__anon__:${a.id}`);
           if (!groups.has(key)) {
             groups.set(key, {
               id: key,
-              name: a.customer_name || a.customer_id || "Unassigned",
+              name: isBatch ? "Batch created users" : (a.customer_name || a.customer_id || "Unassigned"),
               accounts: [],
             });
           }

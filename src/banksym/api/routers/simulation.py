@@ -28,64 +28,51 @@ router = APIRouter(prefix="/simulation", tags=["simulation"])
     summary="List currently participating accounts",
 )
 def participants(container: ContainerDep) -> SimulationParticipantsResponse:
-    """Return metadata for the currently configured simulation targets only."""
-    targets = container.simulation.targets()
-    if not targets:
-        # Keep the Live page immediately usable even before the first explicit /simulation/start.
-        targets = _default_participant_targets(container)
+    """Return metadata for all real customer-linked accounts across all banks.
 
+    The Live page uses this as the source of truth for selectable participants, so it should
+    reflect newly created manual and batch accounts immediately rather than only existing
+    simulator targets.
+    """
     rows: list[SimulationParticipantResponse] = []
-    for bank_id, account_id in targets:
+    for bank in container.bank_service.list_banks():
         try:
-            bank = container.bank_service.get_bank(bank_id)
-            account = container.banking.get_account(bank_id, account_id)
+            accounts = container.banking.list_accounts(bank.id)
         except Exception:
-            # Ignore stale targets that point at removed banks/accounts.
             continue
 
-        customer_id = account.customer_id
-        customer_name = ""
-        if customer_id:
+        for account in accounts:
+            if account.is_internal or not account.customer_id:
+                continue
+
+            customer_id = account.customer_id
+            customer_name = ""
+            customer_source = "manual"
             try:
-                customer_name = container.banking.get_customer(
-                    bank_id, customer_id
-                ).full_name
+                customer = container.banking.get_customer(bank.id, customer_id)
+                customer_name = customer.full_name
+                customer_source = customer.source or "manual"
             except Exception:
                 customer_name = customer_id
 
-        rows.append(
-            SimulationParticipantResponse(
-                bank_id=bank_id,
-                bank_name=bank.branding.display_name,
-                bank_color=bank.branding.primary_color,
-                country=bank.country,
-                customer_id=customer_id,
-                customer_name=customer_name,
-                account_id=account.id,
-                account_name=account.name or account.type.value,
-                iban=account.iban,
-                currency=account.currency,
-                type=account.type.value,
+            rows.append(
+                SimulationParticipantResponse(
+                    bank_id=bank.id,
+                    bank_name=bank.branding.display_name,
+                    bank_color=bank.branding.primary_color,
+                    country=bank.country,
+                    customer_id=customer_id,
+                    customer_name=customer_name,
+                    customer_source=customer_source,
+                    account_id=account.id,
+                    account_name=account.name or account.type.value,
+                    iban=account.iban,
+                    currency=account.currency,
+                    type=account.type.value,
+                )
             )
-        )
+
     return SimulationParticipantsResponse(participants=rows)
-
-
-def _default_participant_targets(
-    container: ContainerDep, *, per_bank_limit: int = 12, total_limit: int = 200
-) -> list[tuple[str, str]]:
-    """Return a capped default target set when no explicit simulator targets exist."""
-    targets: list[tuple[str, str]] = []
-    for bank in container.bank_service.list_banks():
-        if len(targets) >= total_limit:
-            break
-        accounts = container.banking.list_accounts(bank.id, limit=per_bank_limit)
-        for account in accounts:
-            if len(targets) >= total_limit:
-                break
-            if account.customer_id and not account.is_internal:
-                targets.append((bank.id, account.id))
-    return targets
 
 
 @router.get("", response_model=SimulationStatusResponse, summary="Get simulation status")

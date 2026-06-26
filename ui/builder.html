@@ -54,6 +54,40 @@
     .builder-top { display: grid; grid-template-columns: 240px 1fr; gap: 20px; align-items: start; margin-bottom: 20px; }
     @media (max-width: 760px) { .builder-top { grid-template-columns: 1fr; } .preview-card { position: static; } }
 
+    .builder-stage {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+      padding: 16px 18px;
+      margin-bottom: 14px;
+    }
+    .builder-stage:last-of-type { margin-bottom: 0; }
+    .stage-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+    .stage-index {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 750;
+      color: var(--on-brand, #fff);
+      background: linear-gradient(135deg, var(--brand, #000000), var(--brand-secondary, #eb001b));
+      flex: none;
+      margin-top: 1px;
+    }
+    .stage-head h3 { margin: 0; font-size: 15px; letter-spacing: -.01em; }
+    .stage-head p { margin: 4px 0 0; color: var(--muted); font-size: 12.5px; }
+    .form-actions {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
     .preview-card { position: sticky; top: 84px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; box-shadow: var(--shadow); text-align: center; overflow: hidden; }
     .preview-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 84px; background: linear-gradient(135deg, var(--brand, #000000), var(--brand-secondary, #eb001b)); }
     .preview-logo { position: relative; display: flex; align-items: center; justify-content: center; min-height: 64px; margin: 18px auto 0; padding: 12px 18px; max-width: 220px; border-radius: 14px; background: linear-gradient(135deg, var(--brand, #000000), var(--brand-secondary, #eb001b)); color: var(--on-brand, #fff); font-weight: 700; font-size: 19px; letter-spacing: -.01em; line-height: 1.15; word-break: break-word; box-shadow: 0 8px 22px color-mix(in srgb, var(--brand-secondary, #eb001b) 24%, transparent); }
@@ -284,12 +318,21 @@
 
       <div class="panel">
         <div class="panel-head">
-          <h2>Create a Bank</h2>
-          <p>Spin up a new tenant with its own branding and capabilities. <a href="#existing-banks" class="banks-link">View existing banks ↓</a></p>
+          <h2>Bank Builder</h2>
+          <p>Work top to bottom: create a bank, add products, choose customer types, seed customers, then review existing banks.</p>
         </div>
         <form id="form">
-          <div class="form-section">
-            <div class="section-title">Identity</div>
+          <div class="builder-stage" id="stage-create-bank">
+            <div class="stage-head">
+              <span class="stage-index">1</span>
+              <div>
+                <h3>Create A New Bank</h3>
+                <p>Define identity, localisation and simulation adapters for the new tenant.</p>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="section-title">Identity</div>
             <div class="identity-row">
               <div class="id-field id-name">
                 <label>Name</label>
@@ -313,10 +356,10 @@
               </div>
             </div>
             <p class="field-hint">Primary anchors the brand; secondary drives accents and gradients. Logo is preview-only and stays in the browser.</p>
-          </div>
+            </div>
 
-          <div class="form-section">
-            <div class="section-title">Localisation</div>
+            <div class="form-section">
+              <div class="section-title">Localisation</div>
             <div class="row">
               <div>
                 <label>Country</label>
@@ -339,10 +382,48 @@
             <div id="supported-language-list" class="pick-list"></div>
             <input type="hidden" id="supported_languages" value="en" />
             <p class="field-hint">Default language is always included.</p>
+            </div>
+
+            <div class="form-section">
+              <div class="section-title">Mastercard Simulation Adapters</div>
+              <div class="row">
+                <div>
+                  <label>Open Banking Protocol</label>
+                  <div class="protocol-stack">
+                    <label class="toggle-inline"><input type="checkbox" id="open_banking_enabled" /> Enable Open Banking APIs</label>
+                    <select name="protocol" id="protocol"></select>
+                  </div>
+                  <p class="field-hint">FDX is shown for illustration but remains disabled in this simulation.</p>
+                </div>
+                <div>
+                  <label>Transaction Generator</label>
+                  <select name="txgen" id="txgen"></select>
+                </div>
+              </div>
+              <div class="row">
+                <div>
+                  <label>Settlement Engine</label>
+                  <select name="settlement" id="settlement"></select>
+                </div>
+                <div>
+                  <label>Auth Provider</label>
+                  <select name="auth" id="auth"></select>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div class="form-section">
-            <div class="section-title">Card Product Builder</div>
+          <div class="builder-stage" id="stage-products">
+            <div class="stage-head">
+              <span class="stage-index">2</span>
+              <div>
+                <h3>Add Products</h3>
+                <p>Choose and preview the card/account product sets available for this bank.</p>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="section-title">Card Product Builder</div>
             <div class="builder-split">
               <div>
                 <label>Supported Card Products</label>
@@ -353,10 +434,10 @@
               </div>
               <div class="builder-editor" id="card-editor"></div>
             </div>
-          </div>
+            </div>
 
-          <div class="form-section">
-            <div class="section-title">Current (Checking) Account Builder</div>
+            <div class="form-section">
+              <div class="section-title">Current (Checking) Account Builder</div>
             <div class="builder-split">
               <div>
                 <label>Current Account Products</label>
@@ -367,10 +448,10 @@
               </div>
               <div class="builder-editor" id="current-editor"></div>
             </div>
-          </div>
+            </div>
 
-          <div class="form-section">
-            <div class="section-title">Savings Account Builder</div>
+            <div class="form-section">
+              <div class="section-title">Savings Account Builder</div>
             <div class="builder-split">
               <div>
                 <label>Savings Account Products</label>
@@ -381,10 +462,10 @@
               </div>
               <div class="builder-editor" id="savings-editor"></div>
             </div>
-          </div>
+            </div>
 
-          <div class="form-section">
-            <div class="section-title">Loan Product Builder (Illustrative)</div>
+            <div class="form-section">
+              <div class="section-title">Loan Product Builder (Illustrative)</div>
             <div class="builder-split">
               <div>
                 <label>Illustrative Loan Products</label>
@@ -396,45 +477,31 @@
               <div class="builder-editor" id="loan-editor"></div>
             </div>
           </div>
-
-          <div class="form-section">
-            <div class="section-title">Supported Customer Types</div>
-            <label>Supported Customer Types</label>
-            <div id="customer-type-list" class="pick-list"></div>
-            <div id="customer-type-summary" class="pick-summary"></div>
-            <input type="hidden" id="supported_customer_types" name="supported_customer_types" value="" />
-            <p class="field-hint">Customer generation and batch weighting are limited to the selected retail customer types.</p>
           </div>
 
-          <div class="form-section">
-            <div class="section-title">Mastercard Simulation Adapters</div>
-            <div class="row">
+          <div class="builder-stage" id="stage-customer-types">
+            <div class="stage-head">
+              <span class="stage-index">3</span>
               <div>
-                <label>Open Banking Protocol</label>
-                <div class="protocol-stack">
-                  <label class="toggle-inline"><input type="checkbox" id="open_banking_enabled" /> Enable Open Banking APIs</label>
-                  <select name="protocol" id="protocol"></select>
-                </div>
-                <p class="field-hint">FDX is shown for illustration but remains disabled in this simulation.</p>
-              </div>
-              <div>
-                <label>Transaction Generator</label>
-                <select name="txgen" id="txgen"></select>
+                <h3>Add Customer Types</h3>
+                <p>Control which retail personas are available for customer generation and simulation.</p>
               </div>
             </div>
-            <div class="row">
-              <div>
-                <label>Settlement Engine</label>
-                <select name="settlement" id="settlement"></select>
-              </div>
-              <div>
-                <label>Auth Provider</label>
-                <select name="auth" id="auth"></select>
-              </div>
+
+            <div class="form-section">
+              <div class="section-title">Supported Customer Types</div>
+              <label>Supported Customer Types</label>
+              <div id="customer-type-list" class="pick-list"></div>
+              <div id="customer-type-summary" class="pick-summary"></div>
+              <input type="hidden" id="supported_customer_types" name="supported_customer_types" value="" />
+              <p class="field-hint">Customer generation and batch weighting are limited to the selected retail customer types.</p>
             </div>
           </div>
 
-          <button type="submit">Create Bank</button>
+          <div class="form-actions">
+            <button type="submit">Create Bank</button>
+            <p class="field-hint">After creating a bank, continue to section 4 to seed customers and accounts.</p>
+          </div>
         </form>
         <div id="result" class="form-msg" style="display:none"></div>
       </div>
@@ -442,7 +509,7 @@
 
     <div class="panel batch-panel">
       <div class="panel-head">
-        <h2>Batch Seed Customers</h2>
+        <h2>4) Seed Customer</h2>
         <p>Quickly populate a bank with up to 10 000 customers using weighted persona and account-type distributions.</p>
       </div>
       <div class="batch-target" id="batch-target">
@@ -503,7 +570,7 @@
 
     <div class="panel banks-panel" id="existing-banks">
       <div class="panel-head">
-        <h2>Existing Banks</h2>
+        <h2>5) Banks You've Already Created</h2>
         <p>Tenants running in this instance. Click a card to select it for the Bank Console.</p>
       </div>
       <div class="banks" id="banks"></div>
