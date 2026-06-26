@@ -13,7 +13,14 @@ from banksym.capabilities.settlement.base import settlement_registry
 from banksym.capabilities.txgen.base import txgen_registry
 from banksym.capabilities.txgen.personas import PERSONAS
 from banksym.tenancy.bank import Bank
-from banksym.tenancy.service import BankNotFoundError
+from banksym.tenancy.service import (
+    BankNotFoundError,
+    DEFAULT_CARD_PRODUCTS,
+    DEFAULT_CURRENT_ACCOUNT_PRODUCTS,
+    DEFAULT_CUSTOMER_TYPES,
+    DEFAULT_LOAN_PRODUCTS,
+    DEFAULT_SAVINGS_ACCOUNT_PRODUCTS,
+)
 
 router = APIRouter(prefix="/banks", tags=["banks"])
 
@@ -25,7 +32,15 @@ def _to_response(bank: Bank) -> BankResponse:
         country=bank.country,
         locale=bank.locale,
         base_currency=bank.base_currency,
+        secondary_color=bank.branding.secondary_color,
         supported_currencies=bank.supported_currencies,
+        supported_languages=bank.supported_languages,
+        supported_customer_types=bank.supported_customer_types,
+        open_banking_enabled=bank.open_banking_enabled,
+        card_products=bank.card_products,
+        current_account_products=bank.current_account_products,
+        savings_account_products=bank.savings_account_products,
+        loan_products=bank.loan_products,
         logo_url=bank.branding.logo_url,
         primary_color=bank.branding.primary_color,
         enabled_protocols=bank.enabled_protocols,
@@ -47,7 +62,15 @@ def create_bank(body: CreateBankRequest, container: ContainerDep) -> BankRespons
         country=body.country,
         locale=body.locale,
         base_currency=body.base_currency,
+        secondary_color=body.secondary_color,
         supported_currencies=body.supported_currencies,
+        supported_languages=body.supported_languages,
+        supported_customer_types=body.supported_customer_types,
+        open_banking_enabled=body.open_banking_enabled,
+        card_products=body.card_products,
+        current_account_products=body.current_account_products,
+        savings_account_products=body.savings_account_products,
+        loan_products=body.loan_products,
         logo_url=body.logo_url,
         primary_color=body.primary_color,
         enabled_protocols=body.enabled_protocols,
@@ -139,3 +162,42 @@ def list_personas() -> list[dict[str, str]]:
         {"id": p.id, "label": p.label, "description": p.description}
         for p in PERSONAS.values()
     ]
+
+
+@router.get("/_meta/customer-types", tags=["capabilities"], summary="List supported customer types")
+def list_customer_types() -> list[dict[str, str]]:
+    persona_map = {p.id: p for p in PERSONAS.values()}
+    out: list[dict[str, str]] = []
+    for customer_type in DEFAULT_CUSTOMER_TYPES:
+        p = persona_map.get(customer_type)
+        if p:
+            out.append({"id": p.id, "label": p.label, "description": p.description})
+        else:
+            out.append(
+                {
+                    "id": customer_type,
+                    "label": customer_type.replace("_", " ").title(),
+                    "description": "Customer-type profile supported by bank configuration.",
+                }
+            )
+    return out
+
+
+@router.get("/_meta/card-products", tags=["capabilities"], summary="List preconfigured card products")
+def list_card_products() -> list[dict]:
+    return DEFAULT_CARD_PRODUCTS
+
+
+@router.get("/_meta/current-account-products", tags=["capabilities"], summary="List preconfigured current account products")
+def list_current_account_products() -> list[dict]:
+    return DEFAULT_CURRENT_ACCOUNT_PRODUCTS
+
+
+@router.get("/_meta/savings-account-products", tags=["capabilities"], summary="List preconfigured savings account products")
+def list_savings_account_products() -> list[dict]:
+    return DEFAULT_SAVINGS_ACCOUNT_PRODUCTS
+
+
+@router.get("/_meta/loan-products", tags=["capabilities"], summary="List illustrative loan products")
+def list_loan_products() -> list[dict]:
+    return DEFAULT_LOAN_PRODUCTS

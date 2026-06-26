@@ -208,6 +208,11 @@ class CoreBankingService:
                         booked_at=entry.booked_at,
                         description=entry.description,
                         reference=entry.reference,
+                        merchant_name=entry.metadata.get("merchant_name") or entry.description or None,
+                        category=entry.metadata.get("category"),
+                        payment_reference=entry.metadata.get("payment_reference") or entry.reference,
+                        location=entry.metadata.get("location"),
+                        channel=entry.metadata.get("channel"),
                     )
                 )
         return records

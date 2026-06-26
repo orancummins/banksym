@@ -23,7 +23,7 @@ from banksym.api.schemas import (
     PostTransactionRequest,
     TransactionResponse,
 )
-from banksym.capabilities.localization.address import random_address, random_phone
+from banksym.capabilities.localization.address import random_address, random_full_name, random_phone
 from banksym.capabilities.txgen.base import GenerationRequest
 from banksym.capabilities.txgen.personas import PERSONAS
 from banksym.core.domain.account import Account, AccountType
@@ -250,6 +250,11 @@ def account_transactions(
             booked_at=r.booked_at,
             description=r.description,
             reference=r.reference,
+            merchant_name=r.merchant_name,
+            category=r.category,
+            payment_reference=r.payment_reference,
+            location=r.location,
+            channel=r.channel,
         )
         for r in history
     ]
@@ -297,6 +302,11 @@ def post_transaction(
         booked_at=record.booked_at,
         description=record.description,
         reference=record.reference,
+        merchant_name=record.merchant_name,
+        category=record.category,
+        payment_reference=record.payment_reference,
+        location=record.location,
+        channel=record.channel,
     )
 
 
@@ -350,23 +360,6 @@ def generate_history(
 # Batch customer seeding
 # ---------------------------------------------------------------------------
 
-_FIRST_NAMES = [
-    "Alice", "Bob", "Carlos", "Diana", "Ethan", "Fatima", "George", "Hannah",
-    "Ivan", "Julia", "Kai", "Laura", "Marco", "Nadia", "Oscar", "Priya",
-    "Quinn", "Rafael", "Sofia", "Thomas", "Uma", "Victor", "Wendy", "Xian",
-    "Yuki", "Zara", "Adam", "Bella", "Chloe", "David", "Elena", "Felix",
-    "Grace", "Hugo", "Isla", "Jake", "Kira", "Liam", "Mia", "Noah",
-    "Olivia", "Pablo", "Rosa", "Sam", "Tina", "Uri", "Vera", "Will",
-]
-_LAST_NAMES = [
-    "Smith", "Müller", "Garcia", "Rossi", "Dubois", "Kowalski", "Nielsen",
-    "Santos", "Kim", "Tanaka", "Okafor", "Svensson", "Patel", "Ahmed",
-    "Williams", "Brown", "Johnson", "Jones", "Taylor", "Davis",
-    "Martin", "Thomas", "White", "Wilson", "Moore", "Jackson", "Harris",
-    "Clark", "Lewis", "Hall", "Robinson", "Walker", "Young", "Allen",
-]
-
-
 def _weighted_choice(weights: dict[str, float], population: list[str]) -> str:
     if not weights:
         return random.choice(population)
@@ -375,6 +368,46 @@ def _weighted_choice(weights: dict[str, float], population: list[str]) -> str:
         return random.choice(population)
     w = [weights[k] for k in keys]
     return random.choices(keys, weights=w, k=1)[0]
+
+
+def _normalized_shares(weights: dict[str, float], population: list[str]) -> dict[str, float]:
+    filtered = {k: float(v) for k, v in weights.items() if k in population and float(v) > 0}
+    total = sum(filtered.values())
+    if total <= 0:
+        return {}
+    return {k: v / total for k, v in filtered.items()}
+
+
+def _derived_account_types_for_customer(
+    persona: str,
+    acct_weights: dict[str, float],
+    acct_type_pool: list[str],
+) -> list[str]:
+    if not acct_weights:
+        return [AccountType.CURRENT.value]
+
+    shares = _normalized_shares(acct_weights, acct_type_pool)
+    if not shares:
+        return [AccountType.CURRENT.value]
+
+    primary = _weighted_choice(acct_weights, list(shares.keys()))
+    selected: list[str] = [primary]
+    max_accounts = 3 if persona in {"young_professional", "affluent_family"} else 2
+
+    def maybe_add(acct_type: str, threshold: float, allowed_personas: set[str] | None = None) -> None:
+        if acct_type in selected or acct_type not in shares or len(selected) >= max_accounts:
+            return
+        if allowed_personas is not None and persona not in allowed_personas:
+            return
+        if shares[acct_type] >= threshold:
+            selected.append(acct_type)
+
+    maybe_add(AccountType.CURRENT.value, 0.20)
+    maybe_add(AccountType.SAVINGS.value, 0.18)
+    maybe_add(AccountType.CREDIT_CARD.value, 0.16, {"student", "gig_worker", "young_professional", "affluent_family"})
+    maybe_add(AccountType.LOAN.value, 0.12, {"young_professional", "affluent_family"})
+
+    return selected[:max_accounts]
 
 
 @router.post(
@@ -391,15 +424,16 @@ def batch_create_customers(
     """Create up to 10 000 customers with weighted persona and account-type distribution.
 
     ``persona_weights`` maps persona IDs to relative weights (e.g. ``{"student": 3, "retiree": 1}``);
-    omit or leave empty for equal weighting. ``account_types`` maps account type names to weights;
-    omit for a single current account per customer. All customers are flagged as ``source="batch"``
+    omit or leave empty for equal weighting. ``account_types`` maps account type names to weights.
+    When ``accounts_per_customer`` is omitted, the number of accounts per customer is derived from
+    the selected customer/account weighting criteria. All customers are flagged as ``source="batch"``
     and are collapsed in the Live feed tree rather than listed individually.
     """
     bank = container.bank_service.get_bank(bank_id)
     country = bank.country
     currency = bank.base_currency
 
-    persona_pool = list(PERSONAS.keys())
+    persona_pool = list(bank.supported_customer_types or PERSONAS.keys())
     acct_type_pool = [t.value for t in AccountType if t != AccountType.INTERNAL]
 
     # Normalise account-type weights — keep only valid types.
@@ -416,11 +450,12 @@ def batch_create_customers(
     acct_type_tally: Counter = Counter()
 
     for i in range(body.count):
-        first = random.choice(_FIRST_NAMES)
-        last = random.choice(_LAST_NAMES)
-        full_name = f"{first} {last}"
+        full_name = random_full_name(country)
         idx = str(i + 1)
-        email = f"{first.lower()}.{last.lower()}{idx}@example.com"
+        email_base = "".join(ch.lower() for ch in full_name if ch.isascii() and (ch.isalnum() or ch in {" ", "-", "_"})).strip().replace(" ", ".")
+        if not email_base:
+            email_base = f"customer{idx}"
+        email = f"{email_base}{idx}@example.com"
         persona = _weighted_choice(persona_weights, persona_pool)
         address = random_address(country)
         phone = random_phone(country)
@@ -437,13 +472,17 @@ def batch_create_customers(
         customers.append(customer)
         persona_tally[persona] += 1
 
-        for _ in range(body.accounts_per_customer):
-            if acct_weights:
-                keys = list(acct_weights.keys())
-                w = [acct_weights[k] for k in keys]
-                acct_type_str = random.choices(keys, weights=w, k=1)[0]
-            else:
-                acct_type_str = AccountType.CURRENT.value
+        acct_targets = (
+            _derived_account_types_for_customer(persona, acct_weights, acct_type_pool)
+            if body.accounts_per_customer is None
+            else [
+                _weighted_choice(acct_weights, list(acct_weights.keys()) or acct_type_pool)
+                if acct_weights else AccountType.CURRENT.value
+                for _ in range(body.accounts_per_customer)
+            ]
+        )
+
+        for acct_type_str in acct_targets:
             acct_type = AccountType(acct_type_str)
             account = Account(
                 bank_id=bank_id,

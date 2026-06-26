@@ -17,7 +17,15 @@ class CreateBankRequest(BaseModel):
     country: str
     locale: str = "en"
     base_currency: str = "EUR"
+    secondary_color: str = "#f79e1b"
     supported_currencies: list[str] = Field(default_factory=list)
+    supported_languages: list[str] = Field(default_factory=list)
+    supported_customer_types: list[str] = Field(default_factory=list)
+    open_banking_enabled: bool | None = None
+    card_products: list[dict] = Field(default_factory=list)
+    current_account_products: list[dict] = Field(default_factory=list)
+    savings_account_products: list[dict] = Field(default_factory=list)
+    loan_products: list[dict] = Field(default_factory=list)
     logo_url: str | None = None
     primary_color: str = "#0B5FFF"
     enabled_protocols: list[str] = Field(default_factory=list)
@@ -44,7 +52,15 @@ class BankResponse(BaseModel):
     country: str
     locale: str
     base_currency: str
+    secondary_color: str
     supported_currencies: list[str]
+    supported_languages: list[str]
+    supported_customer_types: list[str]
+    open_banking_enabled: bool
+    card_products: list[dict]
+    current_account_products: list[dict]
+    savings_account_products: list[dict]
+    loan_products: list[dict]
     logo_url: str | None
     primary_color: str
     enabled_protocols: list[str]
@@ -90,8 +106,11 @@ class BatchCreateCustomersRequest(BaseModel):
         default_factory=dict,
         description="Account type → relative weight. Empty means one current account per customer.",
     )
-    accounts_per_customer: int = Field(
-        default=1, ge=1, le=5, description="How many accounts to open per customer (1–5)."
+    accounts_per_customer: int | None = Field(
+        default=None,
+        ge=1,
+        le=5,
+        description="Optional override. When omitted, account counts are derived from the selected customer/account weighting criteria.",
     )
 
 
@@ -144,6 +163,11 @@ class TransactionResponse(BaseModel):
     booked_at: datetime
     description: str
     reference: str | None
+    merchant_name: str | None = None
+    category: str | None = None
+    payment_reference: str | None = None
+    location: str | None = None
+    channel: str | None = None
 
 
 class PostTransactionRequest(BaseModel):

@@ -41,19 +41,19 @@
     header nav a:hover { background: rgba(255,255,255,.1); color: #fff; }
     header nav a.active { color: #fff; background: rgba(255,255,255,.14); }
     main { padding: 24px 32px; max-width: 1240px; margin: 0 auto; }
-    .bankbar { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; }
+    .bankbar { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; padding: 10px 12px; background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 6%, var(--surface)), color-mix(in srgb, var(--brand-secondary) 6%, var(--surface))); border: 1px solid color-mix(in srgb, var(--brand-secondary) 18%, var(--border)); border-left: 4px solid var(--brand-secondary); border-radius: 12px; }
     .bankbar label { margin: 0; font-weight: 600; font-size: 13px; }
     .bankbar select { min-width: 320px; }
     /* Custom bank dropdown (grouped by country, with brand logo chips) */
     .bank-dd { position: relative; min-width: 340px; }
-    .bank-dd-trigger { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 11px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text); text-align: left; transition: border-color .15s, box-shadow .15s; }
+    .bank-dd-trigger { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 11px; background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 5%, var(--surface)), color-mix(in srgb, var(--brand-secondary) 5%, var(--surface))); border: 1px solid color-mix(in srgb, var(--brand-secondary) 18%, var(--border)); border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text); text-align: left; transition: border-color .15s, box-shadow .15s; }
     /* Keep the trigger light on hover — the generic dark button:hover must not apply here. */
-    .bank-dd-trigger:hover { background: var(--surface); border-color: var(--brand); box-shadow: none; }
-    .bank-dd-trigger:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent); }
+    .bank-dd-trigger:hover { background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 8%, var(--surface)), color-mix(in srgb, var(--brand-secondary) 8%, var(--surface))); border-color: var(--brand-secondary); box-shadow: none; }
+    .bank-dd-trigger:focus { outline: none; border-color: var(--brand-secondary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-secondary) 18%, transparent); }
     .bank-dd-current { display: flex; align-items: center; gap: 10px; overflow: hidden; }
     .bank-dd-trigger .caret { margin-left: auto; color: var(--muted); transition: transform .15s; flex: none; }
     .bank-dd.open .bank-dd-trigger .caret { transform: rotate(180deg); }
-    .bank-chip { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 7px; background: var(--brand); color: #fff; font-weight: 700; font-size: 11px; letter-spacing: -.02em; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.1); }
+    .bank-chip { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 7px; background: linear-gradient(135deg, var(--brand, #0B5FFF), var(--brand-secondary, #ff5f00)); color: #fff; font-weight: 700; font-size: 11px; letter-spacing: -.02em; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.1); }
     .bank-dd-flag { width: 20px; height: 14px; border-radius: 2px; object-fit: cover; box-shadow: 0 0 0 1px rgba(0,0,0,.12); flex: none; }
     .bank-dd-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .bank-dd-panel { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 200; max-height: 360px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 10px 30px rgba(16,24,40,.16); padding: 6px; display: none; scrollbar-width: thin; }
@@ -62,7 +62,7 @@
     .bank-dd-group img { width: 18px; height: 12px; border-radius: 2px; object-fit: cover; box-shadow: 0 0 0 1px rgba(0,0,0,.12); }
     .bank-dd-opt { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: background .12s; }
     .bank-dd-opt:hover { background: #f3f4f6; }
-    .bank-dd-opt.selected { background: #e5e7eb; }
+    .bank-dd-opt.selected { background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 8%, #fff), color-mix(in srgb, var(--brand-secondary) 8%, #fff)); }
     .bank-dd-opt .bank-dd-name { font-size: 13px; }
     .bank-dd-opt .bank-dd-meta { margin-left: auto; color: var(--muted); font-size: 11.5px; font-variant-numeric: tabular-nums; }
     select, input {
@@ -72,7 +72,7 @@
       transition: border-color .15s, box-shadow .15s;
     }
     select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23697386' d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 11px center; padding-right: 30px; cursor: pointer; }
-    select:focus, input:focus { outline: none; border-color: var(--mc-orange); box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc-orange) 18%, transparent); }
+    select:focus, input:focus { outline: none; border-color: var(--brand-secondary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-secondary) 18%, transparent); }
     .cols { display: grid; grid-template-columns: 1.05fr 1fr; gap: 18px; align-items: start; }
     .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 18px; box-shadow: var(--shadow); }
     .panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin: 0 0 14px; }
@@ -86,20 +86,21 @@
     .step .body { padding-bottom: 22px; flex: 1; }
     .step .title { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
     .step .desc { color: var(--muted); font-size: 12.5px; margin-bottom: 10px; }
-    .step.done .dot { background: var(--brand); border-color: var(--brand); color: #fff; }
-    .step.active .dot { background: var(--brand); border-color: var(--brand); color: #fff; box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 16%, transparent); }
+    .step.done .dot { background: linear-gradient(135deg, var(--brand), var(--brand-secondary)); border-color: var(--brand-secondary); color: #fff; }
+    .step.active .dot { background: linear-gradient(135deg, var(--brand), var(--brand-secondary)); border-color: var(--brand-secondary); color: #fff; box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-secondary) 16%, transparent); }
     .step.locked { opacity: .5; }
     .step.locked .controls { pointer-events: none; }
 
     label { display: block; font-size: 12px; font-weight: 500; color: var(--text); margin: 10px 0 5px; }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .radio { display: flex; gap: 8px; flex-wrap: wrap; }
-    .radio label { display: flex; align-items: center; gap: 7px; margin: 0; padding: 8px 11px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 12.5px; }
-    .radio label:hover { border-color: #d4dae3; }
+    .radio label { display: flex; align-items: center; gap: 7px; margin: 0; padding: 8px 11px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 12.5px; background: var(--surface); }
+    .radio label:hover { border-color: color-mix(in srgb, var(--brand-secondary) 28%, var(--border)); background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 4%, var(--surface)), color-mix(in srgb, var(--brand-secondary) 4%, var(--surface))); }
+    .radio label:has(input:checked) { border-color: var(--brand-secondary); background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 8%, #fff), color-mix(in srgb, var(--brand-secondary) 8%, #fff)); }
     .radio input { width: auto; }
-    button { padding: 9px 15px; background: #374151; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s, box-shadow .15s; }
-    button:hover { background: #1f2937; box-shadow: 0 2px 8px rgba(31,41,55,.28); }
-    button:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
+    button { padding: 9px 15px; background: linear-gradient(135deg, var(--brand), var(--brand-secondary)); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: filter .15s, box-shadow .15s, background .15s; }
+    button:hover { filter: brightness(.94); box-shadow: 0 2px 8px color-mix(in srgb, var(--brand-secondary) 28%, transparent); }
+    button:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; filter: none; }
     button.ghost { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
     button.ghost:hover { background: var(--bg); box-shadow: none; }
     button.small { padding: 7px 12px; font-size: 12px; }
@@ -116,23 +117,23 @@
 
     .list { display: flex; flex-direction: column; gap: 8px; }
     .item { padding: 11px 13px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: border-color .15s, background .15s; }
-    .item:hover { border-color: #d4dae3; }
-    .item.active { border-color: var(--mc-orange); background: color-mix(in srgb, var(--mc-orange) 7%, #fff); }
+    .item:hover { border-color: color-mix(in srgb, var(--brand-secondary) 25%, var(--border)); background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 4%, var(--surface)), color-mix(in srgb, var(--brand-secondary) 4%, var(--surface))); }
+    .item.active { border-color: var(--brand-secondary); background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 7%, #fff), color-mix(in srgb, var(--brand-secondary) 7%, #fff)); }
     .item .name { font-weight: 600; font-size: 13px; }
     .item .meta { color: var(--muted); font-size: 12px; margin-top: 3px; font-variant-numeric: tabular-nums; }
     .pill { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 9px; border-radius: 999px; background: #fff4f1; border: 1px solid #ffd9cc; color: #c2410c; }
 
     .bal { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
-    .tx-scroll { max-height: 320px; overflow: auto; border: 1px solid color-mix(in srgb, var(--brand) 22%, var(--border)); border-radius: 10px; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--brand) 35%, transparent) transparent; }
+    .tx-scroll { max-height: 320px; overflow: auto; border: 1px solid color-mix(in srgb, var(--brand-secondary) 22%, var(--border)); border-radius: 10px; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--brand-secondary) 35%, transparent) transparent; }
     .tx-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
     .tx-scroll::-webkit-scrollbar-track { background: transparent; }
-    .tx-scroll::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--brand) 28%, transparent); border-radius: 8px; }
-    .tx-scroll::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--brand) 48%, transparent); }
+    .tx-scroll::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--brand-secondary) 28%, transparent); border-radius: 8px; }
+    .tx-scroll::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--brand-secondary) 48%, transparent); }
     table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
     th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--border); }
     th { color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; font-size: 11px; }
-    .tx-scroll thead th { position: sticky; top: 0; z-index: 1; background: color-mix(in srgb, var(--brand) 10%, var(--surface)); color: color-mix(in srgb, var(--brand) 70%, var(--text)); box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--brand) 25%, var(--border)); }
-    .tx-scroll tbody tr:hover { background: color-mix(in srgb, var(--brand) 6%, var(--surface)); }
+    .tx-scroll thead th { position: sticky; top: 0; z-index: 1; background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 10%, var(--surface)), color-mix(in srgb, var(--brand-secondary) 10%, var(--surface))); color: color-mix(in srgb, var(--brand) 70%, var(--text)); box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--brand-secondary) 25%, var(--border)); }
+    .tx-scroll tbody tr:hover { background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 6%, var(--surface)), color-mix(in srgb, var(--brand-secondary) 6%, var(--surface))); }
     tbody tr:hover { background: var(--bg); }
     td.amt { text-align: right; font-variant-numeric: tabular-nums; }
     .debit { color: var(--danger); }
@@ -153,7 +154,7 @@
     .log-row .status.ok { color: var(--core); }
     .log-row .status.err { color: var(--danger); }
 
-    .toast { position: fixed; bottom: 18px; right: 18px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--mc-orange); padding: 12px 16px; border-radius: 10px; font-size: 13px; max-width: 360px; opacity: 0; transform: translateY(8px); transition: .2s; box-shadow: 0 8px 24px rgba(16,24,40,.12); z-index: 10; }
+    .toast { position: fixed; bottom: 18px; right: 18px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--brand-secondary); padding: 12px 16px; border-radius: 10px; font-size: 13px; max-width: 360px; opacity: 0; transform: translateY(8px); transition: .2s; box-shadow: 0 8px 24px rgba(16,24,40,.12); z-index: 10; }
     .toast.show { opacity: 1; transform: none; }
     .toast.err { border-left-color: var(--mc-red); }
     .muted { color: var(--muted); font-size: 12px; }
@@ -269,9 +270,11 @@
 
   <script>
     const API = "";
+    const PSD2_STATE_KEY = "banksym.psd2.state";
+    const PSD2_BANK_KEY = "banksym.psd2.bankId";
     const state = {
       bankId: null, country: "DE",
-      consentId: null, accessToken: null, oauthState: null, accountId: null,
+      consentId: null, consentStatus: null, accessToken: null, oauthState: null, oauthStatus: null, accountId: null,
     };
 
     const $ = (id) => document.getElementById(id);
@@ -287,13 +290,48 @@
       return (words[0][0] + words[words.length - 1][0]).toUpperCase();
     }
     function bankChipHTML(b) {
-      return `<span class="bank-chip" style="background:${b.primary_color || 'var(--brand)'}">${bankInitials(b.display_name)}</span>`;
+      const start = b.primary_color || "var(--brand)";
+      const end = b.secondary_color || b.primary_color || "var(--brand-secondary)";
+      return `<span class="bank-chip" style="background:linear-gradient(135deg, ${start}, ${end})">${bankInitials(b.display_name)}</span>`;
     }
     function toast(msg, isErr) {
       const t = $("toast");
       t.textContent = msg;
       t.className = "toast show" + (isErr ? " err" : "");
       setTimeout(() => (t.className = "toast"), 3200);
+    }
+
+    function readSavedState() {
+      try {
+        return JSON.parse(localStorage.getItem(PSD2_STATE_KEY) || "null");
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function persistState() {
+      const saved = {
+        bankId: state.bankId,
+        country: state.country,
+        scope: document.querySelector('input[name="scope"]:checked')?.value || "allPsd2",
+        consentId: state.consentId,
+        consentStatus: state.consentStatus,
+        accessToken: state.accessToken,
+        oauthState: state.oauthState,
+        oauthStatus: state.oauthStatus,
+        accountId: state.accountId,
+      };
+      try {
+        localStorage.setItem(PSD2_STATE_KEY, JSON.stringify(saved));
+        if (state.bankId) localStorage.setItem(PSD2_BANK_KEY, state.bankId);
+      } catch (_) {}
+    }
+
+    function clearPersistedState() {
+      try {
+        localStorage.removeItem(PSD2_STATE_KEY);
+        localStorage.removeItem(PSD2_BANK_KEY);
+      } catch (_) {}
     }
 
     function logCall(method, path, status, ok) {
@@ -342,6 +380,7 @@
     async function loadBanks() {
       const banks = await call("GET", "/banks");
       const sel = $("bank-select");
+      const saved = readSavedState();
       sel.innerHTML = "";
       if (!banks.length) {
         sel.innerHTML = '<option value="">No Banks — Create One in the Bank Builder</option>';
@@ -356,17 +395,26 @@
         o.dataset.country = b.country;
         o.dataset.protocols = (b.enabled_protocols || []).join(",");
         o.dataset.color = b.primary_color || "#0B5FFF";
+        o.dataset.color2 = b.secondary_color || b.primary_color || "#ff5f00";
         sel.appendChild(o);
       }
       // Default to the bank selected in the console: honour ?bank=<id>, then the last bank used
       // in the console (persisted in localStorage), else the first bank.
       let preferred = new URLSearchParams(location.search).get("bank");
       if (!preferred) {
+        try { preferred = localStorage.getItem(PSD2_BANK_KEY); } catch (_) {}
+      }
+      if (!preferred) {
         try { preferred = localStorage.getItem("banksym.bankId"); } catch (_) {}
       }
       if (preferred && banks.some((b) => b.id === preferred)) sel.value = preferred;
       renderBankDropdown(banks, sel.value || banks[0].id);
-      onBankChange();
+      if (saved && saved.bankId && saved.bankId === sel.value) {
+        onBankChange({ preserveFlow: true });
+        await restoreFlowState();
+      } else {
+        onBankChange();
+      }
     }
 
     // Render the custom bank dropdown, grouping banks by country and showing brand logo chips.
@@ -419,30 +467,32 @@
 
     // Tint the page accents with the selected bank's brand colour. The main (black) header is
     // deliberately left unchanged.
-    function applyBankTheme(color) {
+    function applyBankTheme(primary, secondary) {
       const root = document.documentElement;
-      root.style.setProperty("--brand", color);
-      root.style.setProperty("--accent", color);
-      root.style.setProperty("--mc-red", color);
-      root.style.setProperty("--mc-orange", color);
+      root.style.setProperty("--brand", primary);
+      root.style.setProperty("--brand-secondary", secondary);
+      root.style.setProperty("--accent", secondary);
+      root.style.setProperty("--mc-red", primary);
+      root.style.setProperty("--mc-orange", secondary);
       document.body.style.background =
-        `color-mix(in srgb, ${color} 6%, var(--bg))`;
+        `linear-gradient(180deg, color-mix(in srgb, ${primary} 5%, var(--bg)), color-mix(in srgb, ${secondary} 4%, var(--bg)))`;
     }
 
-    function onBankChange() {
+    function onBankChange({ preserveFlow = false } = {}) {
       const sel = $("bank-select");
       const opt = sel.options[sel.selectedIndex];
       if (!opt || !opt.value) return;
       state.bankId = opt.value;
       state.country = opt.dataset.country || "DE";
-      applyBankTheme(opt.dataset.color || "#0B5FFF");
+      applyBankTheme(opt.dataset.color || "#0B5FFF", opt.dataset.color2 || opt.dataset.color || "#ff5f00");
       const protocols = opt.dataset.protocols || "";
       const hasBg = protocols.includes("berlin_group");
       $("bank-meta").innerHTML = hasBg
         ? `Berlin Group XS2A at <code>/xs2a/${state.bankId}/v1</code>`
             .replace("<code>", '<code style="background:#f6f8fb;border:1px solid #e3e8ee;border-radius:6px;padding:1px 6px">')
         : '<span style="color:#b42318">This Bank Does Not Enable the berlin_group API — Endpoints May 404.</span>';
-      resetFlow();
+      if (!preserveFlow) resetFlow();
+      else persistState();
     }
 
     // -- Step state machine ---------------------------------------------------
@@ -454,8 +504,10 @@
 
     function resetFlow() {
       state.consentId = null;
+      state.consentStatus = null;
       state.accessToken = null;
       state.oauthState = null;
+      state.oauthStatus = null;
       state.accountId = null;
       setStep(1, "active");
       setStep(2, "locked");
@@ -469,6 +521,43 @@
       $("accounts").innerHTML = "";
       $("acct-detail").innerHTML =
         '<div class="empty">Complete the consent journey, then select an account to view its balance and transactions.</div>';
+      persistState();
+    }
+
+    async function restoreFlowState() {
+      const saved = readSavedState();
+      if (!saved || saved.bankId !== state.bankId) return;
+      const scope = saved.scope || "allPsd2";
+      const scopeEl = document.querySelector(`input[name="scope"][value="${scope}"]`);
+      if (scopeEl) scopeEl.checked = true;
+      state.consentId = saved.consentId || null;
+      state.consentStatus = saved.consentStatus || null;
+      state.accessToken = saved.accessToken || null;
+      state.oauthState = saved.oauthState || null;
+      state.oauthStatus = saved.oauthStatus || null;
+      state.accountId = saved.accountId || null;
+
+      if (state.consentId) {
+        $("consent-state").innerHTML = badge(state.consentStatus || "received", state.consentStatus || "received");
+        $("consent-info").style.display = "";
+        $("consent-info").innerHTML = `Consent <code>${state.consentId}</code> restored · scope <code>${scope}</code>`;
+        setStep(1, "done");
+        setStep(state.accessToken ? 3 : 2, state.accessToken ? "done" : "active");
+      }
+      if (state.accessToken) {
+        $("oauth-state").innerHTML = badge(state.oauthStatus || "authorised", "valid");
+        $("oauth-info").style.display = "";
+        $("oauth-info").innerHTML = `Access token <code>${state.accessToken.slice(0, 12)}…</code> restored`;
+        $("btn-authorise").disabled = false;
+        $("btn-consent").disabled = false;
+        setStep(2, "done");
+        setStep(3, "active");
+        await listAccounts({ restoreAccountId: state.accountId });
+      } else if (state.consentId) {
+        $("btn-authorise").disabled = false;
+        $("btn-consent").disabled = false;
+      }
+      persistState();
     }
 
     // -- Step 1: request consent ---------------------------------------------
@@ -484,11 +573,13 @@
           body: { access, recurringIndicator: true, frequencyPerDay: 4 },
         });
         state.consentId = data.consentId;
+        state.consentStatus = data.consentStatus;
         $("consent-state").innerHTML = badge(data.consentStatus, data.consentStatus);
         $("consent-info").style.display = "";
         $("consent-info").innerHTML = `Consent <code>${data.consentId}</code> created · scope <code>${scope}</code>`;
         setStep(1, "done");
         setStep(2, "active");
+        persistState();
         toast("Consent created — authorise at the bank");
       } catch (e) {
         $("btn-consent").disabled = false;
@@ -535,6 +626,7 @@
         state.accessToken = tok.access_token;
         // The consent is now active; confirm its status.
         const st = await call("GET", xs2a(`/consents/${state.consentId}/status`));
+        state.oauthStatus = "authorised";
         $("consent-state").innerHTML = badge(st.consentStatus, st.consentStatus);
         $("oauth-state").innerHTML = badge("authorised", "valid");
         $("oauth-info").style.display = "";
@@ -542,6 +634,7 @@
           `Access token <code>${tok.access_token.slice(0, 12)}…</code> · consent <code>${st.consentStatus}</code>`;
         setStep(2, "done");
         setStep(3, "active");
+        persistState();
         toast("Authorised at the bank — consent is valid");
       } catch (e) {
         $("oauth-state").innerHTML = badge("failed", "failed");
@@ -550,7 +643,7 @@
     }
 
     // -- Step 3: account information -----------------------------------------
-    async function listAccounts() {
+    async function listAccounts({ restoreAccountId = null } = {}) {
       try {
         const data = await call("GET", xs2a("/accounts"), { headers: consentHeaders() });
         const wrap = $("accounts");
@@ -568,6 +661,10 @@
           div.onclick = () => selectAccount(a, div);
           wrap.appendChild(div);
         }
+        if (restoreAccountId) {
+          const index = data.accounts.findIndex((a) => a.resourceId === restoreAccountId);
+          if (index >= 0) selectAccount(data.accounts[index], wrap.children[index]);
+        }
       } catch (e) {
         toast(e.message, true);
       }
@@ -583,6 +680,7 @@
           call("GET", xs2a(`/accounts/${acct.resourceId}/balances`), { headers: consentHeaders() }),
           call("GET", xs2a(`/accounts/${acct.resourceId}/transactions`), { headers: consentHeaders() }),
         ]);
+        persistState();
         renderAccount(acct, bal, tx);
       } catch (e) {
         $("acct-detail").innerHTML = `<div class="empty">${e.message}</div>`;
@@ -616,7 +714,7 @@
     }
 
     // -- Wiring ---------------------------------------------------------------
-    $("bank-select").addEventListener("change", onBankChange);
+    $("bank-select").addEventListener("change", () => onBankChange());
     $("bank-dd-trigger").addEventListener("click", () => {
       $("bank-dd").classList.contains("open") ? closeBankDropdown() : openBankDropdown();
     });
@@ -626,12 +724,17 @@
     $("btn-consent").addEventListener("click", requestConsent);
     $("btn-authorise").addEventListener("click", authoriseAtBank);
     $("btn-list").addEventListener("click", listAccounts);
+    document.querySelectorAll('input[name="scope"]').forEach((el) => {
+      el.addEventListener("change", persistState);
+    });
 
     // The bank-hosted login popup posts the authorization code back here.
     window.addEventListener("message", (ev) => {
       if (ev.origin !== location.origin) return;
       onOAuthReturn(ev.data);
     });
+
+    window.addEventListener("beforeunload", persistState);
 
     loadBanks().catch((e) => toast(e.message, true));
   </script>

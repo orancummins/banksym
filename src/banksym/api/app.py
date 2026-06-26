@@ -138,6 +138,10 @@ def create_app() -> FastAPI:
     def ui_home() -> FileResponse:
         return FileResponse(_UI_DIR / "home.html", headers={"Cache-Control": "no-cache"})
 
+    @app.get("/home-hero", include_in_schema=False)
+    def ui_home_hero() -> FileResponse:
+        return FileResponse(_UI_DIR / "BankSym Hero.html", headers={"Cache-Control": "no-cache"})
+
     @app.get("/banksym.png", include_in_schema=False)
     def ui_banksym_png() -> FileResponse:
         return FileResponse(_UI_DIR / "banksym.png")

@@ -52,6 +52,12 @@ def test_full_flow(client: TestClient):
     # Transactions are visible.
     txns = client.get(f"/banks/{bank_id}/accounts/{account['id']}/transactions").json()
     assert len(txns) == gen.json()["entries_booked"]
+    sample = next((t for t in txns if t.get("category") != "income"), txns[0])
+    assert sample["merchant_name"]
+    assert sample["category"]
+    assert sample["payment_reference"]
+    assert sample["location"]
+    assert sample["channel"]
 
 
 def test_tenant_isolation_via_api(client: TestClient):

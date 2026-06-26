@@ -14,6 +14,7 @@ class BankBranding:
     display_name: str
     logo_url: str | None = None
     primary_color: str = "#0B5FFF"
+    secondary_color: str = "#F79E1B"
 
 
 @dataclass(slots=True)
@@ -42,6 +43,13 @@ class Bank:
     locale: str = "en"
     base_currency: str = "EUR"
     supported_currencies: list[str] = field(default_factory=list)
+    supported_languages: list[str] = field(default_factory=list)
+    supported_customer_types: list[str] = field(default_factory=list)
+    open_banking_enabled: bool = False
+    card_products: list[dict] = field(default_factory=list)
+    current_account_products: list[dict] = field(default_factory=list)
+    savings_account_products: list[dict] = field(default_factory=list)
+    loan_products: list[dict] = field(default_factory=list)
     enabled_protocols: list[str] = field(default_factory=list)
     capabilities: CapabilitySelection = field(default_factory=CapabilitySelection)
     id: str = field(default_factory=lambda: new_id("bank_"))
