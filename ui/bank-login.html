@@ -8,6 +8,7 @@
   <style>
     :root {
       --brand: #0B5FFF;
+      --brand-secondary: #ff5f00;
       --on-brand: #ffffff;
       --bg: #eef1f6;
       --surface: #ffffff;
@@ -28,22 +29,22 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
     }
-    .topbar { background: var(--brand); color: var(--on-brand, #fff); padding: 16px 28px; display: flex; align-items: center; gap: 12px; }
+    .topbar { background: linear-gradient(90deg, var(--brand), var(--brand-secondary)); color: var(--on-brand, #fff); padding: 16px 28px; display: flex; align-items: center; gap: 12px; }
     .topbar .name { font-weight: 700; font-size: 16px; letter-spacing: -.01em; }
     .topbar .tag { margin-left: auto; font-size: 12px; opacity: .85; }
     main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 28px; }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 400px; padding: 28px; box-shadow: 0 10px 30px rgba(16,24,40,.10); border-top: 4px solid var(--brand); }
-    .brand-logo { display: flex; align-items: center; justify-content: center; text-align: center; margin: 0 auto 18px; padding: 16px 24px; min-height: 60px; max-width: 320px; border-radius: 14px; background: var(--brand); color: var(--on-brand, #fff); font-weight: 700; font-size: 22px; letter-spacing: -.01em; line-height: 1.15; word-break: break-word; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 400px; padding: 28px; box-shadow: 0 10px 30px rgba(16,24,40,.10); border-top: 4px solid var(--brand-secondary); }
+    .brand-logo { display: flex; align-items: center; justify-content: center; text-align: center; margin: 0 auto 18px; padding: 16px 24px; min-height: 60px; max-width: 320px; border-radius: 14px; background: linear-gradient(135deg, var(--brand), var(--brand-secondary)); color: var(--on-brand, #fff); font-weight: 700; font-size: 22px; letter-spacing: -.01em; line-height: 1.15; word-break: break-word; }
     .card h1 { font-size: 19px; margin: 0 0 4px; letter-spacing: -.01em; }
     .card .lead { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
     .consent { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 12.5px; color: var(--muted); margin-bottom: 18px; }
     .consent strong { color: var(--text); }
-    .consent .scope { margin-top: 6px; display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: #fff; border: 1px solid var(--border); color: var(--text); }
+    .consent .scope { margin-top: 6px; display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 10%, #fff), color-mix(in srgb, var(--brand-secondary) 10%, #fff)); border: 1px solid color-mix(in srgb, var(--brand-secondary) 20%, var(--border)); color: var(--text); }
     label { display: block; font-size: 12px; font-weight: 600; margin: 12px 0 5px; }
     input { width: 100%; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; font-size: 14px; transition: border-color .15s, box-shadow .15s; }
-    input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent); }
-    button { width: 100%; margin-top: 20px; padding: 12px 16px; background: var(--brand); color: var(--on-brand, #fff); border: none; border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; transition: filter .15s; }
-    button:hover { filter: brightness(.94); }
+    input:focus { outline: none; border-color: var(--brand-secondary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-secondary) 18%, transparent); }
+    button { width: 100%; margin-top: 20px; padding: 12px 16px; background: linear-gradient(135deg, var(--brand), var(--brand-secondary)); color: var(--on-brand, #fff); border: none; border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; transition: filter .15s, box-shadow .15s; }
+    button:hover { filter: brightness(.94); box-shadow: 0 2px 8px color-mix(in srgb, var(--brand-secondary) 28%, transparent); }
     button:disabled { opacity: .6; cursor: not-allowed; }
     .error { display: none; margin-top: 14px; background: #fef3f2; border: 1px solid #fecdca; color: var(--danger); border-radius: 9px; padding: 10px 12px; font-size: 12.5px; }
     .error.show { display: block; }
@@ -57,14 +58,14 @@
     .link-btn:hover { filter: none; text-decoration: underline; }
     .acct-list { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow: auto; padding: 2px; }
     .acct { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: border-color .15s, background .15s; }
-    .acct:hover { border-color: color-mix(in srgb, var(--brand) 40%, var(--border)); }
-    .acct.checked { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 6%, var(--surface)); }
-    .acct input { width: 18px; height: 18px; flex: none; accent-color: var(--brand); cursor: pointer; }
+    .acct:hover { border-color: color-mix(in srgb, var(--brand-secondary) 40%, var(--border)); background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 4%, var(--surface)), color-mix(in srgb, var(--brand-secondary) 4%, var(--surface))); }
+    .acct.checked { border-color: var(--brand-secondary); background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 6%, var(--surface)), color-mix(in srgb, var(--brand-secondary) 6%, var(--surface))); }
+    .acct input { width: 18px; height: 18px; flex: none; accent-color: var(--brand-secondary); cursor: pointer; }
     .acct .info { flex: 1; min-width: 0; }
     .acct .a-name { font-weight: 600; font-size: 13.5px; }
     .acct .a-meta { color: var(--muted); font-size: 11.5px; margin-top: 2px; word-break: break-all; }
     .acct .a-bal { font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .a-type { display: inline-block; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--brand) 10%, #fff); border: 1px solid color-mix(in srgb, var(--brand) 25%, var(--border)); color: color-mix(in srgb, var(--brand) 70%, var(--text)); margin-right: 6px; }
+    .a-type { display: inline-block; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; padding: 1px 7px; border-radius: 999px; background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 10%, #fff), color-mix(in srgb, var(--brand-secondary) 10%, #fff)); border: 1px solid color-mix(in srgb, var(--brand-secondary) 25%, var(--border)); color: color-mix(in srgb, var(--brand) 70%, var(--text)); margin-right: 6px; }
     .step-back { background: none; border: 1px solid var(--border); color: var(--text); width: auto; margin: 14px auto 0; display: block; padding: 8px 14px; font-size: 12.5px; font-weight: 600; }
     .step-back:hover { filter: none; background: var(--bg); }
   </style>
@@ -153,7 +154,7 @@
         back: "Back", selectedCount: "{c} of {t} selected",
         noAccounts: "You have no shareable accounts at this bank.",
         typeCurrent: "Current", typeSavings: "Savings", typeCredit: "Credit card", typeLoan: "Loan",
-        errAuth: "Authentication failed", errNetwork: "Network error contacting the bank.",
+        errAuth: "Authentication failed", errInvalidCreds: "Incorrect username or password.", errNetwork: "Network error contacting the bank.",
         errAuthz: "Authorisation failed",
       },
       de: {
@@ -172,7 +173,7 @@
         back: "Zur\u00fcck", selectedCount: "{c} von {t} ausgew\u00e4hlt",
         noAccounts: "Sie haben keine teilbaren Konten bei dieser Bank.",
         typeCurrent: "Girokonto", typeSavings: "Sparkonto", typeCredit: "Kreditkarte", typeLoan: "Darlehen",
-        errAuth: "Authentifizierung fehlgeschlagen", errNetwork: "Netzwerkfehler bei der Verbindung zur Bank.",
+        errAuth: "Authentifizierung fehlgeschlagen", errInvalidCreds: "Falscher Benutzername oder falsches Passwort.", errNetwork: "Netzwerkfehler bei der Verbindung zur Bank.",
         errAuthz: "Autorisierung fehlgeschlagen",
       },
       es: {
@@ -191,7 +192,7 @@
         back: "Atr\u00e1s", selectedCount: "{c} de {t} seleccionadas",
         noAccounts: "No tiene cuentas que pueda compartir en este banco.",
         typeCurrent: "Cuenta corriente", typeSavings: "Cuenta de ahorro", typeCredit: "Tarjeta de cr\u00e9dito", typeLoan: "Pr\u00e9stamo",
-        errAuth: "Error de autenticaci\u00f3n", errNetwork: "Error de red al contactar con el banco.",
+        errAuth: "Error de autenticaci\u00f3n", errInvalidCreds: "Usuario o contrase\u00f1a incorrectos.", errNetwork: "Error de red al contactar con el banco.",
         errAuthz: "Error de autorizaci\u00f3n",
       },
       fr: {
@@ -210,7 +211,7 @@
         back: "Retour", selectedCount: "{c} sur {t} s\u00e9lectionn\u00e9s",
         noAccounts: "Vous n'avez aucun compte partageable dans cette banque.",
         typeCurrent: "Compte courant", typeSavings: "Compte d'\u00e9pargne", typeCredit: "Carte de cr\u00e9dit", typeLoan: "Pr\u00eat",
-        errAuth: "\u00c9chec de l'authentification", errNetwork: "Erreur r\u00e9seau lors de la connexion \u00e0 la banque.",
+        errAuth: "\u00c9chec de l'authentification", errInvalidCreds: "Nom d'utilisateur ou mot de passe incorrect.", errNetwork: "Erreur r\u00e9seau lors de la connexion \u00e0 la banque.",
         errAuthz: "\u00c9chec de l'autorisation",
       },
       nl: {
@@ -229,8 +230,46 @@
         back: "Terug", selectedCount: "{c} van {t} geselecteerd",
         noAccounts: "U heeft geen deelbare rekeningen bij deze bank.",
         typeCurrent: "Betaalrekening", typeSavings: "Spaarrekening", typeCredit: "Creditcard", typeLoan: "Lening",
-        errAuth: "Authenticatie mislukt", errNetwork: "Netwerkfout bij het verbinden met de bank.",
+        errAuth: "Authenticatie mislukt", errInvalidCreds: "Onjuiste gebruikersnaam of wachtwoord.", errNetwork: "Netwerkfout bij het verbinden met de bank.",
         errAuthz: "Autorisatie mislukt",
+      },
+      pt: {
+        title: "Entrar", secureTag: "Entrada segura",
+        authTitle: "Inicie sessão para autorizar",
+        authLead: "Um provedor terceiro está a solicitar acesso às informações da sua conta.",
+        consentLabel: "Referência do consentimento", scopeDefault: "Acesso à informação da conta",
+        usernameLabel: "Utilizador do banco online", passwordLabel: "Palavra-passe",
+        credHint: "As credenciais de demonstração vêm pré-preenchidas. O terceiro nunca as vê — autentica-se diretamente no seu banco.",
+        authBtn: "Autenticar", authBtnBusy: "A autenticar…",
+        secureNote: "🔒 A autenticação é realizada na própria página do banco.",
+        accountsTitle: "Escolha as contas a partilhar",
+        accountsLead: "Selecione as contas a que o terceiro pode aceder. Apenas as contas assinaladas serão partilhadas.",
+        selectAll: "Selecionar tudo", clearAll: "Limpar tudo",
+        grantBtn: "Permitir acesso às contas selecionadas", grantBtnBusy: "A conceder acesso…",
+        back: "Voltar", selectedCount: "{c} de {t} selecionadas",
+        noAccounts: "Não tem contas partilháveis neste banco.",
+        typeCurrent: "Conta à ordem", typeSavings: "Conta poupança", typeCredit: "Cartão de crédito", typeLoan: "Empréstimo",
+        errAuth: "Falha na autenticação", errInvalidCreds: "Nome de utilizador ou palavra-passe incorretos.", errNetwork: "Erro de rede ao contactar o banco.",
+        errAuthz: "Falha na autorização",
+      },
+      zh: {
+        title: "登录", secureTag: "安全登录",
+        authTitle: "登录以授权",
+        authLead: "第三方服务提供商正在请求访问您的账户信息。",
+        consentLabel: "同意编号", scopeDefault: "账户信息访问",
+        usernameLabel: "网上银行用户名", passwordLabel: "密码",
+        credHint: "演示凭据已预先填入。第三方永远不会看到这些凭据，您将直接在银行页面完成身份验证。",
+        authBtn: "验证身份", authBtnBusy: "正在验证…",
+        secureNote: "🔒 身份验证在银行自己的页面上完成。",
+        accountsTitle: "选择要共享的账户",
+        accountsLead: "请选择允许第三方访问的账户。只有您勾选的账户会被共享。",
+        selectAll: "全选", clearAll: "清除全部",
+        grantBtn: "允许访问所选账户", grantBtnBusy: "正在授权…",
+        back: "返回", selectedCount: "已选择 {c} / {t}",
+        noAccounts: "您在该银行没有可共享的账户。",
+        typeCurrent: "活期账户", typeSavings: "储蓄账户", typeCredit: "信用卡", typeLoan: "贷款",
+        errAuth: "身份验证失败", errInvalidCreds: "用户名或密码不正确。", errNetwork: "连接银行时发生网络错误。",
+        errAuthz: "授权失败",
       },
     };
     let T = I18N.en;
@@ -291,7 +330,8 @@
           document.documentElement.style.setProperty("--brand", bank.primary_color);
           document.documentElement.style.setProperty("--on-brand", textOnColor(bank.primary_color));
         }
-        // Logo is generated from the bank's name + brand colour (no uploaded image).
+        document.documentElement.style.setProperty("--brand-secondary", bank.secondary_color || bank.primary_color || "#ff5f00");
+        // Logo is generated from the bank's name + brand colours (no uploaded image).
         $("logo").textContent = bank.display_name || "Your bank";
       } catch (_) { /* branding is best-effort */ }
     }
@@ -369,7 +409,8 @@
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          showError(data.detail || `${T.errAuth} (HTTP ${res.status})`);
+          // Always show the localized error string — never surface the raw English backend detail.
+          showError(res.status === 401 ? T.errInvalidCreds : (T.errAuth + ` (HTTP ${res.status})`));
           btn.disabled = false;
           btn.textContent = T.authBtn;
           return;
@@ -417,7 +458,7 @@
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          showError2(data.detail || `${T.errAuthz} (HTTP ${res.status})`);
+          showError2(res.status === 401 ? T.errAuth : T.errAuthz);
           btn.disabled = false;
           btn.textContent = T.grantBtn;
           return;

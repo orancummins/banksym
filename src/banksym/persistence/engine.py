@@ -39,7 +39,17 @@ def init_db(engine: Engine) -> None:
 # Newly added nullable columns that may be absent from pre-existing databases. ``create_all`` only
 # creates missing tables, never new columns, so we add them in-place to keep existing data.
 _ADDED_COLUMNS: dict[str, dict[str, str]] = {
-    "banks": {"supported_currencies": "TEXT"},
+    "banks": {
+        "secondary_color": "VARCHAR",
+        "supported_currencies": "TEXT",
+        "supported_languages": "TEXT",
+        "supported_customer_types": "TEXT",
+        "open_banking_enabled": "BOOLEAN DEFAULT 0",
+        "card_products": "TEXT",
+        "current_account_products": "TEXT",
+        "savings_account_products": "TEXT",
+        "loan_products": "TEXT",
+    },
     "customers": {"address": "VARCHAR", "source": "VARCHAR DEFAULT 'manual'"},
     "accounts": {"account_metadata": "TEXT"},
 }

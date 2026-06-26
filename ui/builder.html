@@ -8,7 +8,8 @@
   <style>
     :root {
       --on-brand: #ffffff;
-      --brand-link: #067647;
+      --brand-link: #eb001b;
+      --brand-secondary: #eb001b;
       --bg: #f6f8fb;
       --surface: #ffffff;
       --border: #e3e8ee;
@@ -46,19 +47,24 @@
     .panel-head { margin: 0 0 20px; }
     .panel-head h2 { margin: 0; font-size: 16px; font-weight: 650; letter-spacing: -.01em; color: var(--text); text-transform: none; }
     .panel-head p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+    .banks-link { color: var(--brand, #067647); font-weight: 600; text-decoration: none; white-space: nowrap; }
+    .banks-link:hover { text-decoration: underline; }
 
     /* Top zone: preview card + form */
     .builder-top { display: grid; grid-template-columns: 240px 1fr; gap: 20px; align-items: start; margin-bottom: 20px; }
     @media (max-width: 760px) { .builder-top { grid-template-columns: 1fr; } .preview-card { position: static; } }
 
     .preview-card { position: sticky; top: 84px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; box-shadow: var(--shadow); text-align: center; overflow: hidden; }
-    .preview-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 84px; background: linear-gradient(135deg, var(--brand, #067647), color-mix(in srgb, var(--brand, #067647) 60%, #000)); }
-    .preview-logo { position: relative; display: flex; align-items: center; justify-content: center; min-height: 64px; margin: 18px auto 0; padding: 12px 18px; max-width: 220px; border-radius: 14px; background: var(--brand, #067647); color: var(--on-brand, #fff); font-weight: 700; font-size: 19px; letter-spacing: -.01em; line-height: 1.15; word-break: break-word; box-shadow: 0 8px 22px color-mix(in srgb, var(--brand, #067647) 30%, transparent); }
+    .preview-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 84px; background: linear-gradient(135deg, var(--brand, #000000), var(--brand-secondary, #eb001b)); }
+    .preview-logo { position: relative; display: flex; align-items: center; justify-content: center; min-height: 64px; margin: 18px auto 0; padding: 12px 18px; max-width: 220px; border-radius: 14px; background: linear-gradient(135deg, var(--brand, #000000), var(--brand-secondary, #eb001b)); color: var(--on-brand, #fff); font-weight: 700; font-size: 19px; letter-spacing: -.01em; line-height: 1.15; word-break: break-word; box-shadow: 0 8px 22px color-mix(in srgb, var(--brand-secondary, #eb001b) 24%, transparent); }
+    .preview-logo.with-image { padding: 0; overflow: hidden; }
+    .preview-logo-img { width: 100%; height: 100%; min-height: 64px; object-fit: cover; display: block; }
+    .preview-logo-text { padding: 12px 18px; text-align: center; }
     .preview-name { margin-top: 16px; font-size: 16px; font-weight: 650; letter-spacing: -.01em; }
     .preview-loc { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; color: var(--muted); font-size: 13px; }
     .preview-loc .flag { width: 22px; height: 15px; border-radius: 2px; object-fit: cover; box-shadow: 0 0 0 1px rgba(0,0,0,.12); }
     .preview-tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 16px; }
-    .preview-tags span { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: color-mix(in srgb, var(--brand, #067647) 9%, var(--surface)); border: 1px solid color-mix(in srgb, var(--brand, #067647) 22%, var(--border)); color: color-mix(in srgb, var(--brand, #067647) 72%, var(--text)); }
+    .preview-tags span { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: linear-gradient(135deg, color-mix(in srgb, var(--brand, #000000) 10%, var(--surface)), color-mix(in srgb, var(--brand-secondary, #eb001b) 10%, var(--surface))); border: 1px solid color-mix(in srgb, var(--brand-secondary, #eb001b) 22%, var(--border)); color: color-mix(in srgb, var(--brand, #000000) 72%, var(--text)); }
 
     .form-section { padding: 18px 0; border-top: 1px solid var(--border); }
     .form-section:first-of-type { padding-top: 2px; border-top: none; }
@@ -71,11 +77,24 @@
       transition: border-color .15s, box-shadow .15s;
     }
     select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23697386' d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; cursor: pointer; }
-    input:focus, select:focus { outline: none; border-color: var(--brand, #067647); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand, #067647) 16%, transparent); }
-    input[type=color] { width: 46px; height: 40px; padding: 4px; cursor: pointer; flex: none; }
-    .color-row { display: flex; align-items: center; gap: 12px; }
-    .color-row .field-hint { margin: 0; }
-    .color-hex { width: 92px; flex: none; font-variant-numeric: tabular-nums; text-transform: uppercase; }
+    input:focus, select:focus { outline: none; border-color: var(--brand-secondary, #eb001b); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-secondary, #eb001b) 18%, transparent); }
+    input[type=color] { width: 100%; height: 40px; padding: 4px; cursor: pointer; }
+    .color-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .color-grid .field-hint { margin-top: 4px; }
+    .identity-row {
+      display: grid;
+      grid-template-columns: minmax(160px, 1fr) 64px 64px auto;
+      align-items: end;
+      gap: 14px;
+    }
+    .identity-row .id-field { min-width: 0; display: flex; flex-direction: column; }
+    .identity-row .id-field > label { margin: 0 0 6px; }
+    .identity-row input { height: 40px; }
+    .identity-row input[type="color"] { width: 64px; padding: 4px; }
+    .identity-row .id-logo { min-width: 0; }
+    .identity-row .logo-picker-row { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; min-width: 0; height: 40px; }
+    .logo-picker button { width: auto; margin-top: 0; padding-inline: 14px; white-space: nowrap; }
+    .logo-filename { color: var(--muted); font-size: 12px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .flag-row { display: flex; align-items: center; gap: 10px; }
     .flag-row .flag { width: 32px; height: 22px; border-radius: 3px; object-fit: cover; box-shadow: 0 0 0 1px rgba(0,0,0,.12); flex: none; display: block; }
     .flag-row select { flex: 1; }
@@ -84,17 +103,53 @@
     input[readonly] { background: #f8fafc; color: #475467; cursor: default; }
     .pick-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
     .pick-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); background: #f8fafc; font-size: 12px; font-weight: 600; color: #344054; cursor: pointer; user-select: none; }
-    .pick-chip.active { background: color-mix(in srgb, var(--brand, #067647) 10%, #fff); border-color: color-mix(in srgb, var(--brand, #067647) 36%, var(--border)); color: color-mix(in srgb, var(--brand, #067647) 80%, #1f2937); }
+    .pick-chip.active { background: linear-gradient(135deg, color-mix(in srgb, var(--brand, #000000) 10%, #fff), color-mix(in srgb, var(--brand-secondary, #eb001b) 10%, #fff)); border-color: color-mix(in srgb, var(--brand-secondary, #eb001b) 32%, var(--border)); color: color-mix(in srgb, var(--brand, #000000) 80%, #1f2937); }
     .pick-chip.locked { opacity: .8; cursor: default; }
-    .pick-chip input { width: auto; margin: 0; accent-color: var(--brand, #067647); cursor: pointer; }
+    .pick-chip input { width: auto; margin: 0; accent-color: var(--brand-secondary, #eb001b); cursor: pointer; }
     .pick-chip.locked input { cursor: default; }
+    .pick-summary { margin-top: 10px; padding: 10px 12px; border: 1px dashed var(--border); border-radius: 10px; background: color-mix(in srgb, var(--brand, #067647) 4%, #fff); }
+    .pick-summary .sum-title { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    .pick-summary .sum-row { font-size: 12px; color: var(--text); line-height: 1.45; }
+    .pick-summary .sum-row b { font-weight: 700; }
+    .builder-split { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(280px, 1fr); gap: 16px; align-items: start; }
+    .builder-editor { border: 1px solid var(--border); border-radius: 12px; padding: 14px; background: linear-gradient(180deg, #fcfdff 0%, #f8fafc 100%); }
+    .builder-editor h3 { margin: 0 0 8px; font-size: 13px; font-weight: 700; letter-spacing: -.01em; }
+    .builder-editor p { margin: 0 0 10px; color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .builder-editor .editor-row { margin-top: 10px; }
+    .builder-editor .editor-row:first-of-type { margin-top: 0; }
+    .builder-editor .editor-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    .builder-editor .editor-props { display: flex; flex-wrap: wrap; gap: 8px; }
+    .builder-editor .editor-prop { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: #fff; border: 1px solid var(--border); font-size: 12px; }
+    .builder-editor .editor-prop input { width: auto; margin: 0; }
+    .editor-save { margin-top: 14px; }
+    .editor-save button { width: auto; margin: 0; opacity: .7; cursor: not-allowed; }
+    .editor-save .field-hint { margin-top: 8px; }
+    .protocol-stack { display: grid; grid-template-rows: auto auto; gap: 8px; align-content: start; }
+    .toggle-inline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      min-height: 44px;
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface);
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+    .toggle-inline input { width: auto; margin: 0; flex: none; }
+    @media (max-width: 960px) { .builder-split { grid-template-columns: 1fr; } }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .row > div { min-width: 0; }
     button {
-      margin-top: 22px; width: 100%; padding: 12px 18px; background: var(--brand, #067647); color: var(--on-brand, #fff);
+      margin-top: 22px; width: 100%; padding: 12px 18px; background: linear-gradient(135deg, var(--brand, #000000), var(--brand-secondary, #eb001b)); color: var(--on-brand, #fff);
       border: none; border-radius: 10px; font-size: 14.5px; font-weight: 650; cursor: pointer;
       transition: filter .15s, box-shadow .15s, transform .05s;
     }
-    button:hover { filter: brightness(.95); box-shadow: 0 6px 18px color-mix(in srgb, var(--brand, #067647) 30%, transparent); }
+    button:hover { filter: brightness(.96); box-shadow: 0 6px 18px color-mix(in srgb, var(--brand-secondary, #eb001b) 28%, transparent); }
     button:active { transform: translateY(1px); }
     h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin-top: 0; }
     .form-msg { margin-top: 16px; padding: 12px 14px; border-radius: 10px; font-size: 13.5px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
@@ -116,7 +171,7 @@
     .bank.selected { border-color: var(--bank-color, #067647); box-shadow: 0 0 0 2px color-mix(in srgb, var(--bank-color, #067647) 22%, transparent); }
     .bank-header {
       height: 10px; flex: none;
-      background: var(--bank-color, #067647);
+      background: linear-gradient(90deg, var(--bank-color, #000000), var(--bank-secondary-color, #eb001b));
     }
     .bank-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
     .bank-title { display: flex; align-items: center; gap: 10px; }
@@ -218,7 +273,7 @@
   <main>
     <div class="builder-top">
       <aside class="preview-card">
-        <div class="preview-logo" id="logo-preview">Bank Of Banksy</div>
+        <div class="preview-logo" id="logo-preview"><span class="preview-logo-text" id="logo-preview-text">Bank Of Banksy</span></div>
         <div class="preview-name" id="preview-name">Bank Of Banksy</div>
         <div class="preview-loc">
           <img class="flag" id="preview-flag" alt="" />
@@ -230,19 +285,34 @@
       <div class="panel">
         <div class="panel-head">
           <h2>Create a Bank</h2>
-          <p>Spin up a new tenant with its own branding and capabilities.</p>
+          <p>Spin up a new tenant with its own branding and capabilities. <a href="#existing-banks" class="banks-link">View existing banks ↓</a></p>
         </div>
         <form id="form">
           <div class="form-section">
             <div class="section-title">Identity</div>
-            <label>Display Name</label>
-            <input name="display_name" value="Bank Of Banksy" required />
-            <label>Primary Colour</label>
-            <div class="color-row">
-              <input name="primary_color" type="color" value="#067647" id="primary_color" />
-              <input class="color-hex" id="primary_color_hex" value="#067647" aria-label="Primary colour hex" />
-              <span class="field-hint">The logo is generated from the name and this colour.</span>
+            <div class="identity-row">
+              <div class="id-field id-name">
+                <label>Name</label>
+                <input name="display_name" value="Bank Of Banksy" required />
+              </div>
+              <div class="id-field id-color">
+                <label>Primary</label>
+                <input name="primary_color" type="color" value="#000000" id="primary_color" />
+              </div>
+              <div class="id-field id-color">
+                <label>Secondary</label>
+                <input name="secondary_color" type="color" value="#eb001b" id="secondary_color" />
+              </div>
+              <div class="id-field id-logo logo-picker">
+                <label>Logo</label>
+                <div class="logo-picker-row">
+                  <button type="button" id="logo-select-button">Select Logo</button>
+                  <span class="logo-filename" id="logo-filename">No file selected</span>
+                </div>
+                <input type="file" id="logo-file" accept="image/*" hidden />
+              </div>
             </div>
+            <p class="field-hint">Primary anchors the brand; secondary drives accents and gradients. Logo is preview-only and stays in the browser.</p>
           </div>
 
           <div class="form-section">
@@ -256,23 +326,15 @@
                 </div>
               </div>
               <div>
-                <label>Base Currency</label>
-                <input name="base_currency" id="base_currency" value="EUR" readonly />
-                <p class="field-hint">Fixed by country.</p>
+                <label>Language</label>
+                <select name="locale" id="locale"></select>
+                <p class="field-hint">Default language.</p>
               </div>
             </div>
             <label>Supported Currencies</label>
             <div id="supported-currency-list" class="pick-list"></div>
             <input type="hidden" name="supported_currencies" id="supported_currencies" value="EUR" />
-            <p class="field-hint">Defaults to the base currency. Add more currencies as needed.</p>
-            <div class="row">
-              <div>
-                <label>Language</label>
-                <select name="locale" id="locale"></select>
-                <p class="field-hint">Default language.</p>
-              </div>
-              <div></div>
-            </div>
+            <p class="field-hint">Defaults to the country base currency. Add more currencies as needed.</p>
             <label>Supported Languages</label>
             <div id="supported-language-list" class="pick-list"></div>
             <input type="hidden" id="supported_languages" value="en" />
@@ -280,11 +342,80 @@
           </div>
 
           <div class="form-section">
-            <div class="section-title">Capabilities</div>
+            <div class="section-title">Card Product Builder</div>
+            <div class="builder-split">
+              <div>
+                <label>Supported Card Products</label>
+                <div id="card-product-list" class="pick-list"></div>
+                <div id="card-product-summary" class="pick-summary"></div>
+                <input type="hidden" id="card_products" name="card_products" value="[]" />
+                <p class="field-hint">Select card products this bank offers. Console account creation will use these profiles.</p>
+              </div>
+              <div class="builder-editor" id="card-editor"></div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">Current (Checking) Account Builder</div>
+            <div class="builder-split">
+              <div>
+                <label>Current Account Products</label>
+                <div id="current-account-product-list" class="pick-list"></div>
+                <div id="current-account-summary" class="pick-summary"></div>
+                <input type="hidden" id="current_account_products" name="current_account_products" value="[]" />
+                <p class="field-hint">In US locale, Current is shown as Checking in the Console.</p>
+              </div>
+              <div class="builder-editor" id="current-editor"></div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">Savings Account Builder</div>
+            <div class="builder-split">
+              <div>
+                <label>Savings Account Products</label>
+                <div id="savings-account-product-list" class="pick-list"></div>
+                <div id="savings-account-summary" class="pick-summary"></div>
+                <input type="hidden" id="savings_account_products" name="savings_account_products" value="[]" />
+                <p class="field-hint">Preconfigured labels can vary by supported language.</p>
+              </div>
+              <div class="builder-editor" id="savings-editor"></div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">Loan Product Builder (Illustrative)</div>
+            <div class="builder-split">
+              <div>
+                <label>Illustrative Loan Products</label>
+                <div id="loan-product-list" class="pick-list"></div>
+                <div id="loan-product-summary" class="pick-summary"></div>
+                <input type="hidden" id="loan_products" name="loan_products" value="[]" />
+                <p class="field-hint">This section is illustrative only and not functionally enforced on loan account creation.</p>
+              </div>
+              <div class="builder-editor" id="loan-editor"></div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">Supported Customer Types</div>
+            <label>Supported Customer Types</label>
+            <div id="customer-type-list" class="pick-list"></div>
+            <div id="customer-type-summary" class="pick-summary"></div>
+            <input type="hidden" id="supported_customer_types" name="supported_customer_types" value="" />
+            <p class="field-hint">Customer generation and batch weighting are limited to the selected retail customer types.</p>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">Mastercard Simulation Adapters</div>
             <div class="row">
               <div>
-                <label>API</label>
-                <select name="protocol" id="protocol"></select>
+                <label>Open Banking Protocol</label>
+                <div class="protocol-stack">
+                  <label class="toggle-inline"><input type="checkbox" id="open_banking_enabled" /> Enable Open Banking APIs</label>
+                  <select name="protocol" id="protocol"></select>
+                </div>
+                <p class="field-hint">FDX is shown for illustration but remains disabled in this simulation.</p>
               </div>
               <div>
                 <label>Transaction Generator</label>
@@ -307,14 +438,6 @@
         </form>
         <div id="result" class="form-msg" style="display:none"></div>
       </div>
-    </div>
-
-    <div class="panel banks-panel">
-      <div class="panel-head">
-        <h2>Existing Banks</h2>
-        <p>Tenants running in this instance. Click a card to select it for the Bank Console.</p>
-      </div>
-      <div class="banks" id="banks"></div>
     </div>
 
     <div class="panel batch-panel">
@@ -342,13 +465,16 @@
           </div>
         </div>
         <div>
-          <label>Accounts Per Customer</label>
-          <input id="batch-accts-per" type="number" min="1" max="5" value="1" />
+          <label>Account Creation</label>
+          <div class="pick-summary" style="margin-top:0">
+            <div class="sum-title">Automatic</div>
+            <div class="sum-row">Account counts are derived from the selected customer-type and account-profile weightings.</div>
+          </div>
         </div>
       </div>
       <div class="form-section">
         <div class="section-title between">
-          <span>Persona Mix</span>
+          <span>Customer Type Mix</span>
           <span class="chip-row" id="persona-presets" style="margin-top:0">
             <button type="button" class="mini-chip" data-preset="balanced">Balanced</button>
             <button type="button" class="mini-chip" data-preset="retail">Retail</button>
@@ -374,6 +500,14 @@
       </div>
       <div class="batch-result" id="batch-result"></div>
     </div>
+
+    <div class="panel banks-panel" id="existing-banks">
+      <div class="panel-head">
+        <h2>Existing Banks</h2>
+        <p>Tenants running in this instance. Click a card to select it for the Bank Console.</p>
+      </div>
+      <div class="banks" id="banks"></div>
+    </div>
   </main>
 
   <script>
@@ -394,7 +528,15 @@
       US: "USD", CA: "CAD", BR: "BRL", CN: "CNY", ZA: "ZAR"
     };
     const SUPPORTED_CURRENCY_OPTIONS = ["EUR", "GBP", "USD", "CAD", "BRL", "CNY", "ZAR"];
+    const META = {
+      cardProducts: [],
+      currentAccountProducts: [],
+      savingsAccountProducts: [],
+      loanProducts: [],
+      customerTypes: [],
+    };
     let localeTouched = false;
+    let selectedLogoDataUrl = "";
     const flagUrl = (code) => `https://flagcdn.com/${(code || "").toLowerCase()}.svg`;
 
     function parseCurrencies(raw) {
@@ -422,8 +564,46 @@
       });
     }
 
+    function protocolLabel(id) {
+      return id === "berlin_group" ? "Berlin Group"
+        : id === "fdx" ? "FDX"
+        : id === "polishapi" ? "PolishAPI (coming soon)"
+        : id === "stet" ? "STET (coming soon)"
+        : id === "uk_open_banking" ? "UK Open Banking (coming soon)"
+        : id;
+    }
+
+    function renderProtocolOptions(selectedValue, enabled) {
+      const sel = document.getElementById("protocol");
+      sel.innerHTML = "";
+      sel.append(new Option("Select protocol", ""));
+      sel.append(new Option("Berlin Group", "berlin_group"));
+      const polishApi = new Option("PolishAPI (coming soon)", "polishapi");
+      polishApi.disabled = true;
+      sel.append(polishApi);
+      const stet = new Option("STET (coming soon)", "stet");
+      stet.disabled = true;
+      sel.append(stet);
+      const ukOpenBanking = new Option("UK Open Banking (coming soon)", "uk_open_banking");
+      ukOpenBanking.disabled = true;
+      sel.append(ukOpenBanking);
+      const fdx = new Option("FDX (coming soon)", "fdx");
+      fdx.disabled = true;
+      sel.append(fdx);
+      sel.value = enabled ? (selectedValue || "berlin_group") : "";
+      sel.disabled = !enabled;
+    }
+
     function supportedCurrencyChoices(base) {
       return uniqueValues([base, ...SUPPORTED_CURRENCY_OPTIONS]);
+    }
+
+    function baseCurrencyForCountry(country) {
+      return COUNTRY_BASE_CURRENCY[country] || "EUR";
+    }
+    function colourForBrand(color, fallback) {
+      const value = (color || fallback || "").trim();
+      return /^#[0-9a-fA-F]{6}$/.test(value) ? value : fallback;
     }
 
     function renderSupportedCurrencies(base, selected) {
@@ -481,8 +661,227 @@
       return selected;
     }
 
+    function renderMetaPickList(listId, inputId, options, selectedIds, formatter) {
+      const list = document.getElementById(listId);
+      const selected = new Set(selectedIds || []);
+      list.innerHTML = options.map((item) => {
+        const checked = selected.has(item.id) ? "checked" : "";
+        const label = formatter(item);
+        return `<label class="pick-chip${checked ? " active" : ""}" data-pick-item="${item.id}">`
+          + `<input type="checkbox" data-pick-id="${item.id}" ${checked} />${label}`
+          + `</label>`;
+      }).join("");
+      document.getElementById(inputId).value = JSON.stringify(options.filter((item) => selected.has(item.id)));
+    }
+
+    function selectedPickIds(listId) {
+      return [...document.querySelectorAll(`#${listId} input[data-pick-id]:checked`)].map((el) => el.dataset.pickId);
+    }
+
+    function collectSelectedObjects(options, ids) {
+      const set = new Set(ids);
+      return options.filter((item) => set.has(item.id));
+    }
+
+    function defaultCustomerTypeIds() {
+      return META.customerTypes
+        .map((item) => item.id)
+        .filter((id) => ["student", "gig_worker", "young_professional", "affluent_family", "retiree"].includes(id));
+    }
+
+    function renderProductBuilders(created) {
+      const chosen = created || {};
+      renderMetaPickList(
+        "card-product-list",
+        "card_products",
+        META.cardProducts,
+        (chosen.card_products || META.cardProducts).map((item) => item.id),
+        (item) => `${item.name} · ${String(item.scheme || "").toUpperCase()}`
+      );
+      renderMetaPickList(
+        "current-account-product-list",
+        "current_account_products",
+        META.currentAccountProducts,
+        (chosen.current_account_products || META.currentAccountProducts).map((item) => item.id),
+        (item) => item.name
+      );
+      renderMetaPickList(
+        "savings-account-product-list",
+        "savings_account_products",
+        META.savingsAccountProducts,
+        (chosen.savings_account_products || META.savingsAccountProducts).map((item) => item.id),
+        (item) => item.name
+      );
+      renderMetaPickList(
+        "loan-product-list",
+        "loan_products",
+        META.loanProducts,
+        (chosen.loan_products || META.loanProducts).map((item) => item.id),
+        (item) => `${item.name} (dummy)`
+      );
+      const selectedCustomerTypes = (chosen.supported_customer_types || defaultCustomerTypeIds());
+      renderMetaPickList(
+        "customer-type-list",
+        "supported_customer_types",
+        META.customerTypes,
+        selectedCustomerTypes,
+        (item) => item.label
+      );
+      document.getElementById("supported_customer_types").value = selectedCustomerTypes.join(",");
+      document.getElementById("open_banking_enabled").checked = !!chosen.open_banking_enabled;
+      renderProtocolOptions((chosen.enabled_protocols || [])[0] || "", !!chosen.open_banking_enabled);
+      updateBuilderSummaries();
+      renderIllustrativeEditors();
+    }
+
+    function propLabel(key) {
+      return String(key || "")
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (m) => m.toUpperCase());
+    }
+
+    const CARD_TYPE_OPTIONS = [
+      { value: "credit", label: "Credit" },
+      { value: "debit", label: "Debit" },
+      { value: "prepaid", label: "Prepaid" },
+      { value: "commercial", label: "Commercial" },
+    ];
+
+    function renderIllustrativeEditor(elId, title, note, options, valueFormatter) {
+      const el = document.getElementById(elId);
+      const first = options[0] || null;
+      if (!first) {
+        el.innerHTML = `<h3>${title}</h3><p>${note}</p><div class="sum-row">No templates loaded.</div>`;
+        return;
+      }
+      const props = valueFormatter(first);
+      const optionHtml = options.map((item) => `<option value="${item.id}">${item.name}</option>`).join("");
+      const cardTypeHtml = elId === "card-editor"
+        ? `
+        <div class="editor-row">
+          <span class="editor-label">Card Type</span>
+          <select data-editor-card-type="${elId}">${CARD_TYPE_OPTIONS.map((item) => `<option value="${item.value}">${item.label}</option>`).join("")}</select>
+        </div>`
+        : "";
+      el.innerHTML = `
+        <h3>${title}</h3>
+        <p>${note}</p>
+        <div class="editor-row">
+          <span class="editor-label">Template</span>
+          <select data-editor-select="${elId}">${optionHtml}</select>
+        </div>
+        <div class="editor-row">
+          <span class="editor-label">Save As Name</span>
+          <input data-editor-name="${elId}" value="${first.name}" />
+        </div>
+        ${cardTypeHtml}
+        <div class="editor-row">
+          <span class="editor-label">Properties</span>
+          <div class="editor-props" data-editor-props="${elId}">${props}</div>
+        </div>
+        <div class="editor-save">
+          <button type="button" disabled>Save Product</button>
+          <p class="field-hint">Illustrative only. This editor demonstrates how a product type would be configured.</p>
+        </div>`;
+      const select = el.querySelector(`[data-editor-select="${elId}"]`);
+      const name = el.querySelector(`[data-editor-name="${elId}"]`);
+      const propsEl = el.querySelector(`[data-editor-props="${elId}"]`);
+      const cardType = el.querySelector(`[data-editor-card-type="${elId}"]`);
+      if (cardType) {
+        cardType.value = first.card_type || "credit";
+      }
+      select.addEventListener("change", () => {
+        const item = options.find((option) => option.id === select.value) || first;
+        name.value = item.name;
+        propsEl.innerHTML = valueFormatter(item);
+        if (cardType) cardType.value = item.card_type || "credit";
+      });
+      if (cardType) {
+        cardType.addEventListener("change", () => {
+          const item = options.find((option) => option.id === select.value) || first;
+          item.card_type = cardType.value;
+        });
+      }
+    }
+
+    function renderIllustrativeEditors() {
+      renderIllustrativeEditor(
+        "card-editor",
+        "Edit Card Product",
+        "Select a card product, tweak the displayed properties, and name a variant to illustrate product creation.",
+        META.cardProducts,
+        (item) => {
+          const digital = (item.digital_properties || []).map((prop) => `<label class="editor-prop"><input type="checkbox" checked />${propLabel(prop)}</label>`).join("");
+          const general = Object.keys(item.properties || {}).map((key) => `<label class="editor-prop"><input type="checkbox" checked />${propLabel(key)}</label>`).join("");
+          return digital + general;
+        }
+      );
+      renderIllustrativeEditor(
+        "current-editor",
+        "Edit Current / Checking Product",
+        "Select a current account template and tweak which properties define the product.",
+        META.currentAccountProducts,
+        (item) => Object.keys(item.properties || {}).map((key) => `<label class="editor-prop"><input type="checkbox" checked />${propLabel(key)}</label>`).join("")
+      );
+      renderIllustrativeEditor(
+        "savings-editor",
+        "Edit Savings Product",
+        "Select a savings template and experiment with which features would make up the offering.",
+        META.savingsAccountProducts,
+        (item) => {
+          const segment = item.segment ? `<label class="editor-prop"><input type="checkbox" checked />${propLabel(item.segment)}</label>` : "";
+          return segment + Object.keys(item.properties || {}).map((key) => `<label class="editor-prop"><input type="checkbox" checked />${propLabel(key)}</label>`).join("");
+        }
+      );
+      renderIllustrativeEditor(
+        "loan-editor",
+        "Edit Loan Product",
+        "This remains non-functional, but shows how different loan products would be assembled from configurable fields.",
+        META.loanProducts,
+        (item) => (item.properties || []).map((key) => `<label class="editor-prop"><input type="checkbox" checked />${propLabel(key)}</label>`).join("")
+      );
+    }
+
+    function updateBuilderSummaries() {
+      const selectedCards = collectSelectedObjects(META.cardProducts, selectedPickIds("card-product-list"));
+      const selectedCurrent = collectSelectedObjects(META.currentAccountProducts, selectedPickIds("current-account-product-list"));
+      const selectedSavings = collectSelectedObjects(META.savingsAccountProducts, selectedPickIds("savings-account-product-list"));
+      const selectedLoans = collectSelectedObjects(META.loanProducts, selectedPickIds("loan-product-list"));
+      const selectedTypes = collectSelectedObjects(META.customerTypes, selectedPickIds("customer-type-list"));
+
+      document.getElementById("card-product-summary").innerHTML =
+        `<div class="sum-title">Selected</div>` +
+        (selectedCards.length
+          ? selectedCards.map((item) => `<div class="sum-row"><b>${item.name}</b> · ${(item.scheme || "").toUpperCase()} · ${(item.card_type || "").toUpperCase()}</div>`).join("")
+          : `<div class="sum-row">No card products selected.</div>`);
+
+      document.getElementById("current-account-summary").innerHTML =
+        `<div class="sum-title">Selected</div>` +
+        (selectedCurrent.length
+          ? selectedCurrent.map((item) => `<div class="sum-row"><b>${item.name}</b> · overdraft ${item.properties?.overdraft_allowed ? "enabled" : "disabled"}</div>`).join("")
+          : `<div class="sum-row">No current/checking products selected.</div>`);
+
+      document.getElementById("savings-account-summary").innerHTML =
+        `<div class="sum-title">Selected</div>` +
+        (selectedSavings.length
+          ? selectedSavings.map((item) => `<div class="sum-row"><b>${item.name}</b> · interest ${item.properties?.interest_rate ?? "n/a"}%</div>`).join("")
+          : `<div class="sum-row">No savings products selected.</div>`);
+
+      document.getElementById("loan-product-summary").innerHTML =
+        `<div class="sum-title">Selected</div>` +
+        (selectedLoans.length
+          ? selectedLoans.map((item) => `<div class="sum-row"><b>${item.name}</b> · illustrative</div>`).join("")
+          : `<div class="sum-row">No illustrative loan products selected.</div>`);
+
+      document.getElementById("customer-type-summary").innerHTML =
+        `<div class="sum-title">Selected</div>` +
+        (selectedTypes.length
+          ? selectedTypes.map((item) => `<div class="sum-row"><b>${item.label}</b></div>`).join("")
+          : `<div class="sum-row">No customer types selected.</div>`);
+    }
+
     function normalizeSupportedCurrencies(resetToBase = false) {
-      const base = (document.getElementById("base_currency").value || "EUR").toUpperCase();
+      const base = baseCurrencyForCountry(document.getElementById("country").value).toUpperCase();
       const input = document.getElementById("supported_currencies");
       const existing = resetToBase ? [] : parseCurrencies(input.value);
       const currencies = uniqueCurrencies([base, ...existing]);
@@ -493,8 +892,6 @@
 
     function syncBaseCurrencyToCountry() {
       const country = document.getElementById("country").value;
-      const base = COUNTRY_BASE_CURRENCY[country] || "EUR";
-      document.getElementById("base_currency").value = base;
       normalizeSupportedCurrencies(true);
       updatePreviewLoc();
     }
@@ -555,7 +952,18 @@
 
     async function loadMeta() {
       const caps = await (await fetch("/banks/_meta/capabilities")).json();
-      fill("protocol", caps.api || caps.protocol || [], true);
+      const [cardProducts, currentProducts, savingsProducts, loanProducts, customerTypes] = await Promise.all([
+        fetch("/banks/_meta/card-products").then((r) => r.json()),
+        fetch("/banks/_meta/current-account-products").then((r) => r.json()),
+        fetch("/banks/_meta/savings-account-products").then((r) => r.json()),
+        fetch("/banks/_meta/loan-products").then((r) => r.json()),
+        fetch("/banks/_meta/customer-types").then((r) => r.json()),
+      ]);
+      META.cardProducts = cardProducts || [];
+      META.currentAccountProducts = currentProducts || [];
+      META.savingsAccountProducts = savingsProducts || [];
+      META.loanProducts = loanProducts || [];
+      META.customerTypes = customerTypes || [];
       fill("txgen", caps.txgen);
       fill("settlement", caps.settlement);
       fill("auth", caps.auth);
@@ -565,6 +973,7 @@
       fillCountries(countries);
       fillLanguages();
       syncBaseCurrencyToCountry();
+      renderProductBuilders();
       updatePreviewTags();
     }
 
@@ -581,17 +990,23 @@
         div.className = "bank" + (b.id === selectedId ? " selected" : "");
         div.dataset.id = b.id;
         div.style.setProperty("--bank-color", b.primary_color);
+        div.style.setProperty("--bank-secondary-color", b.secondary_color || b.primary_color);
         div.style.setProperty("--bank-on-color", textOnColor(b.primary_color));
         div.title = "Select This Bank for the Bank Console";
         // Build capability tags
         const caps = b.capabilities || {};
         const apis = (b.enabled_protocols || []);
         const capTags = [
-          ...apis.map(a => `<span class="cap-tag api">${a}</span>`),
+          ...apis.map(a => `<span class="cap-tag api">${protocolLabel(a)}</span>`),
+          b.open_banking_enabled ? `<span class="cap-tag">open-banking</span>` : "",
           caps.txgen   ? `<span class="cap-tag">${caps.txgen}</span>`   : "",
           caps.settlement ? `<span class="cap-tag">${caps.settlement}</span>` : "",
           caps.auth    ? `<span class="cap-tag">${caps.auth}</span>`    : "",
           caps.sca     ? `<span class="cap-tag">${caps.sca}</span>`     : "",
+          b.card_products?.length ? `<span class="cap-tag">cards:${b.card_products.length}</span>` : "",
+          b.current_account_products?.length ? `<span class="cap-tag">current:${b.current_account_products.length}</span>` : "",
+          b.savings_account_products?.length ? `<span class="cap-tag">savings:${b.savings_account_products.length}</span>` : "",
+          b.supported_customer_types?.length ? `<span class="cap-tag">types:${b.supported_customer_types.length}</span>` : "",
         ].filter(Boolean).join("");
         const locParts = [b.country, b.base_currency, b.locale ? b.locale.toUpperCase() : null].filter(Boolean).join(" · ");
         div.innerHTML =
@@ -662,12 +1077,25 @@
       if (f.txgen.value) capabilities.txgen = f.txgen.value;
       if (f.settlement.value) capabilities.settlement = f.settlement.value;
       if (f.auth.value) capabilities.auth = f.auth.value;
+      const selectedCardIds = selectedPickIds("card-product-list");
+      const selectedCurrentIds = selectedPickIds("current-account-product-list");
+      const selectedSavingsIds = selectedPickIds("savings-account-product-list");
+      const selectedLoanIds = selectedPickIds("loan-product-list");
+      const selectedCustomerTypeIds = selectedPickIds("customer-type-list");
       const body = {
         display_name: f.display_name.value,
         country: f.country.value,
         locale: f.locale.value,
-        base_currency: f.base_currency.value,
+        base_currency: baseCurrencyForCountry(f.country.value),
+        secondary_color: f.secondary_color.value,
         supported_currencies: normalizeSupportedCurrencies(),
+        supported_languages: normalizeSupportedLanguages(),
+        supported_customer_types: selectedCustomerTypeIds,
+        open_banking_enabled: document.getElementById("open_banking_enabled").checked,
+        card_products: collectSelectedObjects(META.cardProducts, selectedCardIds),
+        current_account_products: collectSelectedObjects(META.currentAccountProducts, selectedCurrentIds),
+        savings_account_products: collectSelectedObjects(META.savingsAccountProducts, selectedSavingsIds),
+        loan_products: collectSelectedObjects(META.loanProducts, selectedLoanIds),
         logo_url: null,
         primary_color: f.primary_color.value,
         enabled_protocols: f.protocol.value ? [f.protocol.value] : [],
@@ -693,11 +1121,13 @@
         f.display_name.value = created.display_name;
         f.country.value = created.country;
         if (created.locale) { f.locale.value = created.locale; localeTouched = true; }
-        f.base_currency.value = created.base_currency;
         f.supported_currencies.value = (created.supported_currencies || [created.base_currency]).join(",");
         normalizeSupportedCurrencies();
+        document.getElementById("supported_languages").value = (created.supported_languages || [created.locale || "en"]).join(",");
         normalizeSupportedLanguages();
+        renderProductBuilders(created);
         f.primary_color.value = created.primary_color;
+        f.secondary_color.value = created.secondary_color || f.secondary_color.value;
         updateLogoPreview();
         updateCountryFlag();
       } else {
@@ -710,14 +1140,23 @@
     function updateLogoPreview() {
       const f = document.getElementById("form");
       const name = (f.display_name.value || "Bank").trim() || "Bank";
-      const color = f.primary_color.value;
-      document.documentElement.style.setProperty("--brand", color);
-      document.documentElement.style.setProperty("--on-brand", textOnColor(color));
-      document.documentElement.style.setProperty("--brand-link", linkColorForBrand(color));
-      document.getElementById("logo-preview").textContent = name;
+      const primary = colourForBrand(f.primary_color.value, "#000000");
+      const secondary = colourForBrand(f.secondary_color.value, "#eb001b");
+      document.documentElement.style.setProperty("--brand", primary);
+      document.documentElement.style.setProperty("--brand-secondary", secondary);
+      document.documentElement.style.setProperty("--on-brand", textOnColor(primary));
+      document.documentElement.style.setProperty("--brand-link", secondary);
+      const preview = document.getElementById("logo-preview");
+      const text = document.getElementById("logo-preview-text");
+      if (selectedLogoDataUrl) {
+        preview.classList.add("with-image");
+        preview.innerHTML = `<img class="preview-logo-img" src="${selectedLogoDataUrl}" alt="Selected logo preview" />`;
+      } else {
+        preview.classList.remove("with-image");
+        preview.innerHTML = `<span class="preview-logo-text" id="logo-preview-text"></span>`;
+        document.getElementById("logo-preview-text").textContent = name;
+      }
       document.getElementById("preview-name").textContent = name;
-      const hex = document.getElementById("primary_color_hex");
-      if (hex.value.toLowerCase() !== color.toLowerCase()) hex.value = color.toUpperCase();
       updatePreviewLoc();
       updatePreviewTags();
     }
@@ -725,7 +1164,7 @@
     function updatePreviewLoc() {
       const f = document.getElementById("form");
       const code = f.country.value;
-      const cur = (f.base_currency.value || "").trim().toUpperCase();
+      const cur = baseCurrencyForCountry(code).toUpperCase();
       const name = COUNTRY_NAMES[code] || code || "—";
       const lang = LANGUAGES[f.locale.value] ? f.locale.value.toUpperCase() : "";
       const parts = [name, cur, lang].filter(Boolean);
@@ -736,24 +1175,41 @@
 
     function updatePreviewTags() {
       const f = document.getElementById("form");
-      const tags = [f.protocol.value, f.txgen.value, f.settlement.value, f.auth.value].filter(Boolean);
+      const tags = [
+        f.protocol.value ? protocolLabel(f.protocol.value) : "",
+        f.txgen.value,
+        f.settlement.value,
+        f.auth.value,
+      ].filter(Boolean);
       document.getElementById("preview-tags").innerHTML =
         tags.map(t => `<span>${t}</span>`).join("");
     }
 
-    const hexInput = document.getElementById("primary_color_hex");
-    hexInput.addEventListener("input", () => {
-      const v = hexInput.value.trim();
-      if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-        document.getElementById("primary_color").value = v;
-        updateLogoPreview();
-      }
-    });
     document.querySelector('input[name="display_name"]').addEventListener("input", updateLogoPreview);
     document.getElementById("primary_color").addEventListener("input", updateLogoPreview);
+    document.getElementById("secondary_color").addEventListener("input", updateLogoPreview);
+    document.getElementById("logo-select-button").addEventListener("click", () => document.getElementById("logo-file").click());
+    document.getElementById("logo-file").addEventListener("change", () => {
+      const fileInput = document.getElementById("logo-file");
+      const file = fileInput.files && fileInput.files[0];
+      const filenameEl = document.getElementById("logo-filename");
+      if (!file) {
+        selectedLogoDataUrl = "";
+        filenameEl.textContent = "No file selected";
+        updateLogoPreview();
+        return;
+      }
+      filenameEl.textContent = file.name;
+      const reader = new FileReader();
+      reader.onload = () => {
+        selectedLogoDataUrl = typeof reader.result === "string" ? reader.result : "";
+        updateLogoPreview();
+      };
+      reader.readAsDataURL(file);
+    });
     document.getElementById("supported-currency-list").addEventListener("change", (e) => {
       if (!e.target.matches('input[data-currency]')) return;
-      const base = (document.getElementById("base_currency").value || "EUR").toUpperCase();
+      const base = baseCurrencyForCountry(document.getElementById("country").value).toUpperCase();
       const selected = uniqueCurrencies([base, ...selectedCurrenciesFromUI()]);
       document.getElementById("supported_currencies").value = selected.join(",");
       renderSupportedCurrencies(base, selected);
@@ -766,6 +1222,32 @@
       document.getElementById("supported_languages").value = selected.join(",");
       renderSupportedLanguages(defaultLang, selected);
     });
+    [
+      { listId: "card-product-list", inputId: "card_products", options: () => META.cardProducts },
+      { listId: "current-account-product-list", inputId: "current_account_products", options: () => META.currentAccountProducts },
+      { listId: "savings-account-product-list", inputId: "savings_account_products", options: () => META.savingsAccountProducts },
+      { listId: "loan-product-list", inputId: "loan_products", options: () => META.loanProducts },
+      { listId: "customer-type-list", inputId: "supported_customer_types", options: () => META.customerTypes, csvOnly: true },
+    ].forEach((cfg) => {
+      document.getElementById(cfg.listId).addEventListener("change", (e) => {
+        if (!e.target.matches('input[data-pick-id]')) return;
+        document.querySelectorAll(`#${cfg.listId} .pick-chip`).forEach((chip) => {
+          const id = chip.querySelector('input[data-pick-id]')?.dataset.pickId;
+          const checked = id ? selectedPickIds(cfg.listId).includes(id) : false;
+          chip.classList.toggle("active", checked);
+        });
+        if (cfg.csvOnly) {
+          document.getElementById(cfg.inputId).value = selectedPickIds(cfg.listId).join(",");
+        } else {
+          document.getElementById(cfg.inputId).value = JSON.stringify(collectSelectedObjects(cfg.options(), selectedPickIds(cfg.listId)));
+        }
+        updateBuilderSummaries();
+      });
+    });
+    document.getElementById("open_banking_enabled").addEventListener("change", (e) => {
+      renderProtocolOptions(document.getElementById("protocol").value, e.target.checked);
+      updatePreviewTags();
+    });
     ["protocol", "txgen", "settlement", "auth"].forEach(id =>
       document.getElementById(id).addEventListener("change", updatePreviewTags));
     document.getElementById("country").addEventListener("change", () => { updateCountryFlag(); syncLanguageToCountry(); syncBaseCurrencyToCountry(); });
@@ -777,6 +1259,8 @@
       syncLanguageToCountry();
       syncBaseCurrencyToCountry();
       normalizeSupportedLanguages(true);
+      renderProductBuilders();
+      document.getElementById("open_banking_enabled").checked = false;
     }, 0));
 
     updateLogoPreview();
@@ -804,7 +1288,9 @@
         batchBase = { customers: 0, accounts: 0 };
         target.classList.remove("active");
         target.style.removeProperty("--bank-color");
+        target.style.removeProperty("--bank-secondary-color");
         panel.style.removeProperty("--brand");
+        panel.style.removeProperty("--brand-secondary");
         nameEl.textContent = "No Bank Selected";
         statsEl.textContent = "Select a bank above to seed customers into it.";
         refreshDistribution();
@@ -819,7 +1305,10 @@
       if (!bank) {
         batchBank = null;
         target.classList.remove("active");
+        target.style.removeProperty("--bank-color");
+        target.style.removeProperty("--bank-secondary-color");
         panel.style.removeProperty("--brand");
+        panel.style.removeProperty("--brand-secondary");
         nameEl.textContent = "No Bank Selected";
         statsEl.textContent = "Select a bank above to seed customers into it.";
         refreshDistribution();
@@ -829,7 +1318,9 @@
       batchBase = { customers: stats?.customers || 0, accounts: stats?.accounts || 0 };
       target.classList.add("active");
       target.style.setProperty("--bank-color", bank.primary_color);
+      target.style.setProperty("--bank-secondary-color", bank.secondary_color || bank.primary_color);
       panel.style.setProperty("--brand", bank.primary_color);
+      panel.style.setProperty("--brand-secondary", bank.secondary_color || bank.primary_color);
       nameEl.textContent = bank.display_name;
       if (batchBase.customers) {
         const manual = stats.manual_customers || 0, seeded = stats.batch_customers || 0;
@@ -839,6 +1330,7 @@
       } else {
         statsEl.innerHTML = "No customers yet — this will be the first batch.";
       }
+      await loadPersonaWeights(bank.supported_customer_types || []);
       refreshDistribution();
     }
 
@@ -861,6 +1353,7 @@
       affluent: { affluent_family: 6, young_professional: 3, retiree: 1 },
       retiree:  { retiree: 6, affluent_family: 2, young_professional: 1 },
     };
+    let ALL_CUSTOMER_TYPES = [];
     let PERSONAS = [];
 
     function weightRow(cls, key, label, value, title) {
@@ -895,6 +1388,23 @@
       return v;
     }
 
+    function estimatedAccountsPerCustomer() {
+      const pShares = shares(readWeights(".persona-w"));
+      const aShares = shares(readWeights(".acct-w"));
+      if (!Object.keys(aShares).length) return 1;
+      let expected = 1;
+      const savingsShare = aShares.savings || 0;
+      const cardShare = aShares.credit_card || 0;
+      const loanShare = aShares.loan || 0;
+      if (savingsShare >= 0.18) expected += 0.45;
+      if (cardShare >= 0.16) expected += 0.55;
+      if (loanShare >= 0.12) {
+        const advanced = (pShares.young_professional || 0) + (pShares.affluent_family || 0);
+        expected += Math.max(0.15, advanced * 0.5);
+      }
+      return Math.max(1, Math.min(3, expected));
+    }
+
     // Blend per-persona account affinities by the current persona mix and reflect it on the sliders.
     function applySmartAccounts() {
       const pShares = shares(readWeights(".persona-w"));
@@ -913,8 +1423,7 @@
 
     function refreshDistribution() {
       const count = clampCount();
-      const acctsPer = parseInt(document.getElementById("batch-accts-per").value) || 1;
-      const totalAccts = count * acctsPer;
+      const totalAccts = Math.round(count * estimatedAccountsPerCustomer());
 
       const pShares = shares(readWeights(".persona-w"));
       PERSONAS.forEach(p => {
@@ -957,8 +1466,13 @@
       refreshDistribution();
     }
 
-    async function loadPersonaWeights() {
-      PERSONAS = await (await fetch("/banks/_meta/personas")).json();
+    async function loadPersonaWeights(supportedTypes = []) {
+      if (!ALL_CUSTOMER_TYPES.length) {
+        ALL_CUSTOMER_TYPES = await (await fetch("/banks/_meta/customer-types")).json();
+      }
+      PERSONAS = supportedTypes.length
+        ? ALL_CUSTOMER_TYPES.filter((item) => supportedTypes.includes(item.id))
+        : [...ALL_CUSTOMER_TYPES];
       const grid = document.getElementById("persona-weights");
       grid.innerHTML = "";
       const defaults = { gig_worker: 2, affluent_family: 1, student: 3, retiree: 1, young_professional: 3 };
@@ -990,7 +1504,6 @@
       document.querySelectorAll("#count-chips .mini-chip").forEach(b => b.classList.remove("active"));
       refreshDistribution();
     });
-    document.getElementById("batch-accts-per").addEventListener("input", refreshDistribution);
 
     document.getElementById("persona-presets").addEventListener("click", e => {
       const btn = e.target.closest(".mini-chip");
@@ -1015,7 +1528,6 @@
       const bankId = batchBank?.id;
       if (!bankId) { alert("Select a bank above first."); return; }
       const count = clampCount();
-      const acctsPer = parseInt(document.getElementById("batch-accts-per").value) || 1;
       const personaWeights = readWeights(".persona-w");
       const acctWeights = readWeights(".acct-w");
 
@@ -1051,7 +1563,6 @@
             count,
             persona_weights: personaWeights,
             account_types: acctWeights,
-            accounts_per_customer: acctsPer,
           }),
         });
         const text = await res.text();

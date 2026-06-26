@@ -26,3 +26,8 @@ class TransactionRecord:
     booked_at: datetime
     description: str = ""
     reference: str | None = None
+    merchant_name: str | None = None
+    category: str | None = None
+    payment_reference: str | None = None
+    location: str | None = None
+    channel: str | None = None

@@ -52,11 +52,11 @@
       padding: 0;
       overflow: hidden;
     }
-    .home-image {
+    .home-embed {
       width: 100%;
       height: 100%;
-      object-fit: contain;
       display: block;
+      border: 0;
       background: #000;
     }
   </style>
@@ -85,7 +85,13 @@
   </header>
 
   <main>
-    <img class="home-image" src="/home-hero.svg" alt="We simulate so we can better serve" />
+    <iframe
+      class="home-embed"
+      src="/home-hero"
+      title="BankSym Hero"
+      loading="eager"
+      referrerpolicy="no-referrer"
+    ></iframe>
   </main>
 </body>
 </html>

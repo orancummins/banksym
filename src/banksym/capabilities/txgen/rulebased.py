@@ -22,6 +22,32 @@ from banksym.core.domain.ledger import JournalEntry, Posting
 from banksym.core.kernel.money import Money
 
 
+_MERCHANT_CATEGORIES: tuple[tuple[str, str], ...] = (
+    ("groceries", "instore"),
+    ("restaurant", "instore"),
+    ("transport", "in_app"),
+    ("utilities", "direct_debit"),
+    ("shopping", "online"),
+    ("entertainment", "online"),
+    ("pharmacy", "instore"),
+    ("subscriptions", "online"),
+)
+
+_LOCATIONS: dict[str, tuple[str, ...]] = {
+    "DE": ("Berlin", "Munich", "Hamburg", "Cologne"),
+    "ES": ("Madrid", "Barcelona", "Valencia", "Seville"),
+    "FR": ("Paris", "Lyon", "Marseille", "Toulouse"),
+    "GB": ("London", "Manchester", "Leeds", "Bristol"),
+    "IE": ("Dublin", "Cork", "Galway", "Limerick"),
+    "NL": ("Amsterdam", "Rotterdam", "Utrecht", "Eindhoven"),
+    "US": ("New York", "Chicago", "Austin", "Seattle"),
+    "CA": ("Toronto", "Vancouver", "Montreal", "Calgary"),
+    "BR": ("São Paulo", "Rio de Janeiro", "Brasília", "Curitiba"),
+    "CN": ("北京", "上海", "广州", "深圳"),
+    "ZA": ("Johannesburg", "Cape Town", "Durban", "Pretoria"),
+}
+
+
 def _month_starts(start: date, end: date):
     cursor = date(start.year, start.month, 1)
     while cursor <= end:
@@ -60,6 +86,14 @@ class RuleBasedTransactionGenerator(TransactionGenerator):
                         credit_account=request.account.id,
                         amount=income,
                         description=pack.income_label,
+                        reference=f"SAL-{pay_day.strftime('%Y%m')}",
+                        metadata={
+                            "merchant_name": pack.income_label,
+                            "category": "income",
+                            "payment_reference": f"PAYROLL-{pay_day.strftime('%Y%m')}",
+                            "location": self._location_for(request, rng),
+                            "channel": "bank_transfer",
+                        },
                     )
                 )
 
@@ -75,7 +109,10 @@ class RuleBasedTransactionGenerator(TransactionGenerator):
                 high = 1 + profile.spend_volatility
                 amount_val = max(1.0, round(base * rng.uniform(low, high), 2))
                 amount = Money.from_decimal(amount_val, request.currency)
-                merchant = pack.merchant_for(rng.randrange(len(pack.merchant_categories)))
+                merchant_idx = rng.randrange(len(pack.merchant_categories))
+                merchant = pack.merchant_for(merchant_idx)
+                category, channel = _MERCHANT_CATEGORIES[merchant_idx % len(_MERCHANT_CATEGORIES)]
+                payment_ref = f"{category[:3].upper()}-{when.strftime('%m%d')}-{rng.randint(1000, 9999)}"
                 entries.append(
                     self._book(
                         request,
@@ -83,6 +120,14 @@ class RuleBasedTransactionGenerator(TransactionGenerator):
                         credit_account=counterparty.id,
                         amount=amount,
                         description=merchant,
+                        reference=payment_ref,
+                        metadata={
+                            "merchant_name": merchant,
+                            "category": category,
+                            "payment_reference": payment_ref,
+                            "location": self._location_for(request, rng),
+                            "channel": channel,
+                        },
                     )
                 )
         return entries
@@ -103,13 +148,20 @@ class RuleBasedTransactionGenerator(TransactionGenerator):
         credit_account: str,
         amount: Money,
         description: str,
+        reference: str | None = None,
+        metadata: dict[str, str] | None = None,
     ) -> JournalEntry:
         entry = JournalEntry(
             bank_id=request.bank_id,
             description=description,
+            reference=reference,
+            metadata=metadata or {},
             postings=[
                 Posting(account_id=debit_account, amount=-amount),
                 Posting(account_id=credit_account, amount=amount),
             ],
         )
         return self.banking.post_journal_entry(entry)
+
+    def _location_for(self, request: GenerationRequest, rng: random.Random) -> str:
+        return rng.choice(_LOCATIONS.get((request.country or "").upper(), (request.country or "Online",)))
