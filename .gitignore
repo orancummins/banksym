@@ -12,3 +12,11 @@ __pycache__/
 .banksym.pid
 banksym.log
 banksym.log.err
+banksym.db
+banksym.db-*
+*.sqlite
+*.sqlite3
+
+# Local image artifacts
+ui/banksym.png
+ui/banksym2.png

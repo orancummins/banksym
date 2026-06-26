@@ -25,6 +25,7 @@ def _to_response(bank: Bank) -> BankResponse:
         country=bank.country,
         locale=bank.locale,
         base_currency=bank.base_currency,
+        supported_currencies=bank.supported_currencies,
         logo_url=bank.branding.logo_url,
         primary_color=bank.branding.primary_color,
         enabled_protocols=bank.enabled_protocols,
@@ -46,6 +47,7 @@ def create_bank(body: CreateBankRequest, container: ContainerDep) -> BankRespons
         country=body.country,
         locale=body.locale,
         base_currency=body.base_currency,
+        supported_currencies=body.supported_currencies,
         logo_url=body.logo_url,
         primary_color=body.primary_color,
         enabled_protocols=body.enabled_protocols,
@@ -86,12 +88,14 @@ def delete_bank(bank_id: str, container: ContainerDep) -> None:
 def list_capabilities() -> dict[str, list[str]]:
     """List available capability implementations the UI can offer when building a bank.
 
-    Returns the registered names grouped by extension point: ``txgen``, ``protocol``,
+    Returns the registered names grouped by extension point: ``txgen``, ``api``,
     ``settlement``, ``localization``, ``auth`` and ``sca``.
     """
+    api_names = protocol_registry.names()
     return {
         "txgen": txgen_registry.names(),
-        "protocol": protocol_registry.names(),
+        "api": api_names,
+        "protocol": api_names,
         "settlement": settlement_registry.names(),
         "localization": localization_registry.names(),
         "auth": auth_registry.names(),

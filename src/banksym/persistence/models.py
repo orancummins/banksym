@@ -24,6 +24,7 @@ class BankRow(Base):
     country: Mapped[str] = mapped_column(String)
     locale: Mapped[str] = mapped_column(String)
     base_currency: Mapped[str] = mapped_column(String)
+    supported_currencies: Mapped[list] = mapped_column(JSON, default=list)
     enabled_protocols: Mapped[list] = mapped_column(JSON, default=list)
     capabilities: Mapped[dict] = mapped_column(JSON, default=dict)
 
@@ -40,6 +41,7 @@ class CustomerRow(Base):
     country: Mapped[str | None] = mapped_column(String, nullable=True)
     address: Mapped[str | None] = mapped_column(String, nullable=True)
     persona: Mapped[str | None] = mapped_column(String, nullable=True)
+    source: Mapped[str] = mapped_column(String, default="manual")
 
 
 class AccountRow(Base):
@@ -53,6 +55,7 @@ class AccountRow(Base):
     customer_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     iban: Mapped[str | None] = mapped_column(String, nullable=True)
     name: Mapped[str | None] = mapped_column(String, nullable=True)
+    account_metadata: Mapped[dict] = mapped_column(JSON, default=dict, nullable=True)
 
 
 class JournalEntryRow(Base):

@@ -68,8 +68,10 @@
     select, input {
       padding: 8px 11px; background: var(--surface); color: var(--text);
       border: 1px solid var(--border); border-radius: 8px; font-size: 13px;
+      box-sizing: border-box; line-height: normal;
       transition: border-color .15s, box-shadow .15s;
     }
+    select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23697386' d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 11px center; padding-right: 30px; cursor: pointer; }
     select:focus, input:focus { outline: none; border-color: var(--mc-orange); box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc-orange) 18%, transparent); }
     .cols { display: grid; grid-template-columns: 1.05fr 1fr; gap: 18px; align-items: start; }
     .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 18px; box-shadow: var(--shadow); }
@@ -168,18 +170,19 @@
       <div class="sub">A Third-Party Provider consuming the bank's Berlin Group interfaces, end to end.</div>
     </div>
     <nav>
-      <a href="/">Architecture</a>
-      <a href="/builder">Bank builder</a>
-      <a href="/console">Bank console</a>
+      <a href="/home">Home</a>
+      <a href="/builder">Bank Builder</a>
+      <a href="/console">Bank Console</a>
       <a href="/psd2" class="active">Open Banking</a>
       <a href="/live">Live</a>
-      <a href="/docs">API docs</a>
+      <a href="/docs">API Docs</a>
+      <a href="/">Architecture</a>
     </nav>
   </header>
 
   <main>
     <div class="bankbar">
-      <label>ASPSP (bank)</label>
+      <label>ASPSP (Bank)</label>
       <select id="bank-select" hidden></select>
       <div class="bank-dd" id="bank-dd">
         <button type="button" class="bank-dd-trigger" id="bank-dd-trigger" aria-haspopup="listbox" aria-expanded="false">
@@ -189,22 +192,22 @@
         <div class="bank-dd-panel" id="bank-dd-panel" role="listbox"></div>
       </div>
       <button class="ghost small" id="refresh">Refresh</button>
-      <button class="ghost small" id="reset">Restart flow</button>
+      <button class="ghost small" id="reset">Restart Flow</button>
       <span class="muted" id="bank-meta"></span>
     </div>
 
     <div class="cols">
       <!-- LEFT: the TPP consent journey -->
       <div class="panel">
-        <h2>Consent journey (AIS)</h2>
+        <h2>Consent Journey (AIS)</h2>
 
         <!-- Step 1: Consent -->
         <div class="step active" id="step-1">
           <div class="rail"><div class="dot">1</div><div class="line"></div></div>
           <div class="body">
-            <div class="title">Request account-access consent</div>
+            <div class="title">Request Account-Access Consent</div>
             <div class="desc">The TPP asks the bank (ASPSP) for the PSU's permission to read account data. No credentials are collected here.</div>
-            <label>Access scope</label>
+            <label>Access Scope</label>
             <div class="radio">
               <label><input type="radio" name="scope" value="allPsd2" checked /> All accounts (allPsd2)</label>
               <label><input type="radio" name="scope" value="availableAccounts" /> Available accounts</label>
@@ -221,10 +224,10 @@
         <div class="step locked" id="step-2">
           <div class="rail"><div class="dot">2</div><div class="line"></div></div>
           <div class="body">
-            <div class="title">Authorise at your bank (OAuth redirect)</div>
+            <div class="title">Authorise at Your Bank (OAuth Redirect)</div>
             <div class="desc">The TPP redirects the PSU to the <strong>bank's own login page</strong>. The customer authenticates there and approves the consent — the TPP never sees the password. The bank returns an authorization code, which the TPP exchanges for an access token.</div>
             <div class="controls">
-              <button id="btn-authorise">Open bank login ↗</button>
+              <button id="btn-authorise">Open Bank Login ↗</button>
               <span id="oauth-state"></span>
             </div>
             <div class="kv" id="oauth-info" style="display:none"></div>
@@ -235,10 +238,10 @@
         <div class="step locked" id="step-3">
           <div class="rail"><div class="dot">3</div><div class="line"></div></div>
           <div class="body">
-            <div class="title">Access account information</div>
+            <div class="title">Access Account Information</div>
             <div class="desc">With a valid consent the TPP lists accounts and reads balances &amp; transactions.</div>
             <div class="controls">
-              <button id="btn-list">List accounts (GET /accounts)</button>
+              <button id="btn-list">List Accounts (GET /accounts)</button>
             </div>
             <div class="list" id="accounts" style="margin-top:12px"></div>
           </div>
@@ -248,14 +251,14 @@
       <!-- RIGHT: account detail + call log -->
       <div>
         <div class="panel">
-          <h2>Account information</h2>
+          <h2>Account Information</h2>
           <div id="acct-detail">
             <div class="empty">Complete the consent journey, then select an account to view its balance and transactions.</div>
           </div>
         </div>
 
         <div class="panel">
-          <h2>XS2A call log</h2>
+          <h2>XS2A Call Log</h2>
           <div class="log" id="log"><div class="empty">API calls to the bank's PSD2 interface appear here.</div></div>
         </div>
       </div>
@@ -272,7 +275,10 @@
     };
 
     const $ = (id) => document.getElementById(id);
-    const COUNTRY_NAMES = { DE: "Germany", ES: "Spain", FR: "France", GB: "United Kingdom", IE: "Ireland", NL: "Netherlands" };
+    const COUNTRY_NAMES = {
+      DE: "Germany", ES: "Spain", FR: "France", GB: "United Kingdom", IE: "Ireland", NL: "Netherlands",
+      US: "United States", CA: "Canada", BR: "Brazil", CN: "China", ZA: "South Africa"
+    };
     const flagUrl = (code) => `https://flagcdn.com/${(code || "").toLowerCase()}.svg`;
     function bankInitials(name) {
       const words = (name || "").trim().split(/\s+/).filter(Boolean);
@@ -338,7 +344,7 @@
       const sel = $("bank-select");
       sel.innerHTML = "";
       if (!banks.length) {
-        sel.innerHTML = '<option value="">No banks — create one in the Bank builder</option>';
+        sel.innerHTML = '<option value="">No Banks — Create One in the Bank Builder</option>';
         $("bank-meta").textContent = "";
         renderBankDropdown([], null);
         return;
@@ -435,7 +441,7 @@
       $("bank-meta").innerHTML = hasBg
         ? `Berlin Group XS2A at <code>/xs2a/${state.bankId}/v1</code>`
             .replace("<code>", '<code style="background:#f6f8fb;border:1px solid #e3e8ee;border-radius:6px;padding:1px 6px">')
-        : '<span style="color:#b42318">This bank does not enable the berlin_group protocol — endpoints may 404.</span>';
+        : '<span style="color:#b42318">This Bank Does Not Enable the berlin_group API — Endpoints May 404.</span>';
       resetFlow();
     }
 
@@ -550,7 +556,7 @@
         const wrap = $("accounts");
         wrap.innerHTML = "";
         if (!data.accounts.length) {
-          wrap.innerHTML = '<div class="empty">No customer accounts visible. Add accounts in the Bank console first.</div>';
+          wrap.innerHTML = '<div class="empty">No Customer Accounts Visible. Add Accounts in the Bank Console First.</div>';
           return;
         }
         for (const a of data.accounts) {

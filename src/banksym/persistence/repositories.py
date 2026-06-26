@@ -35,12 +35,16 @@ def _bank_to_row(bank: Bank) -> BankRow:
         country=bank.country,
         locale=bank.locale,
         base_currency=bank.base_currency,
+        supported_currencies=list(bank.supported_currencies),
         enabled_protocols=list(bank.enabled_protocols),
         capabilities=dict(bank.capabilities.selected),
     )
 
 
 def _row_to_bank(row: BankRow) -> Bank:
+    currencies = list(row.supported_currencies or [])
+    if row.base_currency and row.base_currency not in currencies:
+        currencies.insert(0, row.base_currency)
     return Bank(
         branding=BankBranding(
             display_name=row.display_name,
@@ -50,6 +54,7 @@ def _row_to_bank(row: BankRow) -> Bank:
         country=row.country,
         locale=row.locale,
         base_currency=row.base_currency,
+        supported_currencies=currencies,
         enabled_protocols=list(row.enabled_protocols or []),
         capabilities=CapabilitySelection(selected=dict(row.capabilities or {})),
         id=row.id,
@@ -92,6 +97,7 @@ def _customer_to_row(c: Customer) -> CustomerRow:
         country=c.country,
         address=c.address,
         persona=c.persona,
+        source=c.source,
     )
 
 
@@ -106,6 +112,7 @@ def _row_to_customer(r: CustomerRow) -> Customer:
         country=r.country,
         address=r.address,
         persona=r.persona,
+        source=getattr(r, "source", "manual") or "manual",
     )
 
 
@@ -119,6 +126,7 @@ def _account_to_row(a: Account) -> AccountRow:
         customer_id=a.customer_id,
         iban=a.iban,
         name=a.name,
+        account_metadata=a.metadata or {},
     )
 
 
@@ -131,6 +139,7 @@ def _row_to_account(r: AccountRow) -> Account:
         customer_id=r.customer_id,
         iban=r.iban,
         name=r.name,
+        metadata=dict(r.account_metadata or {}),
         id=r.id,
     )
 
@@ -183,6 +192,28 @@ class SqlCoreBankingRepository:
         with self._sf.begin() as s:
             s.merge(_customer_to_row(customer))
 
+    def add_customers_and_accounts_bulk(
+        self,
+        customers: list[Customer],
+        accounts: list[Account],
+    ) -> None:
+        """Insert many customers and accounts in a single transaction."""
+        with self._sf.begin() as s:
+            for c in customers:
+                s.merge(_customer_to_row(c))
+            for a in accounts:
+                s.merge(_account_to_row(a))
+
+    def count_journal_entries(self, bank_id: str) -> int:
+        """Count distinct journal entries (one per transfer) for a bank."""
+        with self._sf() as s:
+            from sqlalchemy import func
+            return s.scalar(
+                select(func.count()).select_from(JournalEntryRow).where(
+                    JournalEntryRow.bank_id == bank_id
+                )
+            ) or 0
+
     def get_customer(self, bank_id: str, customer_id: str) -> Customer | None:
         with self._sf() as s:
             row = s.get(CustomerRow, customer_id)
@@ -208,11 +239,22 @@ class SqlCoreBankingRepository:
                 return None
             return _row_to_account(row)
 
-    def list_accounts(self, bank_id: str, customer_id: str | None = None) -> list[Account]:
+    def list_accounts(
+        self,
+        bank_id: str,
+        customer_id: str | None = None,
+        limit: int | None = None,
+    ) -> list[Account]:
         with self._sf() as s:
-            stmt = select(AccountRow).where(AccountRow.bank_id == bank_id)
+            stmt = (
+                select(AccountRow)
+                .where(AccountRow.bank_id == bank_id)
+                .order_by(AccountRow.id)
+            )
             if customer_id is not None:
                 stmt = stmt.where(AccountRow.customer_id == customer_id)
+            if limit is not None:
+                stmt = stmt.limit(max(0, limit))
             return [_row_to_account(r) for r in s.scalars(stmt).all()]
 
     def add_journal_entry(self, entry: JournalEntry) -> None:
@@ -291,6 +333,14 @@ class SqlCredentialStore:
                 )
             ).first()
             return _row_to_credential(row) if row else None
+
+    def list_by_bank(self, bank_id: str) -> dict[str, Credential]:
+        """Fetch all credentials for a bank in one query; return dict keyed by customer_id."""
+        with self._sf() as s:
+            rows = s.scalars(
+                select(CredentialRow).where(CredentialRow.bank_id == bank_id)
+            ).all()
+            return {r.customer_id: _row_to_credential(r) for r in rows if r.customer_id}
 
     def purge(self, bank_id: str) -> None:
         with self._sf.begin() as s:

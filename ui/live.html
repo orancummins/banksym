@@ -46,8 +46,10 @@
     select, input {
       width: 100%; padding: 8px 11px; background: var(--surface); color: var(--text);
       border: 1px solid var(--border); border-radius: 8px; font-size: 13px;
+      box-sizing: border-box; line-height: normal;
       transition: border-color .15s, box-shadow .15s;
     }
+    select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23697386' d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 11px center; padding-right: 30px; cursor: pointer; }
     select:focus, input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent); }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     button { padding: 9px 15px; background: var(--brand); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: filter .15s, box-shadow .15s; }
@@ -144,16 +146,17 @@
       </svg>
       <div>
         <h1>BankSym</h1>
-        <div class="sub">Live — simulate transactions across banks in real time</div>
+        <div class="sub">Live — Simulate Transactions Across Banks in Real Time</div>
       </div>
     </div>
     <nav>
-      <a href="/">Architecture</a>
-      <a href="/builder">Bank builder</a>
-      <a href="/console">Bank console</a>
+      <a href="/home">Home</a>
+      <a href="/builder">Bank Builder</a>
+      <a href="/console">Bank Console</a>
       <a href="/psd2">Open Banking</a>
       <a href="/live" class="active">Live</a>
-      <a href="/docs">API docs</a>
+      <a href="/docs">API Docs</a>
+      <a href="/">Architecture</a>
     </nav>
   </header>
 
@@ -163,16 +166,16 @@
       <div>
         <!-- Simulator -->
         <div class="panel">
-          <h2>Live simulator</h2>
+          <h2>Live Simulator</h2>
           <div class="sim-head">
             <span class="sim-dot" id="sim-dot"></span>
             <span class="sim-state" id="sim-state">Stopped</span>
-            <span class="sim-stats" id="sim-stats">0 generated</span>
+            <span class="sim-stats" id="sim-stats">0 Generated</span>
           </div>
-          <label>Average time between transactions</label>
+          <label>Average Time Between Transactions</label>
           <div class="rate-row">
             <input type="range" id="rate" min="0.3" max="15" step="0.1" value="3" />
-            <span class="rate-val" id="rate-val">every 3.0 s</span>
+            <span class="rate-val" id="rate-val">Every 3.0 s</span>
           </div>
           <div class="presets">
             <button type="button" data-rate="0.5">Fast (0.5s)</button>
@@ -189,18 +192,18 @@
 
         <!-- Scope -->
         <div class="panel">
-          <h2>Participating accounts</h2>
+          <h2>Participating Accounts</h2>
           <div class="scope-tools">
-            <button class="link-btn" id="select-all">Select all</button>
+            <button class="link-btn" id="select-all">Select All</button>
             <button class="link-btn" id="clear-all">Clear</button>
-            <span class="count" id="scope-count">0 accounts selected</span>
+            <span class="count" id="scope-count">0 Accounts Selected</span>
           </div>
           <div class="tree" id="tree"><div class="empty">Loading…</div></div>
         </div>
 
         <!-- Manual trigger -->
         <div class="panel">
-          <h2>Trigger a transaction</h2>
+          <h2>Trigger a Transaction</h2>
           <label>Bank</label>
           <select id="m-bank"></select>
           <label>Customer</label>
@@ -224,19 +227,19 @@
           </div>
           <label>Description <span class="muted">(optional)</span></label>
           <input id="m-desc" placeholder="e.g. Salary, Coffee shop…" />
-          <button id="m-post" style="width:100%; margin-top:16px">Post transaction</button>
+          <button id="m-post" style="width:100%; margin-top:16px">Post Transaction</button>
         </div>
       </div>
 
       <!-- RIGHT: live feed -->
       <div class="panel">
         <h2 class="feed-head">
-          Live transaction feed
-          <span class="hint">remembers last 200</span>
+          Live Transaction Feed
+          <span class="hint">Remembers Last 200</span>
         </h2>
         <div class="scope-tools">
           <span class="stats" id="feed-stats" style="margin-left:0;color:var(--muted);font-size:12px">0 shown</span>
-          <button class="ghost small" id="feed-clear" style="margin-left:auto">Clear feed</button>
+          <button class="ghost small" id="feed-clear" style="margin-left:auto">Clear Feed</button>
         </div>
         <div class="feed" id="feed"><div class="empty">No transactions yet. Start the simulator or trigger one manually.</div></div>
       </div>
@@ -247,7 +250,10 @@
 
   <script>
     const MAX_FEED = 200;
-    const COUNTRY_NAMES = { DE: "Germany", ES: "Spain", FR: "France", GB: "United Kingdom", NL: "Netherlands" };
+    const COUNTRY_NAMES = {
+      DE: "Germany", ES: "Spain", FR: "France", GB: "United Kingdom", IE: "Ireland", NL: "Netherlands",
+      US: "United States", CA: "Canada", BR: "Brazil", CN: "China", ZA: "South Africa"
+    };
     const flagUrl = (code) => `https://flagcdn.com/${(code || "").toLowerCase()}.svg`;
     const $ = (id) => document.getElementById(id);
 
@@ -289,32 +295,60 @@
       return body;
     }
 
-    // ---- load all banks, customers, accounts -------------------------------
-    async function loadAll() {
-      const banks = await api("/banks");
-      state.banks = banks;
+    // ---- load participating accounts only ---------------------------------
+    async function loadParticipants() {
+      const data = await api("/simulation/participants");
+      const participants = data.participants || [];
+      const byBank = new Map();
+      const seen = new Set();
+
       state.accounts = [];
       state.accountsById = {};
-      for (const b of banks) {
-        const [customers, accounts] = await Promise.all([
-          api(`/banks/${b.id}/customers`).catch(() => []),
-          api(`/banks/${b.id}/accounts`).catch(() => []),
-        ]);
-        const custName = {};
-        customers.forEach((c) => (custName[c.id] = c.full_name));
-        b._customers = customers;
-        b._accounts = accounts;
-        accounts.filter((a) => a.customer_id).forEach((a) => {
-          const meta = {
-            bankId: b.id, bankName: b.display_name, bankColor: b.primary_color, country: b.country,
-            accountId: a.id, iban: a.iban, name: a.name, currency: a.currency,
-            type: a.type, customerId: a.customer_id, customerName: custName[a.customer_id] || a.customer_id,
-          };
-          state.accounts.push(meta);
-          state.accountsById[a.id] = meta;
-        });
+
+      for (const p of participants) {
+        const uniq = `${p.bank_id}:${p.account_id}`;
+        if (seen.has(uniq)) continue;
+        seen.add(uniq);
+
+        if (!byBank.has(p.bank_id)) {
+          byBank.set(p.bank_id, {
+            id: p.bank_id,
+            display_name: p.bank_name,
+            primary_color: p.bank_color,
+            country: p.country,
+            _participants: [],
+          });
+        }
+        const bank = byBank.get(p.bank_id);
+        const item = {
+          id: p.account_id,
+          name: p.account_name,
+          iban: p.iban,
+          currency: p.currency,
+          type: p.type,
+          customer_id: p.customer_id,
+          customer_name: p.customer_name,
+        };
+        bank._participants.push(item);
+
+        const meta = {
+          bankId: p.bank_id,
+          bankName: p.bank_name,
+          bankColor: p.bank_color,
+          country: p.country,
+          accountId: p.account_id,
+          iban: p.iban,
+          name: p.account_name,
+          currency: p.currency,
+          type: p.type,
+          customerId: p.customer_id,
+          customerName: p.customer_name || p.customer_id || "Unassigned",
+        };
+        state.accounts.push(meta);
+        state.accountsById[p.account_id] = meta;
       }
-      // Everything participates by default.
+
+      state.banks = [...byBank.values()];
       state.active = new Set(state.accounts.map((a) => a.accountId));
       renderTree();
       renderManualBanks();
@@ -324,12 +358,26 @@
     // ---- scope tree --------------------------------------------------------
     function renderTree() {
       const root = $("tree");
-      if (!state.banks.length) { root.innerHTML = '<div class="empty">No banks. Create one in the Bank builder.</div>'; return; }
+      if (!state.banks.length) { root.innerHTML = '<div class="empty">No Participating Accounts Configured Yet.</div>'; return; }
       let html = "";
-      const withAccts = state.banks.filter((b) => (b._accounts || []).some((a) => a.customer_id));
-      if (!withAccts.length) { root.innerHTML = '<div class="empty">No customer accounts yet. Add some in the Bank console.</div>'; return; }
+      const withAccts = state.banks.filter((b) => (b._participants || []).length > 0);
+      if (!withAccts.length) { root.innerHTML = '<div class="empty">No Participating Accounts Configured Yet.</div>'; return; }
       for (const b of withAccts) {
-        const custs = (b._customers || []).filter((c) => (b._accounts || []).some((a) => a.customer_id === c.id));
+        const bankAccts = b._participants || [];
+        const groups = new Map();
+        for (const a of bankAccts) {
+          const key = a.customer_id || `__anon__:${a.id}`;
+          if (!groups.has(key)) {
+            groups.set(key, {
+              id: key,
+              name: a.customer_name || a.customer_id || "Unassigned",
+              accounts: [],
+            });
+          }
+          groups.get(key).accounts.push(a);
+        }
+        const customerGroups = [...groups.values()];
+        const bankAcctIds = bankAccts.map((a) => a.id).join(",");
         html += `<div class="tnode t-bank">`;
         html += `<div class="trow">`
           + `<span class="twist open" data-toggle="bank-${b.id}">▶</span>`
@@ -337,21 +385,31 @@
           + chip(b.primary_color, b.display_name)
           + `<img class="flag-sm" src="${flagUrl(b.country)}" alt="" />`
           + `<span class="tlabel">${b.display_name}</span>`
-          + `<span class="tmeta">${custs.length} cust</span></div>`;
+          + `<span class="tmeta">${bankAccts.length} acct</span></div>`;
         html += `<div class="tchildren open" id="bank-${b.id}">`;
-        for (const c of custs) {
-          const accts = (b._accounts || []).filter((a) => a.customer_id === c.id);
+
+        // "All" shortcut — selects every account in the bank at once.
+        html += `<div class="tnode t-user">`;
+        html += `<div class="trow" style="background:color-mix(in srgb,var(--brand) 4%,var(--surface))">`
+          + `<span class="twist leaf">·</span>`
+          + `<input type="checkbox" class="cb-all-bank" data-bank="${b.id}" data-accts="${bankAcctIds}" checked />`
+          + `<span class="tlabel" style="font-style:italic;color:var(--muted)">All (${bankAccts.length} accounts)</span>`
+          + `</div></div>`;
+
+        for (const c of customerGroups) {
+          const accts = c.accounts;
+          const userDomId = `${b.id}-${c.id}`;
           html += `<div class="tnode t-user">`;
           html += `<div class="trow">`
-            + `<span class="twist" data-toggle="user-${c.id}">▶</span>`
-            + `<input type="checkbox" class="cb-user" data-bank="${b.id}" data-user="${c.id}" checked />`
-            + `<span class="tlabel">${c.full_name}</span>`
+            + `<span class="twist" data-toggle="user-${userDomId}">▶</span>`
+            + `<input type="checkbox" class="cb-user" data-bank="${b.id}" data-user="${userDomId}" checked />`
+            + `<span class="tlabel">${c.name}</span>`
             + `<span class="tmeta">${accts.length} acct</span></div>`;
-          html += `<div class="tchildren" id="user-${c.id}">`;
+          html += `<div class="tchildren" id="user-${userDomId}">`;
           for (const a of accts) {
             html += `<div class="tnode t-acct"><div class="trow">`
               + `<span class="twist leaf">·</span>`
-              + `<input type="checkbox" class="cb-acct" data-bank="${b.id}" data-user="${c.id}" data-acct="${a.id}" checked />`
+              + `<input type="checkbox" class="cb-acct" data-bank="${b.id}" data-user="${userDomId}" data-acct="${a.id}" checked />`
               + `<span class="tlabel">${a.name || a.type}</span>`
               + `<span class="tmeta">${a.iban || a.id} · ${a.currency}</span></div></div>`;
           }
@@ -369,7 +427,20 @@
           el.classList.toggle("open");
         });
       });
+      // "All" shortcut toggles every account in the bank.
+      root.querySelectorAll(".cb-all-bank").forEach((cb) => cb.addEventListener("change", () => {
+        const ids = cb.dataset.accts ? cb.dataset.accts.split(",") : [];
+        root.querySelectorAll(`.cb-acct[data-bank="${cb.dataset.bank}"]`)
+          .forEach((c) => (c.checked = cb.checked));
+        if (cb.checked) ids.forEach((id) => state.active.add(id));
+        else ids.forEach((id) => state.active.delete(id));
+        syncUserBoxes();
+        syncBankBoxes();
+        updateScopeCount();
+        applyConfigIfRunning();
+      }));
       root.querySelectorAll(".cb-bank").forEach((cb) => cb.addEventListener("change", () => {
+        root.querySelectorAll(`.cb-all-bank[data-bank="${cb.dataset.bank}"]`).forEach((c) => (c.checked = cb.checked));
         root.querySelectorAll(`.cb-user[data-bank="${cb.dataset.bank}"], .cb-acct[data-bank="${cb.dataset.bank}"]`)
           .forEach((c) => (c.checked = cb.checked));
         syncActive();
@@ -395,18 +466,25 @@
     function syncBankBoxes() {
       $("tree").querySelectorAll(".cb-bank").forEach((b) => {
         const kids = $("tree").querySelectorAll(`.cb-acct[data-bank="${b.dataset.bank}"]`);
-        b.checked = kids.length > 0 && [...kids].every((k) => k.checked);
+        const allCb = $("tree").querySelector(`.cb-all-bank[data-bank="${b.dataset.bank}"]`);
+        b.checked = kids.length > 0
+          ? [...kids].every((k) => k.checked)
+          : (allCb ? allCb.checked : false);
       });
     }
     function syncActive() {
-      state.active = new Set(
+      const active = new Set(
         [...$("tree").querySelectorAll(".cb-acct:checked")].map((c) => c.dataset.acct)
       );
+      $("tree").querySelectorAll(".cb-all-bank:checked").forEach((cb) => {
+        (cb.dataset.accts || "").split(",").filter(Boolean).forEach((id) => active.add(id));
+      });
+      state.active = active;
       updateScopeCount();
-      applyConfigIfRunning();   // push new target set to the server if it's running
+      applyConfigIfRunning();
     }
     function updateScopeCount() {
-      $("scope-count").textContent = `${state.active.size} of ${state.accounts.length} accounts selected`;
+      $("scope-count").textContent = `${state.active.size} of ${state.accounts.length} Accounts Selected`;
     }
 
     $("select-all").addEventListener("click", () => {
@@ -422,7 +500,7 @@
     function renderManualBanks() {
       const sel = $("m-bank");
       sel.innerHTML = "";
-      const withAccts = state.banks.filter((b) => (b._accounts || []).some((a) => a.customer_id));
+      const withAccts = state.banks.filter((b) => (b._participants || []).length > 0);
       withAccts.forEach((b) => sel.append(new Option(`${b.display_name} (${b.country})`, b.id)));
       if (withAccts.length) renderManualCustomers();
       else { $("m-customer").innerHTML = ""; $("m-account").innerHTML = ""; }
@@ -431,15 +509,20 @@
       const bank = state.banks.find((b) => b.id === $("m-bank").value);
       const sel = $("m-customer");
       sel.innerHTML = "";
-      const custs = (bank._customers || []).filter((c) => (bank._accounts || []).some((a) => a.customer_id === c.id));
-      custs.forEach((c) => sel.append(new Option(c.full_name, c.id)));
+      const byCustomer = new Map();
+      for (const a of (bank?._participants || [])) {
+        if (!a.customer_id) continue;
+        if (!byCustomer.has(a.customer_id)) byCustomer.set(a.customer_id, a.customer_name || a.customer_id);
+      }
+      [...byCustomer.entries()].forEach(([id, name]) => sel.append(new Option(name, id)));
       renderManualAccounts();
     }
     function renderManualAccounts() {
       const bank = state.banks.find((b) => b.id === $("m-bank").value);
       const sel = $("m-account");
       sel.innerHTML = "";
-      const accts = (bank?._accounts || []).filter((a) => a.customer_id === $("m-customer").value);
+      const selectedCustomer = $("m-customer").value;
+      const accts = (bank?._participants || []).filter((a) => !selectedCustomer || a.customer_id === selectedCustomer);
       accts.forEach((a) => sel.append(new Option(`${a.name || a.type} — ${a.iban || a.id} (${a.currency})`, a.id)));
       const acct = accts[0];
       if (acct) $("m-currency").value = acct.currency;
@@ -519,7 +602,7 @@
 
     // ---- simulator controls (server-side) ----------------------------------
     function avgSeconds() { return parseFloat($("rate").value); }
-    function updateRateLabel() { $("rate-val").textContent = `every ${avgSeconds().toFixed(1)} s`; }
+    function updateRateLabel() { $("rate-val").textContent = `Every ${avgSeconds().toFixed(1)} s`; }
     $("rate").addEventListener("input", () => { updateRateLabel(); applyConfigIfRunning(); });
     document.querySelectorAll(".presets button").forEach((b) => b.addEventListener("click", () => {
       $("rate").value = b.dataset.rate; updateRateLabel(); applyConfigIfRunning();
@@ -540,7 +623,7 @@
         $("sim-start").disabled = st.running;
         $("sim-stop").disabled = !st.running;
       }
-      if (typeof st.generated === "number") $("sim-stats").textContent = `${st.generated} generated`;
+      if (typeof st.generated === "number") $("sim-stats").textContent = `${st.generated} Generated`;
       if (typeof st.avg_seconds === "number") { $("rate").value = st.avg_seconds; updateRateLabel(); }
     }
 
@@ -590,7 +673,7 @@
     // ---- boot --------------------------------------------------------------
     async function boot() {
       updateRateLabel();
-      await loadAll();
+      await loadParticipants();
       try {
         const st = await api("/simulation");
         applyStatus(st);

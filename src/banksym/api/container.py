@@ -26,8 +26,8 @@ from banksym.capabilities.auth.base import (
 from banksym.capabilities.protocols.base import (
     InMemoryConsentStore,
     InMemoryPaymentStore,
-    ProtocolAdapter,
-    protocol_registry,
+    APIAdapter,
+    api_registry,
 )
 from banksym.capabilities.protocols.base.consent import (
     Authorisation,
@@ -278,9 +278,9 @@ class Container:
                     self.payment_store.save(payment)
         return results
 
-    def make_protocol_adapter(self, name: str) -> ProtocolAdapter:
-        """Instantiate a protocol adapter bound to the shared services."""
-        impl = protocol_registry.get(name)
+    def make_api_adapter(self, name: str) -> APIAdapter:
+        """Instantiate an API adapter bound to the shared services."""
+        impl = api_registry.get(name)
         return impl(
             self.banking,
             self.consent_store,
@@ -290,9 +290,16 @@ class Container:
             self.resolve_auth_provider,
         )
 
-    def protocol_adapters(self) -> list[ProtocolAdapter]:
-        """Instantiate every registered protocol adapter."""
-        return [self.make_protocol_adapter(name) for name in protocol_registry.names()]
+    def api_adapters(self) -> list[APIAdapter]:
+        """Instantiate every registered API adapter."""
+        return [self.make_api_adapter(name) for name in api_registry.names()]
+
+    # Backward-compatible wrappers for existing call sites.
+    def make_protocol_adapter(self, name: str) -> APIAdapter:
+        return self.make_api_adapter(name)
+
+    def protocol_adapters(self) -> list[APIAdapter]:
+        return self.api_adapters()
 
 
 _container: Container | None = None

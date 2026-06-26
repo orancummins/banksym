@@ -1,4 +1,4 @@
-"""ProtocolAdapter interface + registry."""
+"""APIAdapter interface + registry."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from banksym.core.kernel.registry import Capability, CapabilityRegistry
 from banksym.core.service import CoreBankingService
 from banksym.tenancy import BankService
 
-CAPABILITY_KIND = "protocol"
+CAPABILITY_KIND = "api"
 
 SettlementResolver = Callable[[str], SettlementEngine]
 """Resolves the settlement engine a given bank is configured to use."""
@@ -24,7 +24,7 @@ AuthResolver = Callable[[str], AuthProvider]
 """Resolves the auth provider a given bank is configured to use."""
 
 
-class ProtocolAdapter(Capability, abc.ABC):
+class APIAdapter(Capability, abc.ABC):
     """Exposes the core bank over a specific banking protocol as a mountable FastAPI router.
 
     An adapter is a singleton bound to the shared, multi-tenant services; ``bank_id`` is carried in
@@ -33,7 +33,7 @@ class ProtocolAdapter(Capability, abc.ABC):
 
     capability_kind = CAPABILITY_KIND
     protocol_title: str = ""
-    """Human-readable protocol name shown in the architecture view (e.g. 'Berlin Group XS2A')."""
+    """Human-readable API name shown in the architecture view (e.g. 'Berlin Group XS2A')."""
 
     def __init__(
         self,
@@ -53,8 +53,12 @@ class ProtocolAdapter(Capability, abc.ABC):
 
     @abc.abstractmethod
     def build_router(self) -> APIRouter:
-        """Return a FastAPI router implementing the protocol's endpoints."""
+        """Return a FastAPI router implementing the API's endpoints."""
         raise NotImplementedError
 
 
-protocol_registry: CapabilityRegistry[ProtocolAdapter] = CapabilityRegistry(CAPABILITY_KIND)
+api_registry: CapabilityRegistry[APIAdapter] = CapabilityRegistry(CAPABILITY_KIND)
+
+# Backward-compatible aliases for existing imports.
+ProtocolAdapter = APIAdapter
+protocol_registry = api_registry

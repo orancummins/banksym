@@ -7,11 +7,11 @@ are planned but not yet implemented.
 
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 from banksym.capabilities.auth.base import auth_registry, sca_registry
 from banksym.capabilities.localization.base import localization_registry
-from banksym.capabilities.protocols.base import protocol_registry
+from banksym.capabilities.protocols.base import api_registry
 from banksym.capabilities.settlement.base import settlement_registry
 from banksym.capabilities.txgen.base import txgen_registry
 
@@ -22,6 +22,7 @@ class CapabilityView(TypedDict):
     description: str
     status: str
     implementations: list[str]
+    extends: NotRequired[str]
 
 
 class ArchitectureView(TypedDict):
@@ -32,11 +33,11 @@ class ArchitectureView(TypedDict):
 def get_architecture() -> ArchitectureView:
     capabilities: list[CapabilityView] = [
         {
-            "kind": "protocol",
-            "interface": "ProtocolAdapter",
-            "description": "Exposes the bank over a banking protocol (PSD2 XS2A, STET, UK OB...).",
-            "status": "implemented" if protocol_registry.names() else "planned",
-            "implementations": protocol_registry.names(),
+            "kind": "api",
+            "interface": "APIAdapter",
+            "description": "Exposes the bank over an external banking API (PSD2 XS2A, STET, UK OB...).",
+            "status": "implemented" if api_registry.names() else "planned",
+            "implementations": api_registry.names(),
         },
         {
             "kind": "txgen",
@@ -76,6 +77,7 @@ def get_architecture() -> ArchitectureView:
             "description": "Strong Customer Authentication challenge issuance and verification.",
             "status": "implemented" if sca_registry.names() else "planned",
             "implementations": sca_registry.names(),
+            "extends": "APIAdapter",
         },
     ]
     return {

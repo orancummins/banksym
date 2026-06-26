@@ -39,7 +39,9 @@ def init_db(engine: Engine) -> None:
 # Newly added nullable columns that may be absent from pre-existing databases. ``create_all`` only
 # creates missing tables, never new columns, so we add them in-place to keep existing data.
 _ADDED_COLUMNS: dict[str, dict[str, str]] = {
-    "customers": {"address": "VARCHAR"},
+    "banks": {"supported_currencies": "TEXT"},
+    "customers": {"address": "VARCHAR", "source": "VARCHAR DEFAULT 'manual'"},
+    "accounts": {"account_metadata": "TEXT"},
 }
 
 
@@ -55,6 +57,16 @@ def _backfill_columns(engine: Engine) -> None:
             for name, ddl_type in columns.items():
                 if name not in present:
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl_type}"))
+
+    # Data fix: rows inserted before the source column existed were backfilled as 'manual' by
+    # the ALTER TABLE default. Re-classify them by their email domain — batch customers are
+    # always generated with @example.com addresses; manual customers never are.
+    if "customers" in existing_tables:
+        with engine.begin() as conn:
+            conn.execute(text(
+                "UPDATE customers SET source='batch'"
+                " WHERE source='manual' AND email LIKE '%@example.com'"
+            ))
 
 
 def make_session_factory(engine: Engine) -> sessionmaker:

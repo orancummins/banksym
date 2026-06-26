@@ -25,7 +25,7 @@ _DESCRIPTION = """\
 **BankSym** is a configurable, multi-tenant **test bank framework**. Each *bank* is an isolated
 tenant with its own branding, customers, accounts, transaction history and pluggable capabilities
 (transaction generators, settlement engines, localization, authentication and Open Banking
-protocols).
+APIs).
 
 ### How the API is organised
 
@@ -104,9 +104,9 @@ def create_app() -> FastAPI:
     app.include_router(settlement.router)
     app.include_router(simulation.router)
 
-    # Mount every registered protocol adapter (e.g. Berlin Group XS2A).
+    # Mount every registered API adapter (e.g. Berlin Group XS2A).
     container = get_container()
-    for adapter in container.protocol_adapters():
+    for adapter in container.api_adapters():
         app.include_router(adapter.build_router())
 
     @app.on_event("shutdown")
@@ -134,6 +134,22 @@ def create_app() -> FastAPI:
     def ui_root() -> FileResponse:
         return FileResponse(_UI_DIR / "index.html")
 
+    @app.get("/home", include_in_schema=False)
+    def ui_home() -> FileResponse:
+        return FileResponse(_UI_DIR / "home.html", headers={"Cache-Control": "no-cache"})
+
+    @app.get("/banksym.png", include_in_schema=False)
+    def ui_banksym_png() -> FileResponse:
+        return FileResponse(_UI_DIR / "banksym.png")
+
+    @app.get("/banksym2.png", include_in_schema=False)
+    def ui_banksym2_png() -> FileResponse:
+        return FileResponse(_UI_DIR / "banksym2.png")
+
+    @app.get("/home-hero.svg", include_in_schema=False)
+    def ui_home_hero_svg() -> FileResponse:
+        return FileResponse(_UI_DIR / "home-hero.svg", media_type="image/svg+xml")
+
     @app.get("/favicon.svg", include_in_schema=False)
     def favicon_svg() -> FileResponse:
         return FileResponse(_UI_DIR / "favicon.svg", media_type="image/svg+xml")
@@ -145,19 +161,19 @@ def create_app() -> FastAPI:
 
     @app.get("/builder", include_in_schema=False)
     def ui_builder() -> FileResponse:
-        return FileResponse(_UI_DIR / "builder.html")
+        return FileResponse(_UI_DIR / "builder.html", headers={"Cache-Control": "no-cache"})
 
     @app.get("/console", include_in_schema=False)
     def ui_console() -> FileResponse:
-        return FileResponse(_UI_DIR / "console.html")
+        return FileResponse(_UI_DIR / "console.html", headers={"Cache-Control": "no-cache"})
 
     @app.get("/psd2", include_in_schema=False)
     def ui_psd2() -> FileResponse:
-        return FileResponse(_UI_DIR / "psd2.html")
+        return FileResponse(_UI_DIR / "psd2.html", headers={"Cache-Control": "no-cache"})
 
     @app.get("/live", include_in_schema=False)
     def ui_live() -> FileResponse:
-        return FileResponse(_UI_DIR / "live.html")
+        return FileResponse(_UI_DIR / "live.html", headers={"Cache-Control": "no-cache"})
 
     @app.get("/psd2-callback", include_in_schema=False)
     def ui_psd2_callback() -> FileResponse:

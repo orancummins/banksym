@@ -41,6 +41,7 @@ class Bank:
     country: str
     locale: str = "en"
     base_currency: str = "EUR"
+    supported_currencies: list[str] = field(default_factory=list)
     enabled_protocols: list[str] = field(default_factory=list)
     capabilities: CapabilitySelection = field(default_factory=CapabilitySelection)
     id: str = field(default_factory=lambda: new_id("bank_"))

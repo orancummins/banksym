@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">BankSym Global Banking Simulation Graphic</title>
+  <desc id="desc">Stylized globe with networked bank buildings from different regions and the tagline We simulate so we can better serve.</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#04070f"/>
+      <stop offset="45%" stop-color="#0a1530"/>
+      <stop offset="100%" stop-color="#02050d"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#2b6fff" stop-opacity="0.36"/>
+      <stop offset="55%" stop-color="#0b1a3f" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#02050d" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="globe" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#183a92"/>
+      <stop offset="60%" stop-color="#0b1f54"/>
+      <stop offset="100%" stop-color="#081638"/>
+    </linearGradient>
+    <linearGradient id="land" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#43d0ad"/>
+      <stop offset="100%" stop-color="#1ba07f"/>
+    </linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#49a3ff" stop-opacity="0.12"/>
+      <stop offset="50%" stop-color="#71d8ff" stop-opacity="0.92"/>
+      <stop offset="100%" stop-color="#49a3ff" stop-opacity="0.12"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <symbol id="bank" viewBox="0 0 120 90">
+      <polygon points="12,34 60,10 108,34" fill="#f7cc5b"/>
+      <rect x="16" y="34" width="88" height="42" rx="4" fill="#f5f7ff"/>
+      <rect x="20" y="42" width="10" height="26" fill="#0f2a5e"/>
+      <rect x="38" y="42" width="10" height="26" fill="#0f2a5e"/>
+      <rect x="56" y="42" width="10" height="26" fill="#0f2a5e"/>
+      <rect x="74" y="42" width="10" height="26" fill="#0f2a5e"/>
+      <rect x="92" y="42" width="10" height="26" fill="#0f2a5e"/>
+      <rect x="14" y="75" width="92" height="8" rx="3" fill="#f7cc5b"/>
+    </symbol>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <ellipse cx="800" cy="470" rx="710" ry="360" fill="url(#halo)"/>
+
+  <g opacity="0.35">
+    <circle cx="130" cy="120" r="2" fill="#9dd8ff"/>
+    <circle cx="260" cy="210" r="1.7" fill="#9dd8ff"/>
+    <circle cx="470" cy="90" r="1.5" fill="#9dd8ff"/>
+    <circle cx="1430" cy="150" r="1.7" fill="#9dd8ff"/>
+    <circle cx="1510" cy="280" r="2" fill="#9dd8ff"/>
+    <circle cx="1180" cy="80" r="1.4" fill="#9dd8ff"/>
+    <circle cx="200" cy="760" r="1.5" fill="#9dd8ff"/>
+    <circle cx="1440" cy="760" r="1.5" fill="#9dd8ff"/>
+    <circle cx="920" cy="840" r="1.3" fill="#9dd8ff"/>
+  </g>
+
+  <g transform="translate(800 470)">
+    <circle r="260" fill="url(#globe)"/>
+    <ellipse rx="260" ry="258" fill="none" stroke="#5daeff" stroke-opacity="0.35" stroke-width="2"/>
+
+    <path d="M-190 -80 C-145 -125,-70 -125,-22 -85 C6 -62,35 -61,72 -74 C119 -91,170 -72,196 -26 C221 18,203 68,153 92 C106 114,78 149,25 160 C-24 170,-74 147,-112 105 C-149 65,-183 53,-201 12 C-215 -20,-214 -55,-190 -80Z" fill="url(#land)" fill-opacity="0.88"/>
+    <path d="M-136 -174 C-95 -210,-40 -206,0 -174 C30 -151,53 -145,80 -151 C108 -158,131 -142,140 -120 C149 -96,138 -69,110 -57 C84 -45,63 -24,33 -17 C-6 -8,-41 -21,-65 -47 C-90 -73,-129 -72,-149 -97 C-168 -122,-164 -152,-136 -174Z" fill="#34c7a6" fill-opacity="0.85"/>
+
+    <ellipse rx="250" ry="84" fill="none" stroke="#67c8ff" stroke-opacity="0.24" stroke-width="1.8"/>
+    <ellipse rx="250" ry="168" fill="none" stroke="#67c8ff" stroke-opacity="0.2" stroke-width="1.8"/>
+    <ellipse rx="130" ry="252" fill="none" stroke="#67c8ff" stroke-opacity="0.2" stroke-width="1.6"/>
+    <ellipse rx="208" ry="252" fill="none" stroke="#67c8ff" stroke-opacity="0.16" stroke-width="1.6"/>
+
+    <circle cx="-172" cy="-98" r="5" fill="#7ad5ff" filter="url(#glow)"/>
+    <circle cx="-26" cy="-138" r="5" fill="#7ad5ff" filter="url(#glow)"/>
+    <circle cx="156" cy="-62" r="5" fill="#7ad5ff" filter="url(#glow)"/>
+    <circle cx="188" cy="48" r="5" fill="#7ad5ff" filter="url(#glow)"/>
+    <circle cx="66" cy="146" r="5" fill="#7ad5ff" filter="url(#glow)"/>
+    <circle cx="-74" cy="158" r="5" fill="#7ad5ff" filter="url(#glow)"/>
+    <circle cx="-184" cy="44" r="5" fill="#7ad5ff" filter="url(#glow)"/>
+
+    <path d="M-172 -98 Q-104 -156 -26 -138" stroke="url(#line)" stroke-width="3" fill="none"/>
+    <path d="M-26 -138 Q74 -136 156 -62" stroke="url(#line)" stroke-width="3" fill="none"/>
+    <path d="M156 -62 Q220 -5 188 48" stroke="url(#line)" stroke-width="3" fill="none"/>
+    <path d="M188 48 Q140 113 66 146" stroke="url(#line)" stroke-width="3" fill="none"/>
+    <path d="M66 146 Q-11 194 -74 158" stroke="url(#line)" stroke-width="3" fill="none"/>
+    <path d="M-74 158 Q-162 124 -184 44" stroke="url(#line)" stroke-width="3" fill="none"/>
+    <path d="M-184 44 Q-216 -40 -172 -98" stroke="url(#line)" stroke-width="3" fill="none"/>
+    <path d="M-172 -98 Q6 -4 188 48" stroke="url(#line)" stroke-width="2" fill="none" opacity="0.75"/>
+    <path d="M-26 -138 Q31 14 -74 158" stroke="url(#line)" stroke-width="2" fill="none" opacity="0.8"/>
+  </g>
+
+  <g opacity="0.94">
+    <use href="#bank" x="184" y="370" width="120" height="90"/>
+    <use href="#bank" x="1246" y="190" width="120" height="90"/>
+    <use href="#bank" x="1260" y="620" width="120" height="90"/>
+    <use href="#bank" x="248" y="164" width="120" height="90"/>
+    <use href="#bank" x="332" y="686" width="120" height="90"/>
+    <use href="#bank" x="702" y="96" width="120" height="90"/>
+  </g>
+
+  <g>
+    <text x="800" y="782" text-anchor="middle" fill="#e6f0ff" font-family="Segoe UI, Arial, sans-serif" font-size="56" font-weight="700" letter-spacing="0.4">
+      We simulate so we can better serve
+    </text>
+    <text x="800" y="822" text-anchor="middle" fill="#9dc4ff" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="500" letter-spacing="0.5">
+      Global banking scenarios, locally controlled
+    </text>
+  </g>
+</svg>

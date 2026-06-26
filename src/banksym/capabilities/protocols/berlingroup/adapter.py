@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Header, HTTPException, Path
 
-from banksym.capabilities.protocols.base.adapter import ProtocolAdapter, protocol_registry
+from banksym.capabilities.protocols.base.adapter import APIAdapter, api_registry
 from banksym.capabilities.protocols.base.consent import (
     Authorisation,
     Consent,
@@ -40,8 +40,8 @@ def _synth_iban(account: Account, country: str) -> str:
     return f"{country[:2].upper()}00BSYM{tail}"
 
 
-@protocol_registry.register
-class BerlinGroupAdapter(ProtocolAdapter):
+@api_registry.register
+class BerlinGroupAdapter(APIAdapter):
     capability_name = "berlin_group"
     protocol_title = "Berlin Group NextGenPSD2 (XS2A)"
 

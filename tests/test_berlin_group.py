@@ -45,8 +45,11 @@ def _seed_bank_with_history(client: TestClient) -> tuple[str, str, str]:
 
 def test_architecture_lists_berlin_group(client: TestClient):
     arch = client.get("/architecture").json()
-    protocol = next(c for c in arch["capabilities"] if c["kind"] == "protocol")
-    assert "berlin_group" in protocol["implementations"]
+    api = next(c for c in arch["capabilities"] if c["kind"] == "api")
+    assert api["interface"] == "APIAdapter"
+    assert "berlin_group" in api["implementations"]
+    sca = next(c for c in arch["capabilities"] if c["kind"] == "sca")
+    assert sca["extends"] == "APIAdapter"
     assert arch["core"]["interface"] == "CoreBankingService"
 
 
