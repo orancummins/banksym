@@ -126,6 +126,8 @@ _PACKS: dict[str, LocalePack] = {
             "Rozrywka",
             "Apteka",
             "Subskrypcja",
+        ],
+    ),
     "US": LocalePack(
         country="US",
         language="en",

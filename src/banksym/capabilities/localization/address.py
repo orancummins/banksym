@@ -190,6 +190,8 @@ _ADDRESS_PACKS: dict[str, _AddressPack] = {
             "Gdańsk",
             "Szczecin",
             "Lublin",
+        ],
+    ),
     "US": _AddressPack(
         country_name="United States",
         streets=[
