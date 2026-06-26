@@ -169,6 +169,27 @@ _ADDRESS_PACKS: dict[str, _AddressPack] = {
             "Maastricht",
         ],
     ),
+    "PL": _AddressPack(
+        country_name="Polska",
+        streets=[
+            "ul. Marszałkowska",
+            "ul. Długa",
+            "ul. Kościuszki",
+            "ul. Piłsudskiego",
+            "ul. Mickiewicza",
+            "ul. Słowackiego",
+            "ul. Lipowa",
+            "ul. Ogrodowa",
+        ],
+        cities=[
+            "Warszawa",
+            "Kraków",
+            "Łódź",
+            "Wrocław",
+            "Poznań",
+            "Gdańsk",
+            "Szczecin",
+            "Lublin",
     "US": _AddressPack(
         country_name="United States",
         streets=[
@@ -393,6 +414,9 @@ def random_address(country: str | None, rng: random.Random | None = None) -> str
     if code == "FR":
         postcode = _digits(rng, 5)
         return f"{number} {street}\n{postcode} {city}\n{pack.country_name}"
+    if code == "PL":
+        postcode = f"{_digits(rng, 2)}-{_digits(rng, 3)}"
+        return f"{street} {number}\n{postcode} {city}\n{pack.country_name}"
     if code == "US":
         state = rng.choice(["CA", "NY", "TX", "WA", "IL", "MA", "CO", "GA"])
         zipcode = _digits(rng, 5)
@@ -425,6 +449,7 @@ _PHONE_PACKS: dict[str, tuple[str, list[str], int, list[int]]] = {
     "GB": ("+44", ["7400", "7700", "7800", "7900", "7911"], 6, [3, 3]),
     "IE": ("+353", ["83", "85", "86", "87", "89"], 7, [3, 4]),
     "NL": ("+31", ["6"], 8, [4, 4]),
+    "PL": ("+48", ["501", "503", "505", "510", "512", "600", "601", "660", "720", "790"], 6, [3, 3]),
     "US": ("+1", ["201", "212", "310", "415", "512", "617"], 7, [3, 4]),
     "CA": ("+1", ["204", "236", "403", "416", "514", "604"], 7, [3, 4]),
     "BR": ("+55", ["11 9", "21 9", "31 9", "41 9"], 8, [4, 4]),

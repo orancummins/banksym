@@ -185,6 +185,10 @@
     }
     button:hover { filter: brightness(.96); box-shadow: 0 6px 18px color-mix(in srgb, var(--brand-secondary, #eb001b) 28%, transparent); }
     button:active { transform: translateY(1px); }
+    .form-actions { display: flex; gap: 10px; margin-top: 22px; }
+    .form-actions button { margin-top: 0; }
+    button.secondary { width: auto; background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    button.secondary:hover { background: #f3f5f8; filter: none; box-shadow: none; }
     h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin-top: 0; }
     .form-msg { margin-top: 16px; padding: 12px 14px; border-radius: 10px; font-size: 13.5px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
     .form-msg.success { background: color-mix(in srgb, var(--brand, #067647) 8%, var(--surface)); border: 1px solid color-mix(in srgb, var(--brand, #067647) 22%, var(--border)); color: var(--text); }
@@ -579,22 +583,22 @@
 
   <script>
     const COUNTRY_NAMES = {
-      DE: "Germany", ES: "Spain", FR: "France", GB: "United Kingdom", IE: "Ireland", NL: "Netherlands",
+      DE: "Germany", ES: "Spain", FR: "France", GB: "United Kingdom", IE: "Ireland", NL: "Netherlands", PL: "Poland",
       US: "United States", CA: "Canada", BR: "Brazil", CN: "China", ZA: "South Africa"
     };
     const LANGUAGES = {
-      en: "English", de: "German (Deutsch)", es: "Spanish (Espa\u00f1ol)", fr: "French (Fran\u00e7ais)", nl: "Dutch (Nederlands)",
+      en: "English", de: "German (Deutsch)", es: "Spanish (Espa\u00f1ol)", fr: "French (Fran\u00e7ais)", nl: "Dutch (Nederlands)", pl: "Polish (Polski)",
       pt: "Portuguese (Portugu\u00eas)", zh: "Chinese (\u4e2d\u6587)"
     };
     const COUNTRY_LANG = {
-      DE: "de", ES: "es", FR: "fr", GB: "en", IE: "en", NL: "nl",
+      DE: "de", ES: "es", FR: "fr", GB: "en", IE: "en", NL: "nl", PL: "pl",
       US: "en", CA: "en", BR: "pt", CN: "zh", ZA: "en"
     };
     const COUNTRY_BASE_CURRENCY = {
-      DE: "EUR", ES: "EUR", FR: "EUR", GB: "GBP", IE: "EUR", NL: "EUR",
+      DE: "EUR", ES: "EUR", FR: "EUR", GB: "GBP", IE: "EUR", NL: "EUR", PL: "PLN",
       US: "USD", CA: "CAD", BR: "BRL", CN: "CNY", ZA: "ZAR"
     };
-    const SUPPORTED_CURRENCY_OPTIONS = ["EUR", "GBP", "USD", "CAD", "BRL", "CNY", "ZAR"];
+    const SUPPORTED_CURRENCY_OPTIONS = ["EUR", "GBP", "PLN", "USD", "CAD", "BRL", "CNY", "ZAR"];
     const META = {
       cardProducts: [],
       currentAccountProducts: [],
@@ -1036,7 +1040,7 @@
       fill("auth", caps.auth);
       // Countries come from the localization provider packs.
       const arch = await (await fetch("/architecture")).json();
-      const countries = ["DE", "ES", "FR", "GB", "IE", "NL", "US", "CA", "BR", "CN", "ZA"];
+      const countries = ["DE", "ES", "FR", "GB", "IE", "NL", "PL", "US", "CA", "BR", "CN", "ZA"];
       fillCountries(countries);
       fillLanguages();
       syncBaseCurrencyToCountry();

@@ -32,6 +32,20 @@ class CreateBankRequest(BaseModel):
     capabilities: dict[str, str] = Field(default_factory=dict)
 
 
+class UpdateBankRequest(BaseModel):
+    """Partial update for a bank tenant. Only the supplied fields are changed."""
+
+    display_name: str | None = None
+    country: str | None = None
+    locale: str | None = None
+    base_currency: str | None = None
+    logo_url: str | None = None
+    primary_color: str | None = None
+    enabled_protocols: list[str] | None = None
+    capabilities: dict[str, str] | None = None
+
+
+
 class BankResponse(BaseModel):
     id: str
     display_name: str

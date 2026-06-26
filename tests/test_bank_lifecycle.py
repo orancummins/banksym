@@ -6,7 +6,11 @@ from fastapi.testclient import TestClient
 from banksym.api.app import create_app
 from banksym.api.container import reset_container
 from banksym.tenancy.repository import InMemoryBankRepository
-from banksym.tenancy.service import BankService, DuplicateBankNameError
+from banksym.tenancy.service import (
+    BankNotFoundError,
+    BankService,
+    DuplicateBankNameError,
+)
 
 
 @pytest.fixture
@@ -37,6 +41,61 @@ def test_delete_then_name_reusable():
     # Name can be reused after deletion.
     again = service.create_bank(display_name="Acme Bank", country="DE")
     assert again.id != bank.id
+
+
+def test_update_bank_changes_fields():
+    service = BankService(InMemoryBankRepository())
+    bank = service.create_bank(display_name="Acme Bank", country="DE")
+    updated = service.update_bank(
+        bank.id,
+        display_name="Acme Bank EU",
+        country="FR",
+        locale="fr",
+        base_currency="EUR",
+        primary_color="#123456",
+        enabled_protocols=["berlin_group"],
+        capabilities={"txgen": "rule_based"},
+    )
+    assert updated.id == bank.id
+    assert updated.branding.display_name == "Acme Bank EU"
+    assert updated.branding.primary_color == "#123456"
+    assert updated.country == "FR"
+    assert updated.locale == "fr"
+    assert updated.enabled_protocols == ["berlin_group"]
+    assert updated.capabilities.get("txgen") == "rule_based"
+
+
+def test_update_bank_partial_leaves_other_fields():
+    service = BankService(InMemoryBankRepository())
+    bank = service.create_bank(display_name="Acme Bank", country="DE", locale="de")
+    service.update_bank(bank.id, primary_color="#abcdef")
+    reloaded = service.get_bank(bank.id)
+    assert reloaded.branding.primary_color == "#abcdef"
+    assert reloaded.country == "DE"
+    assert reloaded.locale == "de"
+    assert reloaded.branding.display_name == "Acme Bank"
+
+
+def test_update_bank_keeps_own_name():
+    service = BankService(InMemoryBankRepository())
+    bank = service.create_bank(display_name="Acme Bank", country="DE")
+    # Re-using the bank's own name (same casing) must not trip the duplicate check.
+    updated = service.update_bank(bank.id, display_name="Acme Bank", country="FR")
+    assert updated.country == "FR"
+
+
+def test_update_bank_rejects_duplicate_name():
+    service = BankService(InMemoryBankRepository())
+    service.create_bank(display_name="Bank One", country="DE")
+    other = service.create_bank(display_name="Bank Two", country="FR")
+    with pytest.raises(DuplicateBankNameError):
+        service.update_bank(other.id, display_name="bank one")
+
+
+def test_update_unknown_bank_raises():
+    service = BankService(InMemoryBankRepository())
+    with pytest.raises(BankNotFoundError):
+        service.update_bank("bank_missing", display_name="X")
 
 
 # -- API-level ---------------------------------------------------------------
@@ -70,6 +129,43 @@ def test_delete_bank_purges_data(client: TestClient):
 
 def test_delete_unknown_bank_returns_404(client: TestClient):
     assert client.delete("/banks/bank_missing").status_code == 404
+
+
+def test_update_bank_via_api(client: TestClient):
+    bank = client.post("/banks", json={"display_name": "Edit Me", "country": "DE"}).json()
+    resp = client.put(
+        f"/banks/{bank['id']}",
+        json={
+            "display_name": "Edited",
+            "country": "PL",
+            "locale": "pl",
+            "base_currency": "PLN",
+            "primary_color": "#abcdef",
+            "capabilities": {"txgen": "rule_based"},
+        },
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["id"] == bank["id"]
+    assert body["display_name"] == "Edited"
+    assert body["country"] == "PL"
+    assert body["base_currency"] == "PLN"
+    assert body["primary_color"] == "#abcdef"
+    assert body["capabilities"]["txgen"] == "rule_based"
+    # The change is persisted.
+    assert client.get(f"/banks/{bank['id']}").json()["display_name"] == "Edited"
+
+
+def test_update_unknown_bank_via_api_returns_404(client: TestClient):
+    assert client.put("/banks/bank_missing", json={"display_name": "X"}).status_code == 404
+
+
+def test_update_duplicate_name_via_api_returns_400(client: TestClient):
+    client.post("/banks", json={"display_name": "Bank One", "country": "DE"})
+    two = client.post("/banks", json={"display_name": "Bank Two", "country": "FR"}).json()
+    resp = client.put(f"/banks/{two['id']}", json={"display_name": "Bank One"})
+    assert resp.status_code == 400
+    assert resp.json()["code"] == "duplicate_bank_name"
 
 
 def test_delete_isolates_other_banks(client: TestClient):
