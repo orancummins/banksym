@@ -200,6 +200,7 @@
     .btn.danger:hover { background: var(--bad-bg); }
     .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; filter: none; }
     .btn.lg { padding: 13px 22px; font-size: 14.5px; }
+    .btn.sm { padding: 7px 13px; font-size: 12.5px; }
     .step-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; }
     .step-foot .spacer { flex: 1; }
 
@@ -253,6 +254,14 @@
     .exist .eb .ebm img { width: 15px; height: 10px; border-radius: 2px; object-fit: cover; }
     .exist .eb .ebdel { margin-left: 4px; color: var(--faint); font-size: 15px; line-height: 1; padding: 2px 5px; border-radius: 6px; }
     .exist .eb .ebdel:hover { color: var(--bad); background: var(--bad-bg); }
+    .exist .eb .ebedit { margin-left: 2px; color: var(--faint); font-size: 13px; line-height: 1; padding: 2px 5px; border-radius: 6px; }
+    .exist .eb .ebedit:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+    .eb-editor { flex-basis: 100%; display: flex; align-items: center; flex-wrap: wrap; gap: 14px; padding: 12px 14px; border: 1px dashed var(--border-strong); border-radius: 12px; background: var(--surface-2); }
+    .eb-editor .ebe-title { font-size: 12px; font-weight: 700; color: var(--muted); }
+    .eb-editor .ebe-col { display: flex; align-items: center; gap: 7px; }
+    .eb-editor .ebe-col label { font-size: 11.5px; font-weight: 600; color: var(--muted); }
+    .eb-editor input[type=color] { width: 38px; height: 34px; padding: 0; border: 1px solid var(--border-strong); border-radius: 8px; background: none; cursor: pointer; }
+    .eb-editor .ebe-actions { margin-left: auto; display: flex; gap: 8px; }
 
     /* Stat tiles */
     .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
@@ -949,6 +958,8 @@
       { id:"cajasol",  name:"Caja del Sol",    country:"ES", pc:"#ea580c", pc2:"#f59e0b", desc:"Spanish savings & retail." },
       { id:"batavia",  name:"Batavia Bank",    country:"NL", pc:"#2563eb", pc2:"#38bdf8", desc:"Dutch full-service bank." },
       { id:"meridian", name:"Banque Méridian", country:"FR", pc:"#e11d48", pc2:"#fb7185", desc:"French universal bank." },
+      { id:"citi",     name:"Citi",            country:"US", pc:"#003b70", pc2:"#d9261c", desc:"US global bank — Citi blue & red arc." },
+      { id:"chase",    name:"Chase",           country:"US", pc:"#117aca", pc2:"#0a4e8a", desc:"US retail bank — Chase octagon blue." },
       { id:"banksym",  name:"BankSym One",     country:"DE", pc:"#111116", pc2:"#eb001b", desc:"Signature reference tenant." },
     ];
     const PERSONA_PRESETS = {
@@ -1341,11 +1352,48 @@
         el.style.setProperty("--ebc2", b.secondary_color || b.primary_color || "#666");
         el.innerHTML = `<span class="chip" style="width:34px;height:22px;padding:0;border:none"></span>`
           + `<span><span class="ebn">${esc(b.display_name)}</span><br/><span class="ebm"><img src="${flag(b.country)}" alt=""/>${COUNTRY_NAMES[b.country]||b.country} · ${b.base_currency}</span></span>`
+          + `<span class="ebedit" title="Edit colours">✎</span>`
           + `<span class="ebdel" title="Delete">✕</span>`;
-        el.addEventListener("click", (ev) => { if (ev.target.classList.contains("ebdel")) return; adoptBank(b); });
+        el.addEventListener("click", (ev) => {
+          if (ev.target.classList.contains("ebdel") || ev.target.classList.contains("ebedit")) return;
+          adoptBank(b);
+        });
+        el.querySelector(".ebedit").addEventListener("click", (ev) => { ev.stopPropagation(); openColorEditor(b, el); });
         el.querySelector(".ebdel").addEventListener("click", (ev) => { ev.stopPropagation(); deleteBank(b); });
         wrap.appendChild(el);
       });
+    }
+    function openColorEditor(b, afterEl) {
+      const existing = document.getElementById("eb-editor");
+      const wasForThis = existing && existing.dataset.bankId === b.id;
+      if (existing) existing.remove();
+      if (wasForThis) return;
+      const pc = b.primary_color || "#000000";
+      const pc2 = b.secondary_color || pc;
+      const ed = document.createElement("div");
+      ed.className = "eb-editor";
+      ed.id = "eb-editor";
+      ed.dataset.bankId = b.id;
+      ed.innerHTML =
+        `<span class="ebe-title">Brand colours · ${esc(b.display_name)}</span>`
+        + `<span class="ebe-col"><label>Primary</label><input type="color" id="ebe-pc" value="${pc}"/></span>`
+        + `<span class="ebe-col"><label>Secondary</label><input type="color" id="ebe-pc2" value="${pc2}"/></span>`
+        + `<span class="ebe-actions"><button class="btn ghost sm" id="ebe-cancel">Cancel</button><button class="btn primary sm" id="ebe-save">Save</button></span>`;
+      afterEl.insertAdjacentElement("afterend", ed);
+      ed.querySelector("#ebe-cancel").addEventListener("click", () => ed.remove());
+      ed.querySelector("#ebe-save").addEventListener("click", () => saveBankColors(b, ed));
+    }
+    async function saveBankColors(b, ed) {
+      const primary = ed.querySelector("#ebe-pc").value;
+      const secondary = ed.querySelector("#ebe-pc2").value;
+      const btn = ed.querySelector("#ebe-save"); btn.disabled = true; btn.textContent = "Saving…";
+      try {
+        const updated = await api(`/banks/${b.id}`, { method:"PUT", body:{ primary_color: primary, secondary_color: secondary } });
+        S.banks = S.banks.map(x => x.id === b.id ? updated : x);
+        if (S.bank && S.bank.id === b.id) { S.bank = updated; renderRail(); }
+        loadExisting();
+        toast(`Updated “${b.display_name}” colours`);
+      } catch (e) { toast(e.message, true); btn.disabled = false; btn.textContent = "Save"; }
     }
     function adoptBank(b) {
       S.bank = b;

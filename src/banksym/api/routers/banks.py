@@ -112,6 +112,7 @@ def update_bank(
             base_currency=body.base_currency,
             logo_url=body.logo_url,
             primary_color=body.primary_color,
+            secondary_color=body.secondary_color,
             enabled_protocols=body.enabled_protocols,
             capabilities=body.capabilities,
         )
