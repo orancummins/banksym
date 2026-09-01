@@ -100,6 +100,16 @@ class FdxAdapter(APIAdapter):
                 # A card is a liability: FDX reports the amount owed as a positive
                 # number on a LINE_OF_CREDIT_ACCOUNT, while the core holds it as a
                 # negative deposit-style balance.
+                owed = -balance.to_decimal()
+                # Credit limit is underwriting data for this specific cardholder,
+                # not a core ledger concept BankSym models natively -- it rides in
+                # account metadata the same way the display mask already does.
+                # availableCredit is the whole reason a client asks for this
+                # account at all: whether a purchase can actually be charged to it.
+                limit_raw = (account.metadata or {}).get("credit_limit")
+                available_credit = None
+                if limit_raw is not None:
+                    available_credit = float(limit_raw) - float(owed)
                 return s.FdxAccountEntry(
                     locAccount=s.FdxLocAccount(
                         accountId=account.id,
@@ -108,7 +118,8 @@ class FdxAdapter(APIAdapter):
                         nickname=account.name,
                         currency=currency,
                         balanceAsOf=now,
-                        currentBalance=float(-balance.to_decimal()),
+                        currentBalance=float(owed),
+                        availableCredit=available_credit,
                     )
                 )
             return s.FdxAccountEntry(

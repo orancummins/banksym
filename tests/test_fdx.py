@@ -202,3 +202,63 @@ def test_all_three_protocols_coexist(client):
     from banksym.capabilities.protocols.base import api_registry
 
     assert {"berlin_group", "fdx", "open_finance"} <= set(api_registry.names())
+
+
+def _seed_card_with_limit(client: TestClient, credit_limit: str):
+    """A dedicated bank/customer/card, with credit_limit set at creation.
+
+    There is no account-update endpoint in BankSym, so a limit set via metadata
+    has to be present on the POST that creates the account -- mutating a fetched
+    Account object in-process does not persist, since the repository loads a
+    fresh copy on every request.
+    """
+    bank = client.post(
+        "/banks",
+        json={"display_name": "FDX Limit Test Bank", "country": "US",
+              "base_currency": "USD", "enabled_protocols": ["fdx"]},
+    ).json()
+    bank_id = bank["id"]
+    customer = client.post(
+        f"/banks/{bank_id}/customers",
+        json={"full_name": "Alex Morgan", "email": "alex@example.com"},
+    ).json()
+    card = client.post(
+        f"/banks/{bank_id}/accounts",
+        json={"currency": "USD", "customer_id": customer["id"], "type": "credit_card",
+              "name": "Limited Card", "metadata": {"mask": "1234", "credit_limit": credit_limit}},
+    ).json()
+    return bank_id, card["id"]
+
+
+def test_available_credit_is_computed_from_a_credit_limit_in_metadata(client):
+    """Credit limit is underwriting data for one cardholder, not a core ledger
+    concept BankSym models natively, so it rides in account metadata. A client
+    that only ever sees currentBalance cannot tell whether a purchase will
+    actually be approved -- availableCredit is the reason to ask for this account
+    at all.
+    """
+    bank_id, card = _seed_card_with_limit(client, "1000.00")
+    body = client.get(f"/fdx/{bank_id}/v6/accounts/{card}", headers=AUTH).json()
+    assert body["locAccount"]["availableCredit"] == pytest.approx(1000.00)
+
+
+def test_available_credit_nets_against_the_owed_balance(client):
+    bank_id, card = _seed_card_with_limit(client, "1000.00")
+    client.post(
+        f"/banks/{bank_id}/transactions/import",
+        json={"transactions": [
+            {"account_id": card, "amount": "300.00", "side": "debit",
+             "booked_at": "2025-11-10T00:00:00Z", "description": "SPEND"},
+        ]},
+    )
+    body = client.get(f"/fdx/{bank_id}/v6/accounts/{card}", headers=AUTH).json()
+    loc = body["locAccount"]
+    assert loc["currentBalance"] == pytest.approx(300.00)
+    assert loc["availableCredit"] == pytest.approx(700.00)
+
+
+def test_available_credit_is_none_without_a_credit_limit(client):
+    """No limit set means no claim is made -- never a fabricated default."""
+    bank_id, _customer, _checking, card = _seed(client)
+    body = client.get(f"/fdx/{bank_id}/v6/accounts/{card}", headers=AUTH).json()
+    assert body["locAccount"]["availableCredit"] is None
