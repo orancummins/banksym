@@ -19,6 +19,8 @@ from banksym.api.schemas import (
     CustomerResponse,
     GenerateHistoryRequest,
     GenerateHistoryResponse,
+    GenerateBankHistoryRequest,
+    GenerateBankHistoryResponse,
     OpenAccountRequest,
     PostTransactionRequest,
     TransactionResponse,
@@ -354,6 +356,65 @@ def generate_history(
         raise to_http_error(exc) from exc
     balance = container.banking.balance(bank_id, account_id)
     return GenerateHistoryResponse(entries_booked=len(entries), balance=str(balance))
+
+
+@router.post(
+    "/generate-history",
+    response_model=GenerateBankHistoryResponse,
+    summary="Generate transaction history for the whole bank",
+)
+def generate_bank_history(
+    body: GenerateBankHistoryRequest,
+    bank_id: BankIdDep,
+    container: ContainerDep,
+) -> GenerateBankHistoryResponse:
+    """Generate realistic transaction history for **every** customer account in the bank.
+
+    Iterates all non-internal, customer-linked accounts and synthesises booked entries between
+    ``start`` and ``end`` using the selected generator and each owning customer's persona. This is
+    the bank-wide counterpart of the per-account endpoint, used to populate a freshly seeded bank
+    with history in a single call. Returns how many accounts were processed and the total number
+    of entries booked.
+    """
+    try:
+        bank = container.bank_service.get_bank(bank_id)
+        generator = container.make_txgen(body.generator)
+    except BankSymError as exc:
+        raise to_http_error(exc) from exc
+
+    accounts = [
+        a
+        for a in container.banking.list_accounts(bank_id)
+        if not a.is_internal and a.customer_id is not None
+    ]
+    customers = {c.id: c for c in container.banking.list_customers(bank_id)}
+
+    total_entries = 0
+    processed = 0
+    for account in accounts:
+        customer = customers.get(account.customer_id)
+        request = GenerationRequest(
+            bank_id=bank_id,
+            customer=customer,  # type: ignore[arg-type]
+            account=account,
+            start=body.start,
+            end=body.end,
+            persona=customer.persona if customer else None,
+            currency=account.currency,
+            country=bank.country,
+            language=bank.locale,
+            seed=body.seed,
+        )
+        try:
+            entries = generator.generate(request)  # type: ignore[attr-defined]
+        except BankSymError:
+            continue
+        total_entries += len(entries)
+        processed += 1
+
+    return GenerateBankHistoryResponse(
+        accounts_processed=processed, entries_booked=total_entries
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,2046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>BankSym Studio — Create · Populate · Integrate · Simulate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --canvas: #eef1f6;
+      --surface: #ffffff;
+      --surface-2: #f7f9fc;
+      --border: #e4e8ef;
+      --border-strong: #d3d9e3;
+      --text: #10131c;
+      --muted: #616a7d;
+      --faint: #8a93a5;
+      --ink: #0a0b0f;
+      --mc-red: #eb001b;
+      --mc-orange: #f79e1b;
+      /* Accent is tinted to the active bank's brand once one is selected. */
+      --accent: #eb001b;
+      --accent-2: #f79e1b;
+      --on-accent: #ffffff;
+      --good: #0e9f6e;
+      --good-bg: #e7f7f0;
+      --bad: #e02424;
+      --bad-bg: #fdecec;
+      --radius: 16px;
+      --shadow-sm: 0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.05);
+      --shadow: 0 6px 24px -8px rgba(16,24,40,.16), 0 2px 6px rgba(16,24,40,.06);
+      --shadow-lg: 0 24px 60px -20px rgba(10,12,20,.35);
+    }
+    * { box-sizing: border-box; }
+    html { scrollbar-gutter: stable; }
+    body {
+      margin: 0;
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 85% -10%, rgba(235,0,27,.06), transparent 60%),
+        radial-gradient(1000px 500px at 0% 0%, rgba(247,158,27,.06), transparent 55%),
+        var(--canvas);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* ---------- Header ---------- */
+    header {
+      position: sticky; top: 0; z-index: 60;
+      height: 60px; padding: 0 26px;
+      display: flex; align-items: center; gap: 16px;
+      background: #000; color: #fff;
+      border-bottom: 1px solid #191919;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand .mark { flex: none; }
+    .brand h1 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -.01em; }
+    .brand .kicker { margin: 1px 0 0; font-size: 11.5px; color: rgba(255,255,255,.55); font-weight: 600; letter-spacing: .02em; }
+    header nav { margin-left: auto; display: flex; align-items: center; gap: 2px; }
+    header nav a {
+      color: rgba(255,255,255,.72); text-decoration: none; font-size: 12.5px; font-weight: 600;
+      padding: 7px 11px; border-radius: 9px; transition: background .15s, color .15s;
+    }
+    header nav a:hover { background: rgba(255,255,255,.1); color: #fff; }
+    header nav a.active { color: #fff; background: rgba(255,255,255,.14); }
+    header nav .sep { width: 1px; height: 22px; background: rgba(255,255,255,.14); margin: 0 8px; }
+    header nav a.ghost { color: rgba(255,255,255,.5); font-weight: 500; }
+
+    /* ---------- Layout ---------- */
+    .studio { display: grid; grid-template-columns: 300px 1fr; gap: 26px; max-width: 1320px; margin: 0 auto; padding: 26px; }
+    @media (max-width: 1080px) { .studio { grid-template-columns: 1fr; } .rail { position: static !important; } }
+
+    /* ---------- Rail ---------- */
+    .rail { position: sticky; top: 86px; align-self: start; display: flex; flex-direction: column; gap: 16px; }
+    .rail-bank {
+      background: linear-gradient(160deg, #111116, #1c1d25);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius); padding: 16px; color: #fff;
+      box-shadow: var(--shadow); overflow: hidden; position: relative;
+    }
+    .rail-bank::after { content: ""; position: absolute; inset: 0;
+      background: radial-gradient(140px 90px at 88% -10%, var(--accent), transparent 70%); opacity: .5; pointer-events: none; }
+    .rail-bank .rb-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .12em; color: rgba(255,255,255,.5); font-weight: 700; }
+    .rail-bank .rb-name { font-size: 17px; font-weight: 800; margin-top: 8px; display: flex; align-items: center; gap: 9px; }
+    .rail-bank .rb-name .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); flex: none; }
+    .rail-bank .rb-meta { margin-top: 8px; display: flex; align-items: center; gap: 7px; font-size: 12px; color: rgba(255,255,255,.66); position: relative; z-index: 1; }
+    .rail-bank .rb-meta img { width: 18px; height: 12px; border-radius: 2px; object-fit: cover; box-shadow: 0 0 0 1px rgba(255,255,255,.2); }
+    .rail-bank .rb-tags { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 5px; position: relative; z-index: 1; }
+    .rail-bank .rb-tag { font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,.1); color: rgba(255,255,255,.85); }
+    .rail-bank .rb-empty { font-size: 12.5px; color: rgba(255,255,255,.6); margin-top: 8px; line-height: 1.5; }
+
+    .rail-steps { list-style: none; margin: 0; padding: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+    .rail-step { display: flex; gap: 12px; align-items: flex-start; padding: 12px 12px; border-radius: 12px; cursor: pointer; transition: background .15s; position: relative; }
+    .rail-step + .rail-step::before { content: ""; position: absolute; left: 27px; top: -8px; height: 8px; width: 2px; background: var(--border); }
+    .rail-step:hover { background: var(--surface-2); }
+    .rail-step.active { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+    .rail-step.locked { cursor: not-allowed; opacity: .55; }
+    .rs-num { flex: none; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-weight: 800; font-size: 13px;
+      background: var(--surface-2); border: 1px solid var(--border-strong); color: var(--muted); transition: all .18s; }
+    .rail-step.active .rs-num { background: var(--accent); color: var(--on-accent); border-color: transparent; box-shadow: 0 4px 12px -3px color-mix(in srgb, var(--accent) 60%, transparent); }
+    .rail-step.done .rs-num { background: var(--ink); color: #fff; border-color: transparent; }
+    .rs-body { min-width: 0; }
+    .rs-title { font-size: 13.5px; font-weight: 700; }
+    .rs-sub { font-size: 11.5px; color: var(--faint); margin-top: 2px; }
+    .rail-step.done .rs-sub { color: var(--good); font-weight: 600; }
+    .rail-foot { display: flex; flex-direction: column; gap: 2px; padding: 4px 8px; }
+    .rail-foot .rf-label { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--faint); font-weight: 700; margin: 4px 0; }
+    .rail-foot a { font-size: 12px; color: var(--muted); text-decoration: none; padding: 5px 6px; border-radius: 7px; }
+    .rail-foot a:hover { background: var(--surface-2); color: var(--text); }
+
+    /* ---------- Stage ---------- */
+    .stage { min-width: 0; }
+    .step { display: none; animation: rise .4s cubic-bezier(.2,.7,.3,1); }
+    .step.active { display: block; }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+    .banner {
+      position: relative; overflow: hidden;
+      background: linear-gradient(135deg, #0c0d12 0%, #17181f 60%, #1d1e27 100%);
+      border-radius: 20px; padding: 30px 32px; color: #fff; box-shadow: var(--shadow-lg);
+    }
+    .banner::before { content: ""; position: absolute; right: -60px; top: -80px; width: 320px; height: 320px;
+      background: radial-gradient(circle, var(--accent), transparent 62%); opacity: .55; }
+    .banner::after { content: ""; position: absolute; right: 60px; top: -40px; width: 240px; height: 240px;
+      background: radial-gradient(circle, var(--accent-2), transparent 62%); opacity: .4; mix-blend-mode: screen; }
+    .banner .eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: color-mix(in srgb, var(--accent-2) 60%, #fff); position: relative; z-index: 1; }
+    .banner h2 { margin: 10px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; position: relative; z-index: 1; max-width: 640px; }
+    .banner p { margin: 12px 0 0; font-size: 14.5px; color: rgba(255,255,255,.72); max-width: 620px; line-height: 1.6; position: relative; z-index: 1; }
+
+    .grid { display: grid; gap: 18px; margin-top: 22px; }
+    .cols-2 { grid-template-columns: 1.4fr 1fr; }
+    .cols-3 { grid-template-columns: repeat(3, 1fr); }
+    @media (max-width: 900px) { .cols-2, .cols-3 { grid-template-columns: 1fr; } }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+    .card.pad { padding: 20px; }
+    .card-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .card-h h3 { margin: 0; font-size: 15px; font-weight: 800; }
+    .card-h .hint { font-size: 12px; color: var(--faint); }
+    .section-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-bottom: 10px; }
+
+    /* Preset gallery */
+    .presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+    .preset { position: relative; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; cursor: pointer; background: var(--surface); transition: transform .18s, box-shadow .18s, border-color .18s; }
+    .preset:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+    .preset.selected { border-color: var(--pc, #000); box-shadow: 0 0 0 2px color-mix(in srgb, var(--pc, #000) 30%, transparent), var(--shadow); }
+    .preset .swatch { height: 74px; background: linear-gradient(120deg, var(--pc), var(--pc2)); position: relative; }
+    .preset .swatch .glow { position: absolute; right: 12px; top: 12px; width: 34px; height: 22px; }
+    .preset .swatch .glow circle { mix-blend-mode: screen; }
+    .preset .pbody { padding: 12px 13px 14px; }
+    .preset .pname { font-size: 14px; font-weight: 800; }
+    .preset .pmeta { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+    .preset .pmeta img { width: 16px; height: 11px; border-radius: 2px; object-fit: cover; box-shadow: 0 0 0 1px rgba(0,0,0,.1); }
+    .preset .pdesc { font-size: 11.5px; color: var(--faint); margin-top: 6px; line-height: 1.45; }
+    .preset .check { position: absolute; top: 10px; left: 10px; width: 22px; height: 22px; border-radius: 50%; background: #fff; color: var(--pc,#000); display: none; place-items: center; font-size: 13px; font-weight: 900; box-shadow: var(--shadow-sm); }
+    .preset.selected .check { display: grid; }
+
+    /* Form controls */
+    label.fld { display: block; margin-bottom: 14px; }
+    label.fld > span { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+    input[type=text], input[type=number], select {
+      width: 100%; padding: 10px 12px; font: inherit; font-size: 14px; color: var(--text);
+      background: var(--surface); border: 1px solid var(--border-strong); border-radius: 10px; outline: none; transition: border-color .15s, box-shadow .15s;
+    }
+    input[type=text]:focus, input[type=number]:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .colorpick { display: flex; align-items: center; gap: 8px; }
+    .colorpick input[type=color] { width: 42px; height: 40px; padding: 0; border: 1px solid var(--border-strong); border-radius: 10px; background: none; cursor: pointer; }
+    .flagsel { position: relative; }
+    .flagsel img { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 20px; height: 14px; border-radius: 2px; object-fit: cover; box-shadow: 0 0 0 1px rgba(0,0,0,.12); pointer-events: none; }
+    .flagsel select { padding-left: 40px; }
+    .switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text); }
+    .switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .switch .track { width: 42px; height: 24px; border-radius: 999px; background: var(--border-strong); position: relative; transition: background .18s; flex: none; }
+    .switch .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: var(--shadow-sm); transition: transform .18s; }
+    .switch input:checked + .track { background: var(--accent); }
+    .switch input:checked + .track::after { transform: translateX(18px); }
+    details.adv { margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 12px; }
+    details.adv summary { cursor: pointer; font-size: 12.5px; font-weight: 700; color: var(--muted); list-style: none; }
+    details.adv summary::-webkit-details-marker { display: none; }
+    details.adv summary::before { content: "▸ "; color: var(--faint); }
+    details.adv[open] summary::before { content: "▾ "; }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 18px; font: inherit; font-size: 13.5px; font-weight: 700;
+      border-radius: 11px; border: 1px solid transparent; cursor: pointer; transition: transform .12s, box-shadow .15s, background .15s, filter .15s; white-space: nowrap; }
+    .btn:active { transform: translateY(1px); }
+    .btn.primary { background: var(--accent); color: var(--on-accent); box-shadow: 0 8px 20px -8px color-mix(in srgb, var(--accent) 70%, transparent); }
+    .btn.primary:hover { filter: brightness(1.05); }
+    .btn.dark { background: var(--ink); color: #fff; }
+    .btn.dark:hover { filter: brightness(1.15); }
+    .btn.ghost { background: var(--surface); border-color: var(--border-strong); color: var(--text); }
+    .btn.ghost:hover { background: var(--surface-2); }
+    .btn.danger { background: var(--surface); border-color: #f3c9c9; color: var(--bad); }
+    .btn.danger:hover { background: var(--bad-bg); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; filter: none; }
+    .btn.lg { padding: 13px 22px; font-size: 14.5px; }
+    .step-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; }
+    .step-foot .spacer { flex: 1; }
+
+    /* Preview bank card */
+    .bankcard {
+      aspect-ratio: 1.586; border-radius: 18px; padding: 22px; color: #fff; position: relative; overflow: hidden;
+      background: linear-gradient(135deg, var(--pc, #111), var(--pc2, #333)); box-shadow: var(--shadow-lg);
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .bankcard::after { content: ""; position: absolute; right: -30px; bottom: -60px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(255,255,255,.18), transparent 60%); }
+    .bankcard .bc-top { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
+    .bankcard .bc-name { font-size: 19px; font-weight: 800; letter-spacing: -.01em; }
+    .bankcard .bc-marks svg { display: block; }
+    .bankcard .bc-chip { width: 40px; height: 30px; border-radius: 6px; background: linear-gradient(135deg, #f4d27a, #cf9f3f); position: relative; z-index: 1; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
+    .bankcard .bc-foot { position: relative; z-index: 1; }
+    .bankcard .bc-num { font-size: 15px; letter-spacing: .18em; font-weight: 600; font-variant-numeric: tabular-nums; opacity: .92; }
+    .bankcard .bc-row { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; font-size: 11.5px; }
+    .bankcard .bc-row img { width: 22px; height: 15px; border-radius: 2px; object-fit: cover; box-shadow: 0 0 0 1px rgba(255,255,255,.25); }
+    .bankcard .bc-pill { font-size: 10.5px; font-weight: 800; letter-spacing: .04em; padding: 3px 9px; border-radius: 999px; background: rgba(255,255,255,.16); }
+
+    /* Live-preview bank graphic (colour-coded, name + icon) */
+    .bankhero {
+      position: relative; overflow: hidden; border-radius: 18px; padding: 30px 24px;
+      background: linear-gradient(135deg, var(--pc, #111116), var(--pc2, #333));
+      color: #fff; box-shadow: var(--shadow-lg);
+      display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px;
+      min-height: 220px; justify-content: center;
+    }
+    .bankhero .bh-glow { position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(220px 130px at 82% -12%, rgba(255,255,255,.24), transparent 62%),
+                  radial-gradient(200px 160px at 12% 118%, rgba(255,255,255,.12), transparent 60%); }
+    .bankhero .bh-icon { width: 76px; height: 76px; border-radius: 22px; position: relative; z-index: 1;
+      background: rgba(255,255,255,.15); display: grid; place-items: center;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.28); overflow: hidden; }
+    .bankhero .bh-icon svg { width: 42px; height: 42px; }
+    .bankhero .bh-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .bankhero .bh-name { font-size: 23px; font-weight: 800; letter-spacing: -.01em; position: relative; z-index: 1; line-height: 1.15; }
+    .bankhero .bh-meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: rgba(255,255,255,.85); position: relative; z-index: 1; }
+    .bankhero .bh-meta img { width: 20px; height: 14px; border-radius: 2px; object-fit: cover; box-shadow: 0 0 0 1px rgba(255,255,255,.32); }
+    .bankhero .bh-badges { position: relative; z-index: 1; }
+    .bankhero .bh-pill { font-size: 11px; font-weight: 800; letter-spacing: .03em; padding: 5px 12px; border-radius: 999px; background: rgba(255,255,255,.18); box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
+
+    /* Existing banks strip */
+    .exist { display: flex; flex-wrap: wrap; gap: 10px; }
+    .exist .eb { display: flex; align-items: center; gap: 10px; padding: 9px 12px 9px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+    .exist .eb:hover { box-shadow: var(--shadow-sm); }
+    .exist .eb.selected { border-color: var(--ebc, #000); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ebc,#000) 22%, transparent); }
+    .exist .eb .chip { width: 34px; height: 22px; border-radius: 5px; background: linear-gradient(120deg, var(--ebc), var(--ebc2)); flex: none; }
+    .exist .eb .ebn { font-size: 13px; font-weight: 700; }
+    .exist .eb .ebm { font-size: 11px; color: var(--faint); display: flex; align-items: center; gap: 5px; }
+    .exist .eb .ebm img { width: 15px; height: 10px; border-radius: 2px; object-fit: cover; }
+    .exist .eb .ebdel { margin-left: 4px; color: var(--faint); font-size: 15px; line-height: 1; padding: 2px 5px; border-radius: 6px; }
+    .exist .eb .ebdel:hover { color: var(--bad); background: var(--bad-bg); }
+
+    /* Stat tiles */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    @media (max-width: 780px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden; }
+    .stat .sv { font-size: 30px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+    .stat .sl { font-size: 12px; font-weight: 600; color: var(--muted); margin-top: 3px; }
+    .stat .sicon { position: absolute; right: 14px; top: 14px; opacity: .16; }
+
+    /* Sliders / mix */
+    .mix { display: flex; flex-direction: column; gap: 4px; }
+    .mrow { display: grid; grid-template-columns: 150px 1fr 52px; align-items: center; gap: 14px; padding: 5px 0; }
+    .mrow .ml { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mrow input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    .mrow .mp { text-align: right; font-size: 12.5px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+    .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+    .chip { padding: 6px 12px; font-size: 12.5px; font-weight: 700; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--muted); cursor: pointer; transition: all .12s; }
+    .chip:hover { background: var(--surface-2); }
+    .chip.active { background: color-mix(in srgb, var(--accent) 12%, #fff); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); color: color-mix(in srgb, var(--accent) 80%, var(--text)); }
+
+    /* Bars */
+    .bars { display: flex; flex-direction: column; gap: 9px; }
+    .bar { }
+    .bar .bl { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+    .bar .bl b { font-weight: 700; }
+    .bar .bt { height: 9px; border-radius: 999px; background: var(--surface-2); overflow: hidden; border: 1px solid var(--border); }
+    .bar .bf { height: 100%; border-radius: 999px; background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 55%, #fff), var(--accent)); transition: width .5s cubic-bezier(.2,.7,.3,1); }
+
+    /* Progress */
+    .prog { margin-top: 14px; display: none; }
+    .prog.show { display: block; }
+    .prog .pt { height: 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
+    .prog .pf { height: 100%; width: 30%; border-radius: 999px; background: var(--accent); animation: slide 1.1s ease-in-out infinite; }
+    @keyframes slide { 0% { margin-left: -30%; } 100% { margin-left: 100%; } }
+    .prog .pl { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+    /* Integrate pipeline */
+    .pipe { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 8px; }
+    @media (max-width: 780px) { .pipe { grid-template-columns: 1fr; } .pipe .arrow { display: none; } }
+    .pnode { border: 1px solid var(--border); border-radius: 14px; padding: 16px; background: var(--surface); text-align: center; transition: border-color .2s, box-shadow .2s, background .2s; }
+    .pnode.active { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent); }
+    .pnode.done { background: var(--good-bg); border-color: color-mix(in srgb, var(--good) 40%, var(--border)); }
+    .pnode .pn-ico { font-size: 22px; }
+    .pnode .pn-t { font-size: 13.5px; font-weight: 800; margin-top: 6px; }
+    .pnode .pn-s { font-size: 11.5px; color: var(--muted); margin-top: 4px; min-height: 30px; }
+    .pnode .badge { display: inline-block; margin-top: 6px; font-size: 10.5px; font-weight: 800; padding: 2px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: .05em; }
+    .badge.wait { background: var(--surface-2); color: var(--faint); }
+    .badge.ok { background: var(--good-bg); color: var(--good); }
+    .badge.live { background: color-mix(in srgb, var(--accent) 14%, #fff); color: var(--accent); }
+    .badge.err { background: var(--bad-bg); color: var(--bad); }
+    .pipe .arrow { color: var(--faint); font-size: 20px; text-align: center; }
+
+    .accts { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow: auto; }
+    .acct { padding: 11px 13px; border: 1px solid var(--border); border-radius: 11px; cursor: pointer; transition: border-color .15s, background .15s; }
+    .acct:hover { background: var(--surface-2); }
+    .acct.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
+    .acct .an { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .acct .an .pill { font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); text-transform: uppercase; }
+    .acct .am { font-size: 11.5px; color: var(--faint); margin-top: 3px; font-family: ui-monospace, monospace; }
+
+    .txtable { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .txtable th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); font-weight: 700; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+    .txtable td { padding: 8px; border-bottom: 1px solid var(--surface-2); }
+    .txtable .amt { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+    .txtable .amt.pos { color: var(--good); }
+    .txtable .amt.neg { color: var(--bad); }
+
+    /* Scrollable Open Finance account data (keeps the page compact) */
+    .ob-scroll { max-height: 300px; overflow: auto; border: 1px solid var(--border); border-radius: 10px; }
+    .ob-scroll table { border-collapse: separate; border-spacing: 0; }
+    .ob-scroll thead th { position: sticky; top: 0; z-index: 1; background: var(--surface); box-shadow: inset 0 -1px 0 var(--border); }
+    .ob-scroll td { padding-left: 8px; padding-right: 8px; }
+
+    /* Call log */
+    .log { max-height: 320px; overflow: auto; display: flex; flex-direction: column; gap: 6px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+    .log .lr { display: flex; align-items: center; gap: 8px; font-size: 11.5px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); }
+    .log .m { font-weight: 800; padding: 1px 6px; border-radius: 5px; font-size: 10px; }
+    .log .m.GET { background: #e6f0ff; color: #1d4ed8; }
+    .log .m.POST { background: #e7f7f0; color: var(--good); }
+    .log .p { flex: 1; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .log .s { font-weight: 800; }
+    .log .s.ok { color: var(--good); } .log .s.err { color: var(--bad); }
+    .log-empty { font-size: 12px; color: var(--faint); padding: 8px; }
+
+    /* Simulate */
+    .simhead { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    @media (max-width: 780px) { .simhead { grid-template-columns: repeat(2, 1fr); } }
+    .metric { background: linear-gradient(160deg, #101116, #1b1c24); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 15px 17px; color: #fff; position: relative; overflow: hidden; }
+    .metric::after { content: ""; position: absolute; right: -20px; top: -30px; width: 90px; height: 90px; background: radial-gradient(circle, var(--accent), transparent 65%); opacity: .5; }
+    .metric .mv { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; position: relative; z-index: 1; }
+    .metric .ml { font-size: 11.5px; color: rgba(255,255,255,.6); margin-top: 2px; position: relative; z-index: 1; }
+    .metric .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #37d67a; margin-right: 6px; box-shadow: 0 0 0 0 rgba(55,214,122,.6); animation: pulse 1.6s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(55,214,122,.5); } 70% { box-shadow: 0 0 0 8px rgba(55,214,122,0); } 100% { box-shadow: 0 0 0 0 rgba(55,214,122,0); } }
+
+    .parts { display: flex; flex-direction: column; gap: 7px; max-height: 300px; overflow: auto; }
+    .part { display: flex; align-items: center; gap: 11px; padding: 9px 11px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: border-color .15s, background .15s; }
+    .part:hover { background: var(--surface-2); }
+    .part.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
+    .part .cb { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--border-strong); display: grid; place-items: center; flex: none; color: #fff; font-size: 11px; font-weight: 900; }
+    .part.on .cb { background: var(--accent); border-color: var(--accent); }
+    .part .pn { font-size: 12.5px; font-weight: 700; }
+    .part .pm { font-size: 11px; color: var(--faint); font-family: ui-monospace, monospace; }
+
+    .feed { display: flex; flex-direction: column; gap: 8px; max-height: 480px; overflow: auto; }
+    .fev { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 11px 13px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); animation: pop .35s cubic-bezier(.2,.8,.3,1); }
+    @keyframes pop { from { opacity: 0; transform: translateY(-8px) scale(.99); } to { opacity: 1; transform: none; } }
+    .fev .dotbank { width: 10px; height: 34px; border-radius: 4px; background: var(--bankc, #888); }
+    .fev .fmain .fn { font-size: 13px; font-weight: 700; display: block; }
+    .fev .fmain .fd { font-size: 11.5px; color: var(--faint); margin-top: 2px; display: block; }
+    .fev .fright { text-align: right; }
+    .fev .fa { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .fev .fa.pos { color: var(--good); } .fev .fa.neg { color: var(--bad); }
+    .fev .fb { font-size: 11px; color: var(--faint); margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+    .spark { display: flex; align-items: flex-end; gap: 3px; height: 40px; }
+    .spark .sb { flex: 1; min-width: 3px; background: var(--accent); border-radius: 2px 2px 0 0; opacity: .85; transition: height .3s; }
+
+    .empty { padding: 22px; text-align: center; color: var(--faint); font-size: 13px; }
+    .callout { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 7%, var(--surface)); border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border)); font-size: 13px; color: var(--text); }
+    .callout .ci { font-size: 18px; }
+
+    /* Test credentials */
+    .card.creds { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); background: color-mix(in srgb, var(--accent) 4%, var(--surface)); }
+    .cred-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 12px; }
+    @media (max-width: 720px) { .cred-grid { grid-template-columns: 1fr; } }
+    .cred-field { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 11px 13px; }
+    .cred-field .cf-label { font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+    .cred-field .cf-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+    .cred-field .cf-val { flex: 1; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 14px; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cred-copy { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; font-size: 12px; font-weight: 700; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--muted); cursor: pointer; transition: all .12s; }
+    .cred-copy:hover { background: var(--surface-2); color: var(--text); }
+    .cred-copy.copied { background: var(--good-bg); border-color: color-mix(in srgb, var(--good) 40%, var(--border)); color: var(--good); }
+    .cred-field .cf-hint { font-size: 11px; color: var(--faint); margin-top: 7px; }
+    .cred-name { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
+    .cred-name b { color: var(--text); font-weight: 700; }
+    .cred-name .np { font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 12%, #fff); color: color-mix(in srgb, var(--accent) 80%, var(--text)); }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 4px; margin-bottom: 18px; flex-wrap: wrap; }
+    .tab { flex: 1; min-width: 88px; text-align: center; padding: 8px 10px; font-size: 12.5px; font-weight: 700; color: var(--muted); border-radius: 9px; cursor: pointer; border: 1px solid transparent; transition: all .12s; }
+    .tab:hover { background: var(--surface); color: var(--text); }
+    .tab.active { background: var(--surface); color: var(--text); border-color: var(--border); box-shadow: var(--shadow-sm); }
+    .tabpane { display: none; }
+    .tabpane.active { display: block; animation: rise .25s; }
+
+    /* Pick chips (products / languages / currencies / customer types) */
+    .picks { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pick { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: 12.5px; font-weight: 600; border: 1px solid var(--border-strong); border-radius: 11px; background: var(--surface); color: var(--muted); cursor: pointer; transition: all .12s; }
+    .pick:hover { background: var(--surface-2); }
+    .pick.on { background: color-mix(in srgb, var(--accent) 10%, #fff); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); color: color-mix(in srgb, var(--accent) 82%, var(--text)); }
+    .pick.locked { opacity: .55; cursor: not-allowed; }
+    .pick .pk-check { width: 16px; height: 16px; border-radius: 5px; border: 1.5px solid var(--border-strong); display: grid; place-items: center; font-size: 10px; font-weight: 900; color: #fff; flex: none; }
+    .pick.on .pk-check { background: var(--accent); border-color: var(--accent); }
+    .pick .pk-body { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+    .pick .pk-sub { font-size: 10.5px; color: var(--faint); font-weight: 500; }
+    .field-note { font-size: 11.5px; color: var(--faint); margin: 8px 0 0; line-height: 1.5; }
+
+    /* New-product configurator (per category) */
+    .eyebrow-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .np-btn { font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border)); background: var(--surface); color: var(--accent); cursor: pointer; text-transform: none; letter-spacing: 0; }
+    .np-btn:hover { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+    .np-form { margin: 10px 0 4px; padding: 12px; border: 1px dashed color-mix(in srgb, var(--accent) 45%, var(--border)); border-radius: 12px; background: var(--surface-2); display: grid; gap: 8px; }
+    .np-form .mf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .np-form input, .np-form select { padding: 8px 10px; font-size: 12.5px; border: 1px solid var(--border-strong); border-radius: 8px; width: 100%; background: var(--surface); }
+    .np-form label.inl { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted); }
+    .np-actions { display: flex; gap: 8px; margin-top: 2px; }
+
+    /* Console 3-pane (browse & manage) */
+    .console3 { display: grid; grid-template-columns: 1fr 1fr 1.35fr; gap: 14px; }
+    @media (max-width: 1000px) { .console3 { grid-template-columns: 1fr; } }
+    .pane { border: 1px solid var(--border); border-radius: 14px; background: var(--surface); display: flex; flex-direction: column; overflow: hidden; }
+    .pane-h { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--surface-2); }
+    .pane-h h4 { margin: 0; font-size: 13px; font-weight: 800; }
+    .pane-h .cnt { font-size: 11px; color: var(--faint); font-weight: 700; }
+    .pane-b { padding: 12px 14px; overflow: auto; max-height: 440px; }
+    .search { width: 100%; padding: 8px 11px; font-size: 13px; border: 1px solid var(--border-strong); border-radius: 9px; margin-bottom: 10px; background: var(--surface); }
+    .list { display: flex; flex-direction: column; gap: 6px; }
+    .li { padding: 9px 11px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .12s; }
+    .li:hover { background: var(--surface-2); }
+    .li.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
+    .li .li-t { font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .li .li-s { font-size: 11px; color: var(--faint); margin-top: 2px; font-family: ui-monospace, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .li .li-badge { font-size: 10px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); text-transform: capitalize; white-space: nowrap; }
+
+    /* Mini form (create customer / open account / post txn) */
+    .miniform { display: flex; flex-direction: column; gap: 9px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); }
+    .miniform .mf-h { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+    .miniform .mf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .miniform input, .miniform select { padding: 9px 10px; font-size: 12.5px; border: 1px solid var(--border-strong); border-radius: 9px; width: 100%; background: var(--surface); }
+    .detail-bal { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 4px 0 12px; }
+    .detail-bal .db-v { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
+    .detail-bal .db-l { font-size: 11px; color: var(--faint); }
+    .detail-bal .db-id { font-size: 11px; color: var(--faint); font-family: ui-monospace, monospace; }
+    .seg { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 9px; overflow: hidden; }
+    .seg button { padding: 8px 12px; font-size: 12px; font-weight: 700; background: var(--surface); border: none; cursor: pointer; color: var(--muted); }
+    .seg button.on { background: var(--accent); color: var(--on-accent); }
+
+    /* Generated card visual (credit-card accounts) — animated, embossed, full number */
+    .cc-card { position: relative; width: 300px; max-width: 100%; aspect-ratio: 1.586/1; border-radius: 16px; color: #fff; padding: 20px; margin: 2px 0 16px;
+      background: linear-gradient(135deg, var(--pc, #111116), var(--pc2, #333) 62%, #11151c 100%); box-shadow: 0 14px 32px rgba(0,0,0,.30);
+      overflow: hidden; transform-style: preserve-3d; transition: transform .25s ease; animation: cardIn .6s cubic-bezier(.2,.8,.2,1); }
+    .cc-card:hover { transform: perspective(900px) rotateX(4deg) rotateY(-7deg); }
+    .cc-card::after { content: ""; position: absolute; top: 0; left: -60%; width: 45%; height: 100%;
+      background: linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent); transform: skewX(-20deg); animation: ccShine 4s ease-in-out infinite; }
+    @keyframes ccShine { 0%, 55% { left: -60%; } 100% { left: 135%; } }
+    @keyframes cardIn { from { opacity: 0; transform: translateY(16px) scale(.96); } to { opacity: 1; transform: none; } }
+    .cc-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .cc-type { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; opacity: .85; }
+    .cc-chip { width: 44px; height: 33px; border-radius: 6px; margin: 14px 0 16px; background: linear-gradient(135deg, #f3db8e, #b8902f); box-shadow: inset 0 0 5px rgba(0,0,0,.45); position: relative; }
+    .cc-chip::before { content: ""; position: absolute; inset: 6px 10px; border: 1px solid rgba(0,0,0,.25); border-radius: 3px; }
+    .cc-number { font-family: ui-monospace, "Consolas", "Courier New", monospace; font-size: 18px; letter-spacing: 2px; text-shadow: 0 1px 1px rgba(0,0,0,.55), 0 -1px 0 rgba(255,255,255,.30); }
+    .cc-meta { display: flex; justify-content: space-between; margin-top: 16px; }
+    .cc-meta .lab { font-size: 9px; text-transform: uppercase; letter-spacing: .12em; opacity: .75; }
+    .cc-meta .val { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 1px 1px rgba(0,0,0,.5); }
+    .cc-scheme { position: absolute; right: 18px; bottom: 18px; }
+    .cc-visa { font-style: italic; font-weight: 800; font-size: 22px; letter-spacing: 1px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+    .cc-bank-logo { position: absolute; top: 18px; right: 18px; z-index: 2; background: rgba(255,255,255,.18); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.35); border-radius: 8px; padding: 3px 9px; font-size: 12px; font-weight: 800; letter-spacing: .08em; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.45); max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Toast */
+    #toasts { position: fixed; right: 20px; bottom: 20px; z-index: 200; display: flex; flex-direction: column; gap: 10px; }
+    .toast { background: var(--ink); color: #fff; padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow-lg); max-width: 340px; animation: rise .3s; display: flex; align-items: center; gap: 9px; }
+    .toast.err { background: #7a1420; }
+    .toast .td { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; }
+    .toast.err .td { background: #ff6b6b; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <svg class="mark" width="40" height="25" viewBox="0 0 48 30" aria-hidden="true">
+        <circle cx="19" cy="15" r="13" fill="#eb001b"></circle>
+        <circle cx="29" cy="15" r="13" fill="#f79e1b" style="mix-blend-mode:screen"></circle>
+      </svg>
+      <div>
+        <h1>BankSym Studio</h1>
+        <p class="kicker">Create · Populate · Integrate · Simulate</p>
+      </div>
+    </div>
+    <nav>
+      <a href="/" class="active">Studio</a>
+      <span class="sep"></span>
+      <a href="/builder" class="ghost">Builder</a>
+      <a href="/console" class="ghost">Console</a>
+      <a href="/psd2" class="ghost">Open Banking</a>
+      <a href="/live" class="ghost">Live</a>
+      <a href="/docs" class="ghost">API Docs</a>
+      <a href="/architecture-map" class="ghost">Architecture</a>
+    </nav>
+  </header>
+
+  <div class="studio">
+    <!-- ---------------- Rail ---------------- -->
+    <aside class="rail">
+      <div class="rail-bank" id="rail-bank">
+        <div class="rb-label">Active bank</div>
+        <div class="rb-empty" id="rb-empty">No bank yet — create one to begin, or pick an existing tenant in Step 1.</div>
+        <div id="rb-detail" class="hidden">
+          <div class="rb-name"><span class="dot"></span><span id="rb-name"></span></div>
+          <div class="rb-meta"><img id="rb-flag" alt="" /><span id="rb-meta-text"></span></div>
+          <div class="rb-tags" id="rb-tags"></div>
+        </div>
+      </div>
+
+      <ol class="rail-steps" id="rail-steps"></ol>
+
+      <div class="rail-foot">
+        <div class="rf-label">Advanced surfaces</div>
+        <a href="/builder">Full bank builder</a>
+        <a href="/console">Bank console</a>
+        <a href="/docs">Interactive API docs</a>
+      </div>
+    </aside>
+
+    <!-- ---------------- Stage ---------------- -->
+    <main class="stage">
+
+      <!-- ===== Step 1: Create ===== -->
+      <section class="step" data-step="1">
+        <div class="banner">
+          <div class="eyebrow">Step 01 · Create</div>
+          <h2>Stand up a bank in seconds.</h2>
+          <p>Pick a ready-made profile or design your own identity — name, country, brand and Open Banking. Everything downstream inherits this configuration.</p>
+        </div>
+
+        <div class="card pad" style="margin-top:22px">
+          <div class="card-h"><h3>Choose a starting profile</h3><span class="hint">Presets pre-fill branding, locale &amp; Open Banking</span></div>
+          <div class="presets" id="presets"></div>
+        </div>
+
+        <div class="grid cols-2">
+          <div class="card pad">
+            <div class="card-h"><h3>Configure the bank</h3><span class="hint">Every capability, one place</span></div>
+            <div class="tabs" id="create-tabs">
+              <div class="tab active" data-tab="identity">Identity</div>
+              <div class="tab" data-tab="localization">Localization</div>
+              <div class="tab" data-tab="products">Products</div>
+              <div class="tab" data-tab="customers">Customers</div>
+              <div class="tab" data-tab="capabilities">Capabilities</div>
+            </div>
+
+            <div class="tabpane active" data-pane="identity">
+              <label class="fld"><span>Bank name</span><input type="text" id="f-name" placeholder="e.g. Aurora Bank" /></label>
+              <div class="row2">
+                <label class="fld"><span>Primary brand</span>
+                  <div class="colorpick"><input type="color" id="f-primary" value="#111116" /><input type="text" id="f-primary-hex" /></div>
+                </label>
+                <label class="fld"><span>Accent</span>
+                  <div class="colorpick"><input type="color" id="f-secondary" value="#eb001b" /><input type="text" id="f-secondary-hex" /></div>
+                </label>
+              </div>
+              <label class="fld" style="margin-bottom:0"><span>Logo URL (optional)</span><input type="text" id="f-logo" placeholder="https://…/logo.svg" /></label>
+              <p class="field-note">The logo shows on the preview card and the bank's branding. Leave blank to use the wordmark.</p>
+            </div>
+
+            <div class="tabpane" data-pane="localization">
+              <div class="row2">
+                <label class="fld"><span>Country</span>
+                  <div class="flagsel"><img id="f-flag" alt="" /><select id="f-country"></select></div>
+                </label>
+                <label class="fld"><span>Base currency</span><select id="f-currency"></select></label>
+              </div>
+              <label class="fld"><span>Default language</span><select id="f-lang"></select></label>
+              <div class="section-eyebrow">Supported languages</div>
+              <div class="picks" id="lang-picks"></div>
+              <div class="section-eyebrow" style="margin-top:16px">Supported currencies</div>
+              <div class="picks" id="ccy-picks"></div>
+              <p class="field-note">The base currency and default language are always included.</p>
+            </div>
+
+            <div class="tabpane" data-pane="products">
+              <div class="section-eyebrow eyebrow-row"><span>Card products</span><button type="button" class="np-btn" data-newprod="card">＋ New product</button></div>
+              <div class="picks" id="card-picks"></div>
+              <div class="np-form" id="np-card" hidden>
+                <input id="npc-name" placeholder="Product name (e.g. Signature Card)" />
+                <div class="mf-row">
+                  <select id="npc-scheme"><option value="mastercard">Mastercard</option><option value="visa">Visa</option></select>
+                  <select id="npc-type"><option value="credit">Credit</option><option value="debit">Debit</option><option value="prepaid">Prepaid</option></select>
+                </div>
+                <div class="mf-row">
+                  <input id="npc-limit" type="number" min="0" placeholder="Credit limit" />
+                  <input id="npc-apr" type="number" min="0" step="0.1" placeholder="APR %" />
+                </div>
+                <div class="np-actions"><button type="button" class="btn primary" data-saveprod="card" style="padding:8px 12px;font-size:12.5px">Add product</button><button type="button" class="btn ghost" data-cancelprod="card" style="padding:8px 12px;font-size:12.5px">Cancel</button></div>
+              </div>
+
+              <div class="section-eyebrow eyebrow-row" style="margin-top:16px"><span>Current / checking accounts</span><button type="button" class="np-btn" data-newprod="current">＋ New product</button></div>
+              <div class="picks" id="current-picks"></div>
+              <div class="np-form" id="np-current" hidden>
+                <input id="npcur-name" placeholder="Product name (e.g. Everyday Plus)" />
+                <div class="mf-row">
+                  <input id="npcur-fee" type="number" min="0" step="0.5" placeholder="Monthly fee" />
+                  <input id="npcur-od" type="number" step="1" placeholder="Overdraft limit (e.g. -500)" />
+                </div>
+                <label class="inl"><input type="checkbox" id="npcur-odallow" checked /> Overdraft allowed</label>
+                <div class="np-actions"><button type="button" class="btn primary" data-saveprod="current" style="padding:8px 12px;font-size:12.5px">Add product</button><button type="button" class="btn ghost" data-cancelprod="current" style="padding:8px 12px;font-size:12.5px">Cancel</button></div>
+              </div>
+
+              <div class="section-eyebrow eyebrow-row" style="margin-top:16px"><span>Savings accounts</span><button type="button" class="np-btn" data-newprod="savings">＋ New product</button></div>
+              <div class="picks" id="savings-picks"></div>
+              <div class="np-form" id="np-savings" hidden>
+                <input id="npsav-name" placeholder="Product name (e.g. Bonus Saver)" />
+                <div class="mf-row">
+                  <input id="npsav-rate" type="number" step="0.1" placeholder="Interest rate %" />
+                  <input id="npsav-min" type="number" min="0" placeholder="Minimum balance" />
+                </div>
+                <div class="np-actions"><button type="button" class="btn primary" data-saveprod="savings" style="padding:8px 12px;font-size:12.5px">Add product</button><button type="button" class="btn ghost" data-cancelprod="savings" style="padding:8px 12px;font-size:12.5px">Cancel</button></div>
+              </div>
+
+              <div class="section-eyebrow eyebrow-row" style="margin-top:16px"><span>Loan products <span style="text-transform:none;letter-spacing:0;color:var(--faint)">(illustrative)</span></span><button type="button" class="np-btn" data-newprod="loan">＋ New product</button></div>
+              <div class="picks" id="loan-picks"></div>
+              <div class="np-form" id="np-loan" hidden>
+                <input id="nploan-name" placeholder="Product name (e.g. Green Home Loan)" />
+                <div class="np-actions"><button type="button" class="btn primary" data-saveprod="loan" style="padding:8px 12px;font-size:12.5px">Add product</button><button type="button" class="btn ghost" data-cancelprod="loan" style="padding:8px 12px;font-size:12.5px">Cancel</button></div>
+              </div>
+            </div>
+
+            <div class="tabpane" data-pane="customers">
+              <div class="section-eyebrow">Supported customer types</div>
+              <p class="field-note" style="margin-top:0;margin-bottom:12px">Customer generation and persona weighting are limited to the types selected here.</p>
+              <div class="picks" id="type-picks"></div>
+            </div>
+
+            <div class="tabpane" data-pane="capabilities">
+              <label class="switch" style="margin:2px 0 14px">
+                <input type="checkbox" id="f-ob" checked /><span class="track"></span>
+                <span>Enable Open Banking (Berlin Group XS2A)</span>
+              </label>
+              <div class="row2">
+                <label class="fld"><span>Transaction generator</span><select id="f-txgen"></select></label>
+                <label class="fld"><span>Settlement engine</span><select id="f-settlement"></select></label>
+              </div>
+              <label class="fld" style="margin-bottom:0"><span>Auth provider</span><select id="f-auth"></select></label>
+              <p class="field-note">These pluggable capabilities drive transaction generation, settlement and PSU authentication.</p>
+            </div>
+          </div>
+
+          <div class="card pad">
+            <div class="card-h"><h3>Live preview</h3></div>
+            <div class="bankhero" id="preview-card">
+              <div class="bh-glow"></div>
+              <div class="bh-icon" id="pc-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 2.5 21.5 7v1.5H2.5V7L12 2.5Z"/>
+                  <path d="M4.5 8.5v9M9 8.5v9M15 8.5v9M19.5 8.5v9"/>
+                  <path d="M2.5 20.5h19M2 17.5h20"/>
+                </svg>
+              </div>
+              <div class="bh-name" id="pc-name">Aurora Bank</div>
+              <div class="bh-meta"><img id="pc-flag" alt="" /><span id="pc-loc">Germany · EUR</span></div>
+              <div class="bh-badges"><span class="bh-pill" id="pc-ob">Open Banking · XS2A</span></div>
+            </div>
+            <div class="step-foot">
+              <span class="hint" style="font-size:12px;color:var(--faint)">This becomes your active tenant.</span>
+              <button class="btn primary lg" id="btn-create">Create bank →</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card pad" style="margin-top:18px">
+          <div class="card-h"><h3>Or continue with an existing bank</h3><span class="hint" id="exist-count"></span></div>
+          <div class="exist" id="exist"></div>
+        </div>
+      </section>
+
+      <!-- ===== Step 2: Populate ===== -->
+      <section class="step" data-step="2">
+        <div class="banner">
+          <div class="eyebrow">Step 02 · Populate</div>
+          <h2>Fill the bank with life.</h2>
+          <p>Seed a realistic customer base with weighted personas and account products, then generate months of true-to-life transaction history — in two clicks.</p>
+        </div>
+
+        <div class="stats" id="pop-stats" style="margin-top:22px">
+          <div class="stat"><div class="sv" id="st-customers">0</div><div class="sl">Customers</div></div>
+          <div class="stat"><div class="sv" id="st-accounts">0</div><div class="sl">Accounts</div></div>
+          <div class="stat"><div class="sv" id="st-tx">0</div><div class="sl">Transactions</div></div>
+          <div class="stat"><div class="sv" id="st-personas">0</div><div class="sl">Persona types</div></div>
+        </div>
+
+        <div class="grid cols-2">
+          <div class="card pad">
+            <div class="card-h"><h3>1 · Seed customers &amp; accounts</h3></div>
+            <label class="fld"><span>How many customers?</span><input type="number" id="p-count" min="1" max="10000" value="250" /></label>
+            <div class="chips" id="count-chips">
+              <button class="chip" data-c="50">50</button>
+              <button class="chip active" data-c="250">250</button>
+              <button class="chip" data-c="1000">1,000</button>
+              <button class="chip" data-c="5000">5,000</button>
+            </div>
+            <div class="section-eyebrow" style="margin-top:18px">Customer-type mix</div>
+            <div class="chips" style="margin-bottom:10px">
+              <button class="chip active" data-preset="balanced">Balanced</button>
+              <button class="chip" data-preset="affluent">Affluent</button>
+              <button class="chip" data-preset="student">Student-heavy</button>
+              <button class="chip" data-preset="retiree">Retiree-heavy</button>
+            </div>
+            <div class="mix" id="persona-mix"></div>
+            <div class="section-eyebrow" style="margin-top:18px;display:flex;justify-content:space-between;align-items:center">
+              <span>Account profile</span>
+              <label class="switch" style="font-size:12px"><input type="checkbox" id="p-auto" checked /><span class="track"></span><span>Auto-match to personas</span></label>
+            </div>
+            <div class="mix" id="acct-mix"></div>
+            <button class="btn primary lg" id="btn-seed" style="margin-top:18px;width:100%">Seed customers</button>
+            <div class="prog" id="seed-prog"><div class="pt"><div class="pf"></div></div><div class="pl" id="seed-prog-l">Creating customers…</div></div>
+          </div>
+
+          <div class="card pad">
+            <div class="card-h"><h3>2 · Generate transaction history</h3></div>
+            <p style="font-size:13px;color:var(--muted);margin:0 0 14px;line-height:1.5">Synthesise realistic booked transactions across every account, shaped by each customer's persona.</p>
+            <div class="row2">
+              <label class="fld"><span>From</span><input type="text" id="h-start" /></label>
+              <label class="fld"><span>To</span><input type="text" id="h-end" /></label>
+            </div>
+            <div class="chips">
+              <button class="chip" data-days="30">Last 30 days</button>
+              <button class="chip active" data-days="90">Last 90 days</button>
+              <button class="chip" data-days="180">Last 6 months</button>
+              <button class="chip" data-days="365">Last year</button>
+            </div>
+            <button class="btn dark lg" id="btn-history" style="margin-top:18px;width:100%">Generate history</button>
+            <div class="prog" id="hist-prog"><div class="pt"><div class="pf"></div></div><div class="pl" id="hist-prog-l">Generating…</div></div>
+
+            <div class="section-eyebrow" style="margin-top:20px">Population breakdown</div>
+            <div class="bars" id="pop-bars"><div class="empty">Seed customers to see the persona &amp; account mix.</div></div>
+          </div>
+        </div>
+
+        <div class="card pad" style="margin-top:18px">
+          <div class="card-h"><h3>Bank console</h3><span class="hint">Browse &amp; manage customers, accounts and transactions</span></div>
+          <div class="console3">
+            <div class="pane">
+              <div class="pane-h"><h4>Customers</h4><span class="cnt" id="mng-cust-cnt"></span></div>
+              <div class="pane-b">
+                <div class="miniform" style="border-top:none;padding-top:0;margin-top:0">
+                  <div class="mf-h">New customer</div>
+                  <input id="nc-name" placeholder="Full name" />
+                  <div class="mf-row"><input id="nc-email" placeholder="Email (optional)" /><select id="nc-persona"></select></div>
+                  <button class="btn primary" id="btn-new-cust" style="padding:9px 12px;font-size:12.5px">Create customer</button>
+                </div>
+                <input class="search" id="mng-cust-search" placeholder="Search customers…" style="margin-top:14px" />
+                <div class="list" id="mng-customers"><div class="empty">Loading…</div></div>
+              </div>
+            </div>
+            <div class="pane">
+              <div class="pane-h"><h4>Accounts</h4><span class="cnt" id="mng-acct-cnt"></span></div>
+              <div class="pane-b">
+                <div class="miniform" id="open-acct-form" style="display:none;border-top:none;padding-top:0;margin-top:0">
+                  <div class="mf-h">Open account</div>
+                  <div class="mf-row"><select id="oa-type"></select><select id="oa-ccy"></select></div>
+                  <div id="oa-card-wrap" style="display:none"><select id="oa-card"></select></div>
+                  <input id="oa-name" placeholder="Account name (optional)" />
+                  <button class="btn primary" id="btn-open-acct" style="padding:9px 12px;font-size:12.5px">Open account</button>
+                </div>
+                <div class="list" id="mng-accounts" style="margin-top:14px"><div class="empty">Select a customer.</div></div>
+              </div>
+            </div>
+            <div class="pane">
+              <div class="pane-h"><h4>Account detail</h4><span class="cnt" id="mng-detail-id"></span></div>
+              <div class="pane-b" id="mng-detail"><div class="empty">Select an account to view its balance, post transactions and generate history.</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card pad" style="margin-top:18px">
+          <div class="card-h"><h3>Settlement</h3><span class="hint" id="settle-engine"></span></div>
+          <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Run the bank's deferred settlement cycle to reconcile pending inter-bank payments.</p>
+          <button class="btn dark" id="btn-settle">Run settlement cycle</button>
+          <div id="settle-result" style="margin-top:12px"></div>
+        </div>
+
+        <div class="step-foot">
+          <button class="btn ghost" data-goto="1">← Back to Create</button>
+          <div class="spacer"></div>
+          <button class="btn primary" data-goto="3">Continue to Integrate →</button>
+        </div>
+      </section>
+
+      <!-- ===== Step 3: Integrate ===== -->
+      <section class="step" data-step="3">
+        <div class="banner">
+          <div class="eyebrow">Step 03 · Integrate</div>
+          <h2>Connect via Open Banking.</h2>
+          <p>Run the real PSD2 / Berlin Group XS2A journey: request a consent, authorise at the bank with redirect SCA, then pull live account information — exactly as a licensed third party would.</p>
+        </div>
+
+        <div id="ob-disabled" class="card pad hidden" style="margin-top:22px">
+          <div class="callout"><span class="ci">🔒</span><div><b>Open Banking isn't enabled for this bank.</b><br/>Turn on the Berlin Group XS2A surface to run the consent journey.</div></div>
+          <button class="btn primary" id="btn-enable-ob" style="margin-top:14px">Enable Open Banking</button>
+        </div>
+
+        <div id="ob-main">
+          <div class="card pad creds" style="margin-top:22px">
+            <div class="card-h">
+              <h3>🔑 Test PSU login</h3>
+              <button class="btn ghost" id="btn-cred-shuffle" style="padding:6px 12px;font-size:12px">↻ Another customer</button>
+            </div>
+            <p style="font-size:12.5px;color:var(--muted);margin:0 0 12px">Use these credentials on the bank's authorisation popup during Step 2. Every BankSym customer signs in with their email and the shared demo password.</p>
+            <div class="cred-grid" id="cred-grid">
+              <div class="empty" style="grid-column:1/-1">Populate the bank with customers first to get a login.</div>
+            </div>
+          </div>
+
+          <div class="card pad" style="margin-top:18px">
+            <div class="card-h"><h3>The consent journey</h3><span class="hint">PSD2 · Berlin Group XS2A</span></div>
+            <div class="pipe">
+              <div class="pnode" id="pn-1">
+                <div class="pn-ico">📝</div><div class="pn-t">1 · Request consent</div>
+                <div class="pn-s">TPP asks the bank for an AIS consent.</div>
+                <span class="badge wait" id="pn-1-b">Pending</span>
+              </div>
+              <div class="arrow">→</div>
+              <div class="pnode" id="pn-2">
+                <div class="pn-ico">🔐</div><div class="pn-t">2 · Authorise (SCA)</div>
+                <div class="pn-s">PSU logs in at the bank &amp; approves.</div>
+                <span class="badge wait" id="pn-2-b">Locked</span>
+              </div>
+              <div class="arrow">→</div>
+              <div class="pnode" id="pn-3">
+                <div class="pn-ico">📊</div><div class="pn-t">3 · Access data</div>
+                <div class="pn-s">TPP reads balances &amp; transactions.</div>
+                <span class="badge wait" id="pn-3-b">Locked</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
+              <button class="btn primary" id="btn-consent">Request consent</button>
+              <button class="btn dark" id="btn-authorise" disabled>Authorise at the bank</button>
+              <button class="btn ghost" id="btn-ob-reset" style="margin-left:auto">Reset</button>
+            </div>
+          </div>
+
+          <div class="grid cols-2">
+            <div class="card pad">
+              <div class="card-h"><h3>Shared accounts</h3></div>
+              <div class="accts" id="ob-accts"><div class="empty">Complete the consent journey to list the customer's accounts.</div></div>
+            </div>
+            <div class="card pad">
+              <div class="card-h"><h3>Account data</h3></div>
+              <div id="ob-detail"><div class="empty">Select an account to view balances &amp; transactions retrieved over XS2A.</div></div>
+            </div>
+          </div>
+
+          <div class="card pad" style="margin-top:18px">
+            <div class="card-h"><h3>API call log</h3><span class="hint">Every request the TPP makes</span></div>
+            <div class="log" id="ob-log"><div class="log-empty">No calls yet.</div></div>
+          </div>
+        </div>
+
+        <div class="step-foot">
+          <button class="btn ghost" data-goto="2">← Back to Populate</button>
+          <div class="spacer"></div>
+          <button class="btn primary" data-goto="4">Continue to Simulate →</button>
+        </div>
+      </section>
+
+      <!-- ===== Step 4: Simulate ===== -->
+      <section class="step" data-step="4">
+        <div class="banner">
+          <div class="eyebrow">Step 04 · Simulate</div>
+          <h2>Bring the bank to life.</h2>
+          <p>Stream continuous, realistic transactions across the accounts you choose. The simulator runs server-side, so the feed keeps flowing — perfect for a live demo.</p>
+        </div>
+
+        <div class="simhead" style="margin-top:22px">
+          <div class="metric"><div class="mv" id="m-status">Idle</div><div class="ml" id="m-status-l">Simulator state</div></div>
+          <div class="metric"><div class="mv" id="m-generated">0</div><div class="ml">Transactions generated</div></div>
+          <div class="metric"><div class="mv" id="m-rate">0</div><div class="ml">Per minute</div></div>
+          <div class="metric"><div class="mv" id="m-accts">0</div><div class="ml">Active accounts</div></div>
+        </div>
+
+        <div class="grid cols-2">
+          <div class="card pad">
+            <div class="card-h"><h3>Participating accounts</h3><span class="hint" id="sim-sel-count"></span></div>
+            <div style="display:flex;gap:8px;margin-bottom:12px">
+              <button class="chip" id="sim-all">Select all</button>
+              <button class="chip" id="sim-none">Clear</button>
+            </div>
+            <div class="parts" id="sim-parts"><div class="empty">No customer accounts yet — populate the bank first.</div></div>
+            <div class="section-eyebrow" style="margin-top:18px">Cadence</div>
+            <div class="mrow" style="grid-template-columns:1fr 70px">
+              <input type="range" id="sim-cadence" min="1" max="20" value="6" />
+              <span class="mp" id="sim-cadence-l">1.7s</span>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:16px">
+              <button class="btn primary lg" id="btn-sim-start" style="flex:1">▶ Start simulation</button>
+              <button class="btn danger lg" id="btn-sim-stop" style="flex:1" disabled>■ Stop</button>
+            </div>
+          </div>
+
+          <div class="card pad">
+            <div class="card-h">
+              <h3><span class="live-dot" id="feed-dot" style="display:none"></span>Live feed</h3>
+              <span class="hint">Volume</span>
+            </div>
+            <div class="spark" id="sim-spark"></div>
+            <div class="feed" id="sim-feed" style="margin-top:14px"><div class="empty">Start the simulation to watch transactions stream in.</div></div>
+          </div>
+        </div>
+
+        <div class="step-foot">
+          <button class="btn ghost" data-goto="3">← Back to Integrate</button>
+          <div class="spacer"></div>
+          <a class="btn dark" href="/live">Open full Live console →</a>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <div id="toasts"></div>
+
+  <script>
+  (function () {
+    "use strict";
+
+    // ---------------- constants & helpers ----------------
+    const COUNTRY_NAMES = { DE:"Germany", ES:"Spain", FR:"France", GB:"United Kingdom", NL:"Netherlands", IE:"Ireland", PL:"Poland", US:"United States" };
+    const COUNTRY_CCY = { DE:"EUR", ES:"EUR", FR:"EUR", NL:"EUR", IE:"EUR", GB:"GBP", PL:"PLN", US:"USD" };
+    const COUNTRY_LANG = { DE:"de", ES:"es", FR:"fr", NL:"nl", IE:"en", GB:"en", PL:"pl", US:"en" };
+    const CCY_OPTIONS = ["EUR","GBP","USD","PLN"];
+    const CCY_SYMBOL = { EUR:"€", GBP:"£", USD:"$", PLN:"zł" };
+    const LANGUAGES = { en:"English", de:"German", es:"Spanish", fr:"French", nl:"Dutch", pl:"Polish" };
+    const ACCT_TYPES = [
+      { id:"current", label:"Current" },
+      { id:"savings", label:"Savings" },
+      { id:"credit_card", label:"Credit card" },
+      { id:"loan", label:"Loan" },
+    ];
+    const PRESETS = [
+      { id:"aurora",   name:"Aurora Bank",     country:"DE", pc:"#6d28d9", pc2:"#ec4899", desc:"Modern German digital bank." },
+      { id:"kingsford",name:"Kingsford",       country:"GB", pc:"#0d9488", pc2:"#22d3ee", desc:"UK challenger, mobile-first." },
+      { id:"cajasol",  name:"Caja del Sol",    country:"ES", pc:"#ea580c", pc2:"#f59e0b", desc:"Spanish savings & retail." },
+      { id:"batavia",  name:"Batavia Bank",    country:"NL", pc:"#2563eb", pc2:"#38bdf8", desc:"Dutch full-service bank." },
+      { id:"meridian", name:"Banque Méridian", country:"FR", pc:"#e11d48", pc2:"#fb7185", desc:"French universal bank." },
+      { id:"banksym",  name:"BankSym One",     country:"DE", pc:"#111116", pc2:"#eb001b", desc:"Signature reference tenant." },
+    ];
+    const PERSONA_PRESETS = {
+      balanced: {},
+      affluent: { affluent_family:4, young_professional:3, retiree:2, student:1, gig_worker:1 },
+      student:  { student:5, young_professional:2, gig_worker:2, affluent_family:1, retiree:1 },
+      retiree:  { retiree:5, affluent_family:2, young_professional:1, student:1, gig_worker:1 },
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const flag = (c) => `https://flagcdn.com/${(c||"").toLowerCase()}.svg`;
+    const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+    const esc = (s) => String(s==null?"":s).replace(/[&<>"]/g, (m) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+
+    function toast(msg, isErr) {
+      const t = document.createElement("div");
+      t.className = "toast" + (isErr ? " err" : "");
+      t.innerHTML = `<span class="td"></span><span>${esc(msg)}</span>`;
+      $("toasts").appendChild(t);
+      setTimeout(() => { t.style.opacity = "0"; t.style.transform = "translateY(8px)"; t.style.transition = "all .3s"; setTimeout(() => t.remove(), 300); }, 3200);
+    }
+
+    async function api(path, opts) {
+      opts = opts || {};
+      const h = Object.assign({}, opts.headers);
+      const init = { method: opts.method || "GET", headers: h };
+      if (opts.body !== undefined) { h["Content-Type"] = "application/json"; init.body = JSON.stringify(opts.body); }
+      const res = await fetch(path, init);
+      if (opts.log) opts.log(init.method, path, res.status, res.ok);
+      if (res.status === 204) return null;
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || data.detail || `HTTP ${res.status}`);
+      return data;
+    }
+
+    function fmtMoney(v, ccy) {
+      const n = parseFloat(v);
+      if (isNaN(n)) return v;
+      const sym = CCY_SYMBOL[ccy] || "";
+      return sym + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    function animateNum(el, to) {
+      const from = parseInt((el.textContent || "0").replace(/[^\d]/g, "")) || 0;
+      to = Math.round(to);
+      if (from === to) { el.textContent = to.toLocaleString(); return; }
+      const steps = 24; let i = 0;
+      const dt = (to - from) / steps;
+      clearInterval(el._anim);
+      el._anim = setInterval(() => { i++; const v = Math.round(from + dt * i); el.textContent = (i>=steps?to:v).toLocaleString(); if (i>=steps) clearInterval(el._anim); }, 16);
+    }
+    function isoDaysAgo(days) { const d = new Date(); d.setDate(d.getDate() - days); return d.toISOString().slice(0,10); }
+    function todayIso() { return new Date().toISOString().slice(0,10); }
+
+    // ---------------- global state ----------------
+    const S = {
+      step: 1,
+      bank: null,
+      meta: { caps: null, customerTypes: [], cardProducts: [], currentProducts: [], savingsProducts: [], loanProducts: [] },
+      banks: [],
+      stats: null,
+      preset: "aurora",
+      form: {
+        name:"Aurora Bank", country:"DE", currency:"EUR", primary:"#6d28d9", secondary:"#ec4899", ob:true,
+        logo:"", langs:new Set(), ccys:new Set(),
+        cards:new Set(), current:new Set(), savings:new Set(), loans:new Set(), types:new Set(),
+      },
+      ob: { consentId:null, token:null, oauthState:null, accounts:[], accountId:null },
+      sim: { selected:new Set(), lastSeq:0, timer:null, generated:0, buckets:[], recvTimes:[] },
+      mng: { customerId:null, accountId:null, customers:[], accounts:[] },
+    };
+
+    const STEP_META = [
+      { n:1, title:"Create a bank", sub:"Profile & branding" },
+      { n:2, title:"Populate", sub:"Customers, accounts, history" },
+      { n:3, title:"Integrate", sub:"Open Banking journey" },
+      { n:4, title:"Simulate", sub:"Live transaction stream" },
+    ];
+
+    // ---------------- accent theming ----------------
+    function setAccent(primary, secondary) {
+      const r = document.documentElement.style;
+      r.setProperty("--accent", primary || "#eb001b");
+      r.setProperty("--accent-2", secondary || primary || "#f79e1b");
+      r.setProperty("--on-accent", textOn(primary || "#eb001b"));
+    }
+    function textOn(hex) {
+      const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex||"");
+      if (!m) return "#fff";
+      const [r,g,b] = [1,2,3].map(i => parseInt(m[i],16));
+      return (r*299+g*587+b*114)/1000 >= 150 ? "#111827" : "#ffffff";
+    }
+
+    // ---------------- rail ----------------
+    function isStepDone(n) {
+      if (n === 1) return !!S.bank;
+      if (n === 2) return !!(S.stats && S.stats.customers > 0);
+      if (n === 3) return !!S.ob.token;
+      if (n === 4) return S.sim.generated > 0;
+      return false;
+    }
+    function renderRail() {
+      const ol = $("rail-steps");
+      ol.innerHTML = "";
+      STEP_META.forEach((s) => {
+        const unlocked = s.n === 1 || !!S.bank;
+        const done = isStepDone(s.n);
+        const li = document.createElement("li");
+        li.className = "rail-step" + (s.n === S.step ? " active" : "") + (done ? " done" : "") + (!unlocked ? " locked" : "");
+        li.innerHTML = `<div class="rs-num">${done ? "✓" : s.n}</div>`
+          + `<div class="rs-body"><div class="rs-title">${s.title}</div><div class="rs-sub">${done ? "Complete" : s.sub}</div></div>`;
+        if (unlocked) li.addEventListener("click", () => goStep(s.n));
+        ol.appendChild(li);
+      });
+      renderRailBank();
+    }
+    function renderRailBank() {
+      if (!S.bank) { $("rb-empty").classList.remove("hidden"); $("rb-detail").classList.add("hidden"); return; }
+      $("rb-empty").classList.add("hidden"); $("rb-detail").classList.remove("hidden");
+      $("rb-name").textContent = S.bank.display_name;
+      $("rb-flag").src = flag(S.bank.country);
+      $("rb-meta-text").textContent = `${COUNTRY_NAMES[S.bank.country]||S.bank.country} · ${S.bank.base_currency} · ${(S.bank.locale||"").toUpperCase()}`;
+      const tags = [];
+      if (S.bank.open_banking_enabled || (S.bank.enabled_protocols||[]).includes("berlin_group")) tags.push("XS2A");
+      if (S.bank.capabilities?.txgen) tags.push(S.bank.capabilities.txgen);
+      if (S.bank.capabilities?.settlement) tags.push(S.bank.capabilities.settlement);
+      $("rb-tags").innerHTML = tags.map(t => `<span class="rb-tag">${esc(t)}</span>`).join("");
+      document.documentElement.style.setProperty("--accent", S.bank.primary_color || "#eb001b");
+      document.documentElement.style.setProperty("--accent-2", S.bank.secondary_color || S.bank.primary_color || "#f79e1b");
+      document.documentElement.style.setProperty("--on-accent", textOn(S.bank.primary_color || "#eb001b"));
+    }
+
+    // ---------------- step navigation ----------------
+    function goStep(n) {
+      if (n !== 1 && !S.bank) { toast("Create or select a bank first", true); return; }
+      S.step = n;
+      document.querySelectorAll(".step").forEach(el => el.classList.toggle("active", +el.dataset.step === n));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      renderRail();
+      try { localStorage.setItem("banksym.studioStep", String(n)); } catch (_) {}
+      if (n === 2) enterPopulate();
+      if (n === 3) enterIntegrate();
+      if (n === 4) enterSimulate();
+    }
+    document.querySelectorAll("[data-goto]").forEach(b => b.addEventListener("click", () => goStep(+b.dataset.goto)));
+
+    // ================= STEP 1: CREATE =================
+    function renderPresets() {
+      const wrap = $("presets");
+      wrap.innerHTML = "";
+      PRESETS.forEach(p => {
+        const div = document.createElement("div");
+        div.className = "preset" + (p.id === S.preset ? " selected" : "");
+        div.style.setProperty("--pc", p.pc); div.style.setProperty("--pc2", p.pc2);
+        div.innerHTML =
+          `<div class="check">✓</div>` +
+          `<div class="swatch"></div>` +
+          `<div class="pbody"><div class="pname">${esc(p.name)}</div>` +
+          `<div class="pmeta"><img src="${flag(p.country)}" alt="" />${COUNTRY_NAMES[p.country]} · ${COUNTRY_CCY[p.country]}</div>` +
+          `<div class="pdesc">${esc(p.desc)}</div></div>`;
+        div.addEventListener("click", () => applyPreset(p));
+        wrap.appendChild(div);
+      });
+    }
+    function applyPreset(p) {
+      S.preset = p.id;
+      S.form.name = p.name; S.form.country = p.country; S.form.currency = COUNTRY_CCY[p.country];
+      S.form.primary = p.pc; S.form.secondary = p.pc2;
+      $("f-name").value = p.name;
+      $("f-country").value = p.country;
+      $("f-primary").value = p.pc; $("f-primary-hex").value = p.pc;
+      $("f-secondary").value = p.pc2; $("f-secondary-hex").value = p.pc2;
+      $("f-flag").src = flag(p.country);
+      fillCurrency(p.country);
+      fillLangs(p.country);
+      S.form.langs = new Set([$("f-lang").value]);
+      S.form.ccys = new Set([S.form.currency]);
+      renderLangPicks(); renderCcyPicks();
+      renderPresets();
+      syncPreview();
+    }
+    function fillCountry() {
+      const sel = $("f-country");
+      sel.innerHTML = "";
+      Object.keys(COUNTRY_NAMES).forEach(c => sel.appendChild(new Option(COUNTRY_NAMES[c], c)));
+      sel.value = S.form.country;
+    }
+    function fillCurrency(country) {
+      const sel = $("f-currency");
+      const base = COUNTRY_CCY[country] || "EUR";
+      const list = [base, ...CCY_OPTIONS.filter(c => c !== base)];
+      sel.innerHTML = "";
+      list.forEach(c => sel.appendChild(new Option(c, c)));
+      sel.value = base; S.form.currency = base;
+    }
+    function fillLangs(country) {
+      const sel = $("f-lang");
+      sel.innerHTML = "";
+      Object.entries(LANGUAGES).forEach(([code, label]) => sel.appendChild(new Option(label, code)));
+      sel.value = COUNTRY_LANG[country] || "en";
+    }
+    // Generic multi-select "pick" renderer used for languages, currencies, products & customer types.
+    function renderPick(wrapId, items, selectedSet, opts) {
+      opts = opts || {};
+      const locked = opts.lockedIds || new Set();
+      const wrap = $(wrapId); if (!wrap) return;
+      wrap.innerHTML = items.length ? "" : `<span class="field-note">None available.</span>`;
+      items.forEach(it => {
+        const isLocked = locked.has(it.id);
+        const on = selectedSet.has(it.id) || isLocked;
+        const el = document.createElement("div");
+        el.className = "pick" + (on ? " on" : "") + (isLocked ? " locked" : "");
+        el.innerHTML = `<span class="pk-check">${on ? "✓" : ""}</span>`
+          + `<span class="pk-body"><span>${esc(it.label)}</span>${it.sub ? `<span class="pk-sub">${esc(it.sub)}</span>` : ""}</span>`;
+        if (!isLocked) el.addEventListener("click", () => {
+          if (selectedSet.has(it.id)) selectedSet.delete(it.id); else selectedSet.add(it.id);
+          renderPick(wrapId, items, selectedSet, opts);
+          if (opts.onchange) opts.onchange();
+        });
+        wrap.appendChild(el);
+      });
+    }
+    function renderLangPicks() {
+      const items = Object.entries(LANGUAGES).map(([code, label]) => ({ id: code, label }));
+      renderPick("lang-picks", items, S.form.langs, { lockedIds: new Set([$("f-lang").value]) });
+    }
+    function renderCcyPicks() {
+      const base = S.form.currency;
+      const items = [base, ...CCY_OPTIONS.filter(c => c !== base)].map(c => ({ id: c, label: c }));
+      renderPick("ccy-picks", items, S.form.ccys, { lockedIds: new Set([base]) });
+    }
+    function renderProductPicks() {
+      renderPick("card-picks", S.meta.cardProducts.map(p => ({ id: p.id, label: p.name, sub: (p.scheme || "").toUpperCase() + (p.card_type ? " · " + p.card_type : "") })), S.form.cards);
+      renderPick("current-picks", S.meta.currentProducts.map(p => ({ id: p.id, label: p.name, sub: p.properties && p.properties.overdraft_allowed ? "overdraft" : "" })), S.form.current);
+      renderPick("savings-picks", S.meta.savingsProducts.map(p => ({ id: p.id, label: p.name, sub: p.properties && p.properties.interest_rate != null ? p.properties.interest_rate + "% AER" : "" })), S.form.savings);
+      renderPick("loan-picks", S.meta.loanProducts.map(p => ({ id: p.id, label: p.name })), S.form.loans);
+    }
+    function renderTypePicks() {
+      renderPick("type-picks", (S.meta.customerTypes || []).map(t => ({ id: t.id, label: t.label, sub: t.description })), S.form.types);
+    }
+    function selectAllCatalogue() {
+      S.form.cards = new Set(S.meta.cardProducts.map(p => p.id));
+      S.form.current = new Set(S.meta.currentProducts.map(p => p.id));
+      S.form.savings = new Set(S.meta.savingsProducts.map(p => p.id));
+      S.form.loans = new Set(S.meta.loanProducts.map(p => p.id));
+      S.form.types = new Set((S.meta.customerTypes || []).map(t => t.id));
+    }
+    function slugId(s) { return "custom_" + (String(s).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 24) || "product") + "_" + Math.random().toString(36).slice(2, 6); }
+    function toggleNewProduct(cat) { const f = $("np-" + cat); if (f) f.hidden = !f.hidden; }
+    function addCustomProduct(cat) {
+      let prod, arr, sel;
+      if (cat === "card") {
+        const name = $("npc-name").value.trim(); if (!name) return toast("Name the product", true);
+        prod = { id: slugId(name), name, scheme: $("npc-scheme").value, card_type: $("npc-type").value,
+          digital_properties: ["contactless", "apple_pay", "google_pay"],
+          properties: { credit_limit: +$("npc-limit").value || 0, apr: +$("npc-apr").value || 0 } };
+        arr = S.meta.cardProducts; sel = S.form.cards;
+        $("npc-name").value = ""; $("npc-limit").value = ""; $("npc-apr").value = "";
+      } else if (cat === "current") {
+        const name = $("npcur-name").value.trim(); if (!name) return toast("Name the product", true);
+        prod = { id: slugId(name), name, properties: { monthly_fee: +$("npcur-fee").value || 0, overdraft_allowed: $("npcur-odallow").checked, overdraft_limit: +$("npcur-od").value || 0, interest_rate: 0 } };
+        arr = S.meta.currentProducts; sel = S.form.current;
+        $("npcur-name").value = ""; $("npcur-fee").value = ""; $("npcur-od").value = "";
+      } else if (cat === "savings") {
+        const name = $("npsav-name").value.trim(); if (!name) return toast("Name the product", true);
+        prod = { id: slugId(name), name, segment: "personal", properties: { interest_rate: +$("npsav-rate").value || 0, minimum_balance: +$("npsav-min").value || 0 } };
+        arr = S.meta.savingsProducts; sel = S.form.savings;
+        $("npsav-name").value = ""; $("npsav-rate").value = ""; $("npsav-min").value = "";
+      } else if (cat === "loan") {
+        const name = $("nploan-name").value.trim(); if (!name) return toast("Name the product", true);
+        prod = { id: slugId(name), name, dummy: true, properties: ["interest_rate", "term", "minimum_amount", "maximum_amount"] };
+        arr = S.meta.loanProducts; sel = S.form.loans;
+        $("nploan-name").value = "";
+      } else return;
+      arr.push(prod); sel.add(prod.id);
+      renderProductPicks();
+      $("np-" + cat).hidden = true;
+      toast(`Added “${prod.name}”`);
+    }
+    const BANK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">`
+      + `<path d="M12 2.5 21.5 7v1.5H2.5V7L12 2.5Z"/><path d="M4.5 8.5v9M9 8.5v9M15 8.5v9M19.5 8.5v9"/><path d="M2.5 20.5h19M2 17.5h20"/></svg>`;
+    function syncPreview() {
+      const f = S.form;
+      $("pc-name").textContent = f.name || "Your Bank";
+      const icon = $("pc-icon");
+      if (icon) {
+        if (f.logo && /^https?:\/\//.test(f.logo)) {
+          icon.innerHTML = `<img src="${esc(f.logo)}" alt="" />`;
+          const img = icon.querySelector("img");
+          if (img) img.onerror = () => { icon.innerHTML = BANK_ICON; };
+        } else {
+          icon.innerHTML = BANK_ICON;
+        }
+      }
+      $("pc-flag").src = flag(f.country);
+      $("pc-loc").textContent = `${COUNTRY_NAMES[f.country]||f.country} · ${f.currency}`;
+      $("pc-ob").style.display = f.ob ? "" : "none";
+      const card = $("preview-card");
+      card.style.setProperty("--pc", f.primary);
+      card.style.setProperty("--pc2", f.secondary);
+      setAccent(f.primary, f.secondary);
+    }
+    function wireCreateForm() {
+      // Tabs
+      document.querySelectorAll("#create-tabs .tab").forEach(t => t.addEventListener("click", () => {
+        document.querySelectorAll("#create-tabs .tab").forEach(x => x.classList.toggle("active", x === t));
+        document.querySelectorAll('.tabpane[data-pane]').forEach(p => p.classList.toggle("active", p.dataset.pane === t.dataset.tab));
+      }));
+      $("f-name").addEventListener("input", e => { S.form.name = e.target.value; S.preset=null; renderPresets(); syncPreview(); });
+      $("f-logo").addEventListener("input", e => { S.form.logo = e.target.value.trim(); syncPreview(); });
+      $("f-country").addEventListener("change", () => {
+        S.form.country = $("f-country").value;
+        fillCurrency(S.form.country);
+        fillLangs(S.form.country);
+        $("f-flag").src = flag(S.form.country);
+        S.form.ccys.add(S.form.currency);
+        S.form.langs.add($("f-lang").value);
+        renderCcyPicks(); renderLangPicks();
+        S.preset = null; renderPresets(); syncPreview();
+      });
+      $("f-currency").addEventListener("change", e => { S.form.currency = e.target.value; S.form.ccys.add(e.target.value); renderCcyPicks(); syncPreview(); });
+      $("f-lang").addEventListener("change", e => { S.form.langs.add(e.target.value); renderLangPicks(); });
+      const bindColor = (pick, hex, key) => {
+        $(pick).addEventListener("input", e => { S.form[key] = e.target.value; $(hex).value = e.target.value; S.preset=null; renderPresets(); syncPreview(); });
+        $(hex).addEventListener("input", e => { if (/^#[0-9a-f]{6}$/i.test(e.target.value)) { S.form[key] = e.target.value; $(pick).value = e.target.value; syncPreview(); } });
+      };
+      bindColor("f-primary", "f-primary-hex", "primary");
+      bindColor("f-secondary", "f-secondary-hex", "secondary");
+      $("f-ob").addEventListener("change", e => { S.form.ob = e.target.checked; syncPreview(); });
+      // New-product configurators
+      document.querySelectorAll("[data-newprod]").forEach(b => b.addEventListener("click", () => toggleNewProduct(b.dataset.newprod)));
+      document.querySelectorAll("[data-saveprod]").forEach(b => b.addEventListener("click", () => addCustomProduct(b.dataset.saveprod)));
+      document.querySelectorAll("[data-cancelprod]").forEach(b => b.addEventListener("click", () => { const f = $("np-" + b.dataset.cancelprod); if (f) f.hidden = true; }));
+      $("btn-create").addEventListener("click", createBank);
+    }
+    async function createBank() {
+      const f = S.form;
+      if (!f.name.trim()) { toast("Give the bank a name", true); return; }
+      const caps = {};
+      if ($("f-txgen").value) caps.txgen = $("f-txgen").value;
+      if ($("f-settlement").value) caps.settlement = $("f-settlement").value;
+      if ($("f-auth").value) caps.auth = $("f-auth").value;
+      const locale = $("f-lang").value || "en";
+      const body = {
+        display_name: f.name.trim(),
+        country: f.country,
+        locale,
+        base_currency: f.currency,
+        primary_color: f.primary,
+        secondary_color: f.secondary,
+        logo_url: f.logo && /^https?:\/\//.test(f.logo) ? f.logo : null,
+        supported_currencies: [...new Set([f.currency, ...f.ccys])],
+        supported_languages: [...new Set([locale, ...f.langs])],
+        supported_customer_types: [...f.types],
+        open_banking_enabled: f.ob,
+        enabled_protocols: f.ob ? ["berlin_group"] : [],
+        capabilities: caps,
+        card_products: S.meta.cardProducts.filter(p => f.cards.has(p.id)),
+        current_account_products: S.meta.currentProducts.filter(p => f.current.has(p.id)),
+        savings_account_products: S.meta.savingsProducts.filter(p => f.savings.has(p.id)),
+        loan_products: S.meta.loanProducts.filter(p => f.loans.has(p.id)),
+      };
+      const btn = $("btn-create"); btn.disabled = true; btn.textContent = "Creating…";
+      try {
+        const bank = await api("/banks", { method:"POST", body });
+        S.bank = bank; S.banks.unshift(bank);
+        try { localStorage.setItem("banksym.bankId", bank.id); } catch (_) {}
+        toast(`“${bank.display_name}” is live`);
+        renderRail();
+        resetDownstream();
+        goStep(2);
+      } catch (e) { toast(e.message, true); }
+      finally { btn.disabled = false; btn.textContent = "Create bank →"; }
+    }
+    function resetDownstream() {
+      S.ob = { consentId:null, token:null, oauthState:null, accounts:[], accountId:null };
+      stopSimPolling();
+      S.sim = { selected:new Set(), lastSeq:0, timer:null, generated:0, buckets:[], recvTimes:[] };
+    }
+
+    async function loadExisting() {
+      try { S.banks = await api("/banks"); } catch (_) { S.banks = []; }
+      const wrap = $("exist");
+      $("exist-count").textContent = S.banks.length ? `${S.banks.length} tenant${S.banks.length>1?"s":""}` : "";
+      if (!S.banks.length) { wrap.innerHTML = `<div class="empty" style="text-align:left;padding:6px 0">No banks yet.</div>`; return; }
+      wrap.innerHTML = "";
+      S.banks.forEach(b => {
+        const el = document.createElement("div");
+        el.className = "eb" + (S.bank && b.id === S.bank.id ? " selected" : "");
+        el.style.setProperty("--ebc", b.primary_color || "#000");
+        el.style.setProperty("--ebc2", b.secondary_color || b.primary_color || "#666");
+        el.innerHTML = `<span class="chip" style="width:34px;height:22px;padding:0;border:none"></span>`
+          + `<span><span class="ebn">${esc(b.display_name)}</span><br/><span class="ebm"><img src="${flag(b.country)}" alt=""/>${COUNTRY_NAMES[b.country]||b.country} · ${b.base_currency}</span></span>`
+          + `<span class="ebdel" title="Delete">✕</span>`;
+        el.addEventListener("click", (ev) => { if (ev.target.classList.contains("ebdel")) return; adoptBank(b); });
+        el.querySelector(".ebdel").addEventListener("click", (ev) => { ev.stopPropagation(); deleteBank(b); });
+        wrap.appendChild(el);
+      });
+    }
+    function adoptBank(b) {
+      S.bank = b;
+      try { localStorage.setItem("banksym.bankId", b.id); } catch (_) {}
+      resetDownstream();
+      renderRail();
+      loadExisting();
+      toast(`Switched to “${b.display_name}”`);
+    }
+    async function deleteBank(b) {
+      if (!confirm(`Delete “${b.display_name}” and all its data?`)) return;
+      try {
+        await api(`/banks/${b.id}`, { method:"DELETE" });
+        S.banks = S.banks.filter(x => x.id !== b.id);
+        if (S.bank && S.bank.id === b.id) { S.bank = null; resetDownstream(); }
+        renderRail(); loadExisting();
+        toast(`Deleted “${b.display_name}”`);
+      } catch (e) { toast(e.message, true); }
+    }
+
+    // ================= STEP 2: POPULATE =================
+    let personaWeights = {};
+    let acctWeights = { current:1, savings:1, credit_card:1, loan:1 };
+
+    function supportedTypes() {
+      const ids = (S.bank && S.bank.supported_customer_types && S.bank.supported_customer_types.length)
+        ? S.bank.supported_customer_types : (S.meta.customerTypes || []).map(t => t.id);
+      const byId = {}; (S.meta.customerTypes || []).forEach(t => byId[t.id] = t);
+      return ids.map(id => byId[id] || { id, label: id.replace(/_/g," ").replace(/\b\w/g,m=>m.toUpperCase()) });
+    }
+    function renderPersonaMix() {
+      const types = supportedTypes();
+      if (!Object.keys(personaWeights).length) types.forEach(t => personaWeights[t.id] = 1);
+      const wrap = $("persona-mix"); wrap.innerHTML = "";
+      const total = types.reduce((s,t) => s + (personaWeights[t.id]||0), 0) || 1;
+      types.forEach(t => {
+        const row = document.createElement("div"); row.className = "mrow";
+        const pct = Math.round((personaWeights[t.id]||0) / total * 100);
+        row.innerHTML = `<span class="ml">${esc(t.label)}</span><input type="range" min="0" max="10" value="${personaWeights[t.id]||0}" data-t="${t.id}"/><span class="mp">${pct}%</span>`;
+        row.querySelector("input").addEventListener("input", (e) => { personaWeights[t.id] = +e.target.value; renderPersonaMix(); });
+        wrap.appendChild(row);
+      });
+    }
+    function renderAcctMix() {
+      const wrap = $("acct-mix");
+      const auto = $("p-auto").checked;
+      wrap.style.opacity = "1"; wrap.style.pointerEvents = "auto";
+      if (auto) {
+        wrap.innerHTML = `<div class="field-note" style="margin:2px 0 0">Account types are matched to each customer's persona automatically — students &amp; young professionals get cards, affluent families add savings &amp; loans, retirees stay simple. Turn off auto-match to set the mix yourself.</div>`;
+        return;
+      }
+      wrap.innerHTML = "";
+      const total = ACCT_TYPES.reduce((s,t) => s + (acctWeights[t.id]||0), 0) || 1;
+      ACCT_TYPES.forEach(t => {
+        const row = document.createElement("div"); row.className = "mrow";
+        const pct = Math.round((acctWeights[t.id]||0) / total * 100);
+        row.innerHTML = `<span class="ml">${t.label}</span><input type="range" min="0" max="10" value="${acctWeights[t.id]||0}" data-t="${t.id}"/><span class="mp">${pct}%</span>`;
+        row.querySelector("input").addEventListener("input", (e) => { acctWeights[t.id] = +e.target.value; renderAcctMix(); });
+        wrap.appendChild(row);
+      });
+    }
+    function wirePopulate() {
+      $("count-chips").querySelectorAll("[data-c]").forEach(c => c.addEventListener("click", () => {
+        $("p-count").value = c.dataset.c;
+        $("count-chips").querySelectorAll(".chip").forEach(x => x.classList.remove("active"));
+        c.classList.add("active");
+      }));
+      document.querySelectorAll("[data-preset]").forEach(c => c.addEventListener("click", () => {
+        document.querySelectorAll("[data-preset]").forEach(x => x.classList.remove("active"));
+        c.classList.add("active");
+        const preset = PERSONA_PRESETS[c.dataset.preset] || {};
+        const types = supportedTypes();
+        personaWeights = {};
+        types.forEach(t => personaWeights[t.id] = preset[t.id] != null ? preset[t.id] : (Object.keys(preset).length ? 1 : 1));
+        renderPersonaMix();
+      }));
+      $("p-auto").addEventListener("change", renderAcctMix);
+      document.querySelectorAll("[data-days]").forEach(c => c.addEventListener("click", () => {
+        document.querySelectorAll("[data-days]").forEach(x => x.classList.remove("active"));
+        c.classList.add("active");
+        $("h-start").value = isoDaysAgo(+c.dataset.days); $("h-end").value = todayIso();
+      }));
+      $("btn-seed").addEventListener("click", seedCustomers);
+      $("btn-history").addEventListener("click", generateHistory);
+      $("h-start").value = isoDaysAgo(90); $("h-end").value = todayIso();
+      // Bank console (manage) controls
+      $("mng-cust-search").addEventListener("input", renderMngCustomers);
+      $("btn-new-cust").addEventListener("click", createSingleCustomer);
+      $("btn-open-acct").addEventListener("click", openAccountForCustomer);
+      $("oa-type").addEventListener("change", updateOaCard);
+      $("btn-settle").addEventListener("click", runSettlement);
+    }
+    function enterPopulate() {
+      renderPersonaMix(); renderAcctMix();
+      refreshStats();
+      enterManage();
+    }
+    async function refreshStats() {
+      if (!S.bank) return;
+      try {
+        const s = await api(`/banks/${S.bank.id}/stats`);
+        S.stats = s;
+        animateNum($("st-customers"), s.customers);
+        animateNum($("st-accounts"), s.accounts);
+        animateNum($("st-tx"), s.transaction_count);
+        animateNum($("st-personas"), Object.keys(s.persona_breakdown||{}).filter(k=>k!=="(none)").length);
+        renderPopBars(s);
+        renderRail();
+      } catch (_) {}
+    }
+    function renderPopBars(s) {
+      const wrap = $("pop-bars");
+      const personas = s.persona_breakdown || {};
+      const accts = s.account_type_breakdown || {};
+      if (!s.customers) { wrap.innerHTML = `<div class="empty">Seed customers to see the persona &amp; account mix.</div>`; return; }
+      const typeLabel = {}; (S.meta.customerTypes||[]).forEach(t => typeLabel[t.id] = t.label);
+      const pMax = Math.max(1, ...Object.values(personas));
+      const aMax = Math.max(1, ...Object.values(accts));
+      let html = `<div class="section-eyebrow">Personas</div>`;
+      Object.entries(personas).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => {
+        html += `<div class="bar"><div class="bl"><span>${esc(typeLabel[k]||k)}</span><b>${v.toLocaleString()}</b></div><div class="bt"><div class="bf" style="width:${Math.round(v/pMax*100)}%"></div></div></div>`;
+      });
+      html += `<div class="section-eyebrow" style="margin-top:14px">Account types</div>`;
+      Object.entries(accts).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => {
+        html += `<div class="bar"><div class="bl"><span>${esc(k.replace(/_/g," "))}</span><b>${v.toLocaleString()}</b></div><div class="bt"><div class="bf" style="width:${Math.round(v/aMax*100)}%"></div></div></div>`;
+      });
+      wrap.innerHTML = html;
+    }
+    async function seedCustomers() {
+      if (!S.bank) return;
+      const count = clamp(parseInt($("p-count").value)||0, 1, 10000);
+      const auto = $("p-auto").checked;
+      // "Auto-match to personas": send balanced weights across all account types so the backend
+      // derives a persona-appropriate account mix (e.g. credit cards for students/young pros,
+      // loans for affluent families). Sending {} would give everyone a single current account.
+      const autoWeights = Object.fromEntries(ACCT_TYPES.map(t => [t.id, 1]));
+      const body = { count, persona_weights: personaWeights, account_types: auto ? autoWeights : acctWeights };
+      const btn = $("btn-seed"); btn.disabled = true;
+      $("seed-prog").classList.add("show"); $("seed-prog-l").textContent = `Creating ${count.toLocaleString()} customers…`;
+      try {
+        const r = await api(`/banks/${S.bank.id}/customers/batch`, { method:"POST", body });
+        toast(`Added ${r.customers_created.toLocaleString()} customers · ${r.accounts_created.toLocaleString()} accounts`);
+        await refreshStats();
+        loadMngCustomers();
+      } catch (e) { toast(e.message, true); }
+      finally { btn.disabled = false; $("seed-prog").classList.remove("show"); }
+    }
+    async function generateHistory() {
+      if (!S.bank) return;
+      const body = { generator: "rule_based", start: $("h-start").value, end: $("h-end").value };
+      const btn = $("btn-history"); btn.disabled = true;
+      $("hist-prog").classList.add("show"); $("hist-prog-l").textContent = "Generating transactions across all accounts…";
+      try {
+        const r = await api(`/banks/${S.bank.id}/generate-history`, { method:"POST", body });
+        toast(`Booked ${r.entries_booked.toLocaleString()} transactions across ${r.accounts_processed.toLocaleString()} accounts`);
+        await refreshStats();
+      } catch (e) { toast(e.message, true); }
+      finally { btn.disabled = false; $("hist-prog").classList.remove("show"); }
+    }
+
+    // ---------------- Bank console (browse & manage) ----------------
+    function acctTypeLabel(t) { return String(t||"").replace(/_/g," ").replace(/\b\w/g, m => m.toUpperCase()); }
+    function updateOaCard() {
+      const wrap = $("oa-card-wrap");
+      if (!wrap) return;
+      const show = $("oa-type").value === "credit_card" && (S.bank && (S.bank.card_products||[]).length);
+      wrap.style.display = show ? "" : "none";
+    }
+    function schemeMarks(scheme) {
+      return String(scheme||"").toLowerCase() === "visa"
+        ? `<span class="cc-visa">VISA</span>`
+        : `<svg width="44" height="28" viewBox="0 0 48 30" aria-hidden="true"><circle cx="19" cy="15" r="13" fill="#eb001b"/><circle cx="29" cy="15" r="13" fill="#f79e1b" style="mix-blend-mode:screen"/></svg>`;
+    }
+    function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) { h = (Math.imul(31, h) + s.charCodeAt(i)) | 0; } return h >>> 0; }
+    function cardNumber(id, scheme) {
+      let seed = hashStr(id);
+      let digits = scheme === "visa" ? "4" : "5";
+      while (digits.length < 16) { seed = (Math.imul(seed, 1103515245) + 12345) >>> 0; digits += seed % 10; }
+      return digits.match(/.{1,4}/g).join("  ");
+    }
+    function cardExpiry(id) { const h = hashStr(id + "exp"); const mm = String((h % 12) + 1).padStart(2, "0"); const yy = String(28 + (h % 6)); return `${mm}/${yy}`; }
+    function cardVisual(acct, holderName) {
+      const meta = acct.metadata || {};
+      const prod = (S.bank.card_products || []).find(p => p.id === meta.card_product) || null;
+      const scheme = ((prod && prod.scheme) || meta.scheme || ((acct.name||"").toLowerCase().includes("visa") ? "visa" : "mastercard")).toLowerCase();
+      const cardType = (prod && prod.card_type) || meta.card_type || "credit";
+      const bankName = S.bank.display_name || "";
+      const abbr = bankName.split(/[\s\-&]+/).filter(Boolean).map(w => w[0].toUpperCase()).slice(0, 3).join("") || bankName.slice(0, 2).toUpperCase();
+      const primary = S.bank.primary_color || "#111116";
+      const secondary = S.bank.secondary_color || S.bank.primary_color || "#444";
+      const holder = holderName || acct.name || "Card Holder";
+      return `<div class="cc-card" style="--pc:${esc(primary)};--pc2:${esc(secondary)}">`
+        + `<div class="cc-top"><div class="cc-type">${scheme === "visa" ? "Visa" : "Mastercard"} · ${esc(cardType[0].toUpperCase() + cardType.slice(1))}</div></div>`
+        + `<div class="cc-chip"></div>`
+        + `<div class="cc-number">${cardNumber(acct.id, scheme)}</div>`
+        + `<div class="cc-meta"><div><div class="lab">Card holder</div><div class="val">${esc(holder)}</div></div>`
+        + `<div><div class="lab">Valid thru</div><div class="val">${cardExpiry(acct.id)}</div></div></div>`
+        + `<div class="cc-scheme">${schemeMarks(scheme)}</div>`
+        + (bankName ? `<div class="cc-bank-logo" title="${esc(bankName)}">${esc(abbr)}</div>` : "")
+        + `</div>`;
+    }
+    function enterManage() {
+      if (!S.bank) return;
+      // Populate the persona / account-type / currency selects for the mini-forms.
+      const persSel = $("nc-persona");
+      persSel.innerHTML = `<option value="">Auto persona</option>` + supportedTypes().map(t => `<option value="${t.id}">${esc(t.label)}</option>`).join("");
+      $("oa-type").innerHTML = ACCT_TYPES.map(t => `<option value="${t.id}">${t.label}</option>`).join("");
+      const ccys = (S.bank.supported_currencies && S.bank.supported_currencies.length) ? S.bank.supported_currencies : [S.bank.base_currency];
+      $("oa-ccy").innerHTML = ccys.map(c => `<option value="${c}">${c}</option>`).join("");
+      const cards = S.bank.card_products || [];
+      $("oa-card").innerHTML = cards.length
+        ? cards.map(p => `<option value="${p.id}">${esc(p.name)} · ${String(p.scheme||"").toUpperCase()}</option>`).join("")
+        : `<option value="">No card products configured for this bank</option>`;
+      updateOaCard();
+      $("settle-engine").textContent = (S.bank.capabilities && S.bank.capabilities.settlement) ? `Engine: ${S.bank.capabilities.settlement}` : "";
+      S.mng = { customerId:null, accountId:null, customers:[], accounts:[] };
+      $("mng-accounts").innerHTML = `<div class="empty">Select a customer.</div>`;
+      $("open-acct-form").style.display = "none";
+      $("mng-detail").innerHTML = `<div class="empty">Select an account to view its balance, post transactions and generate history.</div>`;
+      $("mng-detail-id").textContent = "";
+      loadMngCustomers();
+    }
+    async function loadMngCustomers() {
+      if (!S.bank) return;
+      try {
+        S.mng.customers = await api(`/banks/${S.bank.id}/customers`);
+        renderMngCustomers();
+      } catch (e) { $("mng-customers").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+    }
+    function renderMngCustomers() {
+      const q = ($("mng-cust-search").value || "").toLowerCase();
+      const list = S.mng.customers.filter(c => !q
+        || (c.full_name||"").toLowerCase().includes(q)
+        || (c.email||"").toLowerCase().includes(q)
+        || (c.id||"").toLowerCase().includes(q));
+      $("mng-cust-cnt").textContent = `${list.length}/${S.mng.customers.length}`;
+      const wrap = $("mng-customers");
+      if (!S.mng.customers.length) { wrap.innerHTML = `<div class="empty">No customers yet — seed some above.</div>`; return; }
+      if (!list.length) { wrap.innerHTML = `<div class="empty">No matches.</div>`; return; }
+      wrap.innerHTML = "";
+      list.slice(0, 200).forEach(c => {
+        const el = document.createElement("div");
+        el.className = "li" + (c.id === S.mng.customerId ? " active" : "");
+        el.innerHTML = `<div class="li-t">${esc(c.full_name||"Customer")}<span class="li-badge">${esc((c.persona||"—").replace(/_/g," "))}</span></div>`
+          + `<div class="li-s">${esc(c.email||c.id)}</div>`;
+        el.addEventListener("click", () => selectMngCustomer(c.id));
+        wrap.appendChild(el);
+      });
+    }
+    async function selectMngCustomer(id) {
+      S.mng.customerId = id; S.mng.accountId = null;
+      renderMngCustomers();
+      $("open-acct-form").style.display = "";
+      $("mng-detail").innerHTML = `<div class="empty">Select an account to view its balance, post transactions and generate history.</div>`;
+      $("mng-detail-id").textContent = "";
+      await loadMngAccounts();
+    }
+    async function loadMngAccounts() {
+      if (!S.mng.customerId) return;
+      try {
+        S.mng.accounts = await api(`/banks/${S.bank.id}/accounts?customer_id=${encodeURIComponent(S.mng.customerId)}`);
+        const wrap = $("mng-accounts");
+        $("mng-acct-cnt").textContent = `${S.mng.accounts.length}`;
+        if (!S.mng.accounts.length) { wrap.innerHTML = `<div class="empty">No accounts. Open one below.</div>`; return; }
+        wrap.innerHTML = "";
+        S.mng.accounts.forEach(a => {
+          const el = document.createElement("div");
+          el.className = "li" + (a.id === S.mng.accountId ? " active" : "");
+          el.innerHTML = `<div class="li-t">${esc(a.name || acctTypeLabel(a.type))}<span class="li-badge">${esc(acctTypeLabel(a.type))}</span></div>`
+            + `<div class="li-s">${esc(fmtMoney(a.balance, a.currency))} · ${esc(a.id)}</div>`;
+          el.addEventListener("click", () => selectMngAccount(a.id));
+          wrap.appendChild(el);
+        });
+      } catch (e) { $("mng-accounts").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+    }
+    async function selectMngAccount(id) {
+      S.mng.accountId = id;
+      loadMngAccounts();
+      $("mng-detail-id").textContent = id;
+      $("mng-detail").innerHTML = `<div class="empty">Loading…</div>`;
+      try {
+        const [acct, txns] = await Promise.all([
+          api(`/banks/${S.bank.id}/accounts/${id}`),
+          api(`/banks/${S.bank.id}/accounts/${id}/transactions`),
+        ]);
+        renderMngDetail(acct, txns);
+      } catch (e) { $("mng-detail").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+    }
+    function renderMngDetail(acct, txns) {
+      const recent = (txns || []).slice(-25).reverse();
+      let rows = "";
+      if (!recent.length) rows = `<tr><td colspan="3" class="empty">No transactions yet.</td></tr>`;
+      else recent.forEach(t => {
+        const credit = t.side === "credit";
+        rows += `<tr><td>${esc((t.booked_at||"").slice(0,10))}</td><td>${esc(t.description||t.merchant_name||"—")}</td>`
+          + `<td class="amt ${credit?"pos":"neg"}">${credit?"+":"−"}${Math.abs(parseFloat(t.amount)).toFixed(2)}</td></tr>`;
+      });
+      const holder = (S.mng.customers.find(c => c.id === acct.customer_id) || {}).full_name || "";
+      const cardHtml = acct.type === "credit_card" ? cardVisual(acct, holder) : "";
+      $("mng-detail").innerHTML = cardHtml +
+        `<div class="detail-bal"><div><div class="db-l">Balance</div><div class="db-v">${esc(fmtMoney(acct.balance, acct.currency))}</div></div>`
+        + `<div class="db-id">${esc(acct.iban || acct.id)}</div></div>`
+        + `<div class="miniform" style="border-top:none;padding-top:0;margin-top:0">`
+        + `<div class="mf-h">Post transaction</div>`
+        + `<div class="mf-row"><input id="tx-amount" type="number" min="0.01" step="0.01" placeholder="Amount" />`
+        + `<div class="seg" id="tx-side"><button data-side="credit" class="on">Credit</button><button data-side="debit">Debit</button></div></div>`
+        + `<input id="tx-desc" placeholder="Description (optional)" />`
+        + `<button class="btn primary" id="btn-post-tx" style="padding:9px 12px;font-size:12.5px">Post transaction</button>`
+        + `</div>`
+        + `<div class="miniform"><div class="mf-h">Generate history for this account</div>`
+        + `<div class="mf-row"><input id="ah-start" type="text" value="${isoDaysAgo(90)}" /><input id="ah-end" type="text" value="${todayIso()}" /></div>`
+        + `<button class="btn dark" id="btn-acct-hist" style="padding:9px 12px;font-size:12.5px">Generate history</button></div>`
+        + `<div class="section-eyebrow" style="margin-top:16px">Recent transactions</div>`
+        + `<table class="txtable"><thead><tr><th>Date</th><th>Description</th><th style="text-align:right">Amount</th></tr></thead><tbody>${rows}</tbody></table>`;
+      // wire the just-rendered controls
+      let side = "credit";
+      $("tx-side").querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+        side = b.dataset.side; $("tx-side").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+      }));
+      $("btn-post-tx").addEventListener("click", async () => {
+        const amount = parseFloat($("tx-amount").value);
+        if (!(amount > 0)) { toast("Enter an amount", true); return; }
+        try {
+          await api(`/banks/${S.bank.id}/accounts/${acct.id}/transactions`, { method:"POST", body:{ amount, side, description: $("tx-desc").value || undefined } });
+          toast(`Posted ${side} of ${amount.toFixed(2)}`);
+          await selectMngAccount(acct.id); refreshStats();
+        } catch (e) { toast(e.message, true); }
+      });
+      $("btn-acct-hist").addEventListener("click", async () => {
+        const btn = $("btn-acct-hist"); btn.disabled = true; btn.textContent = "Generating…";
+        try {
+          const r = await api(`/banks/${S.bank.id}/accounts/${acct.id}/generate-history`, { method:"POST", body:{ generator:"rule_based", start: $("ah-start").value, end: $("ah-end").value } });
+          toast(`Booked ${r.entries_booked.toLocaleString()} transactions`);
+          await selectMngAccount(acct.id); refreshStats();
+        } catch (e) { toast(e.message, true); }
+        finally { btn.disabled = false; btn.textContent = "Generate history"; }
+      });
+    }
+    async function createSingleCustomer() {
+      if (!S.bank) return;
+      const name = $("nc-name").value.trim();
+      if (!name) { toast("Enter a customer name", true); return; }
+      const body = { full_name: name };
+      if ($("nc-email").value.trim()) body.email = $("nc-email").value.trim();
+      if ($("nc-persona").value) body.persona = $("nc-persona").value;
+      const btn = $("btn-new-cust"); btn.disabled = true;
+      try {
+        const c = await api(`/banks/${S.bank.id}/customers`, { method:"POST", body });
+        toast(`Created ${c.full_name} · login ${c.username}`);
+        $("nc-name").value = ""; $("nc-email").value = "";
+        await loadMngCustomers(); refreshStats();
+        selectMngCustomer(c.id);
+      } catch (e) { toast(e.message, true); }
+      finally { btn.disabled = false; }
+    }
+    async function openAccountForCustomer() {
+      if (!S.mng.customerId) { toast("Select a customer first", true); return; }
+      const type = $("oa-type").value;
+      const body = { customer_id: S.mng.customerId, type, currency: $("oa-ccy").value };
+      if ($("oa-name").value.trim()) body.name = $("oa-name").value.trim();
+      if (type === "credit_card") {
+        const prod = (S.bank.card_products || []).find(p => p.id === $("oa-card").value);
+        if (prod) {
+          body.metadata = Object.assign({ card_product: prod.id, scheme: prod.scheme, card_type: prod.card_type }, prod.properties || {});
+          if (!body.name) body.name = prod.name;
+        }
+      }
+      const btn = $("btn-open-acct"); btn.disabled = true;
+      try {
+        const a = await api(`/banks/${S.bank.id}/accounts`, { method:"POST", body });
+        toast(`Opened ${acctTypeLabel(a.type)} account`);
+        $("oa-name").value = "";
+        await loadMngAccounts(); refreshStats();
+        selectMngAccount(a.id);
+      } catch (e) { toast(e.message, true); }
+      finally { btn.disabled = false; }
+    }
+    async function runSettlement() {
+      if (!S.bank) return;
+      const btn = $("btn-settle"); btn.disabled = true; btn.textContent = "Running…";
+      try {
+        const r = await api(`/banks/${S.bank.id}/settlement/run-cycle`, { method:"POST" });
+        const n = (r.settled || []).length;
+        $("settle-result").innerHTML = n
+          ? `<div class="callout"><span class="ci">✅</span><div><b>${n} instruction${n>1?"s":""} settled.</b><br/>${r.settled.map(s => `${esc(s.instruction_id)} → ${esc(s.status)}`).join("<br/>")}</div></div>`
+          : `<div class="callout"><span class="ci">ℹ️</span><div>No pending settlements — the engine is immediate or nothing was due.</div></div>`;
+        toast(n ? `Settled ${n} instruction${n>1?"s":""}` : "Settlement cycle complete");
+        refreshStats();
+      } catch (e) { toast(e.message, true); }
+      finally { btn.disabled = false; btn.textContent = "Run settlement cycle"; }
+    }
+
+    // ================= STEP 3: INTEGRATE =================
+    function xs2a(p) { return `/xs2a/${S.bank.id}/v1${p}`; }
+    function obLog(method, path, status, ok) {
+      const log = $("ob-log");
+      if (log.querySelector(".log-empty")) log.innerHTML = "";
+      const row = document.createElement("div");
+      row.className = "lr";
+      row.innerHTML = `<span class="m ${method}">${method}</span><span class="p">${esc(path)}</span><span class="s ${ok?"ok":"err"}">${status}</span>`;
+      log.insertBefore(row, log.firstChild);
+    }
+    function pnBadge(n, cls, text) { const b = $(`pn-${n}-b`); b.className = `badge ${cls}`; b.textContent = text; $(`pn-${n}`).classList.toggle("done", cls==="ok"); $(`pn-${n}`).classList.toggle("active", cls==="live"); }
+    function obEnabled() { return S.bank && (S.bank.open_banking_enabled || (S.bank.enabled_protocols||[]).includes("berlin_group")); }
+    function enterIntegrate() {
+      const enabled = obEnabled();
+      $("ob-disabled").classList.toggle("hidden", enabled);
+      $("ob-main").classList.toggle("hidden", !enabled);
+      if (enabled) { resetOb(); loadTestCred(); }
+    }
+    function resetOb() {
+      S.ob = { consentId:null, token:null, oauthState:null, accounts:[], accountId:null };
+      pnBadge(1, "live", "Ready"); pnBadge(2, "wait", "Locked"); pnBadge(3, "wait", "Locked");
+      $("btn-consent").disabled = false; $("btn-authorise").disabled = true;
+      $("ob-accts").innerHTML = `<div class="empty">Complete the consent journey to list the customer's accounts.</div>`;
+      $("ob-detail").innerHTML = `<div class="empty">Select an account to view balances &amp; transactions retrieved over XS2A.</div>`;
+    }
+    function wireIntegrate() {
+      $("btn-enable-ob").addEventListener("click", async () => {
+        try {
+          const b = await api(`/banks/${S.bank.id}`, { method:"PUT", body:{ enabled_protocols:["berlin_group"] } });
+          S.bank = b; renderRail(); enterIntegrate(); toast("Open Banking enabled");
+        } catch (e) { toast(e.message, true); }
+      });
+      $("btn-consent").addEventListener("click", requestConsent);
+      $("btn-authorise").addEventListener("click", authoriseAtBank);
+      $("btn-ob-reset").addEventListener("click", resetOb);
+      $("btn-cred-shuffle").addEventListener("click", () => loadTestCred(true));
+      window.addEventListener("message", (ev) => {
+        if (ev.origin !== location.origin || !ev.data || ev.data.type !== "banksym-oauth") return;
+        onOAuthReturn(ev.data);
+      });
+    }
+    async function loadTestCred(shuffle) {
+      const grid = $("cred-grid");
+      try {
+        const customers = await api(`/banks/${S.bank.id}/customers`);
+        if (!customers || !customers.length) {
+          grid.innerHTML = `<div class="empty" style="grid-column:1/-1">No customers yet — populate the bank in Step 2 to get a login.</div>`;
+          return;
+        }
+        const c = customers[Math.floor(Math.random() * customers.length)];
+        const login = c.username || c.email || "";
+        grid.innerHTML =
+          `<div class="cred-name"><span class="np">${esc((c.persona||"customer").replace(/_/g," "))}</span><b>${esc(c.full_name||"Customer")}</b></div>`
+          + credField("Username / email", login, "Use this on the bank login popup")
+          + credField("Password", "foobar!", "Shared demo password for every customer");
+        grid.querySelectorAll(".cred-copy").forEach(btn => btn.addEventListener("click", () => {
+          const val = btn.dataset.copy || "";
+          navigator.clipboard.writeText(val).then(() => {
+            const old = btn.innerHTML; btn.classList.add("copied"); btn.innerHTML = "✓ Copied";
+            setTimeout(() => { btn.classList.remove("copied"); btn.innerHTML = old; }, 1400);
+          }).catch(() => toast("Copy failed — select the text manually", true));
+        }));
+      } catch (e) {
+        grid.innerHTML = `<div class="empty" style="grid-column:1/-1">${esc(e.message)}</div>`;
+      }
+    }
+    function credField(label, value, hint) {
+      return `<div class="cred-field"><div class="cf-label">${esc(label)}</div>`
+        + `<div class="cf-row"><span class="cf-val" title="${esc(value)}">${esc(value)}</span>`
+        + `<button class="cred-copy" data-copy="${esc(value)}">⧉ Copy</button></div>`
+        + `<div class="cf-hint">${esc(hint)}</div></div>`;
+    }
+    async function requestConsent() {
+      try {
+        $("btn-consent").disabled = true;
+        const data = await api(xs2a("/consents"), { method:"POST", body:{ access:{ allPsd2:"allAccounts" }, recurringIndicator:true, frequencyPerDay:4 }, log:obLog });
+        S.ob.consentId = data.consentId;
+        pnBadge(1, "ok", data.consentStatus || "received");
+        pnBadge(2, "live", "Authorise");
+        $("btn-authorise").disabled = false;
+        toast("Consent created — authorise at the bank");
+      } catch (e) { $("btn-consent").disabled = false; toast(e.message, true); }
+    }
+    function authoriseAtBank() {
+      if (!S.ob.consentId) return;
+      S.ob.oauthState = "st_" + Math.random().toString(36).slice(2, 12);
+      const redirect = `${location.origin}/psd2-callback`;
+      const url = `/banks/${S.bank.id}/oauth/authorize?consent_id=${encodeURIComponent(S.ob.consentId)}`
+        + `&redirect_uri=${encodeURIComponent(redirect)}&state=${encodeURIComponent(S.ob.oauthState)}&scope=${encodeURIComponent("All accounts")}`;
+      obLog("GET", url, "redirect", true);
+      const w = 460, h = 660, left = window.screenX + (window.outerWidth-w)/2, top = window.screenY + (window.outerHeight-h)/2;
+      const popup = window.open(url, "banksym-bank-login", `width=${w},height=${h},left=${left},top=${top}`);
+      pnBadge(2, "live", "Waiting…");
+      if (!popup) toast("Pop-up blocked — allow pop-ups to authorise.", true);
+    }
+    async function onOAuthReturn(p) {
+      if (p.state && S.ob.oauthState && p.state !== S.ob.oauthState) return;
+      if (p.error || !p.code) { pnBadge(2, "err", "Failed"); return toast(p.error || "Authorisation cancelled", true); }
+      try {
+        const redirect = `${location.origin}/psd2-callback`;
+        const tok = await api(`/banks/${S.bank.id}/oauth/token`, { method:"POST", body:{ grant_type:"authorization_code", code:p.code, redirect_uri:redirect }, log:obLog });
+        S.ob.token = tok.access_token;
+        renderRail();
+        const st = await api(xs2a(`/consents/${S.ob.consentId}/status`), { log:obLog });
+        pnBadge(1, "ok", st.consentStatus || "valid");
+        pnBadge(2, "ok", "Authorised");
+        pnBadge(3, "live", "Reading…");
+        toast("Authorised — consent is valid");
+        await obListAccounts();
+      } catch (e) { pnBadge(2, "err", "Failed"); toast(e.message, true); }
+    }
+    async function obListAccounts() {
+      try {
+        const data = await api(xs2a("/accounts"), { headers:{ "Consent-ID": S.ob.consentId }, log:obLog });
+        S.ob.accounts = data.accounts || [];
+        const wrap = $("ob-accts");
+        if (!S.ob.accounts.length) { wrap.innerHTML = `<div class="empty">No customer accounts visible for this login.</div>`; pnBadge(3,"ok","No data"); return; }
+        pnBadge(3, "ok", `${S.ob.accounts.length} accounts`);
+        wrap.innerHTML = "";
+        S.ob.accounts.forEach(a => {
+          const el = document.createElement("div"); el.className = "acct";
+          el.innerHTML = `<div class="an">${esc(a.name||a.iban)} <span class="pill">${esc(a.cashAccountType||"")}</span></div><div class="am">${esc(a.iban)} · ${esc(a.currency)}</div>`;
+          el.addEventListener("click", () => { document.querySelectorAll("#ob-accts .acct").forEach(n=>n.classList.remove("active")); el.classList.add("active"); obSelectAccount(a); });
+          wrap.appendChild(el);
+        });
+      } catch (e) { toast(e.message, true); }
+    }
+    async function obSelectAccount(a) {
+      $("ob-detail").innerHTML = `<div class="empty">Loading…</div>`;
+      try {
+        const [bal, tx] = await Promise.all([
+          api(xs2a(`/accounts/${a.resourceId}/balances`), { headers:{ "Consent-ID": S.ob.consentId }, log:obLog }),
+          api(xs2a(`/accounts/${a.resourceId}/transactions`), { headers:{ "Consent-ID": S.ob.consentId }, log:obLog }),
+        ]);
+        const b = (bal.balances||[])[0];
+        const amount = b ? `${b.balanceAmount.amount} ${b.balanceAmount.currency}` : "—";
+        const booked = (tx.transactions && tx.transactions.booked) || [];
+        let rows = "";
+        if (!booked.length) rows = `<tr><td colspan="3" class="empty">No booked transactions.</td></tr>`;
+        else booked.slice(0, 40).forEach(t => {
+          const v = parseFloat(t.transactionAmount.amount);
+          const desc = t.remittanceInformationUnstructured || t.creditorName || t.debtorName || "Transaction";
+          rows += `<tr><td>${esc((t.bookingDate||"").slice(0,10))}</td><td>${esc(desc)}</td><td class="amt ${v<0?"neg":"pos"}">${v<0?"−":"+"}${Math.abs(v).toFixed(2)} ${esc(t.transactionAmount.currency)}</td></tr>`;
+        });
+        $("ob-detail").innerHTML =
+          `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">`
+          + `<div><div style="font-size:12px;color:var(--faint)">Booked balance</div><div style="font-size:24px;font-weight:800">${esc(amount)}</div></div>`
+          + `<div style="font-size:11px;color:var(--faint);font-family:ui-monospace,monospace">${esc(a.iban)}</div></div>`
+          + `<div class="ob-scroll"><table class="txtable"><thead><tr><th>Date</th><th>Description</th><th style="text-align:right">Amount</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+      } catch (e) { $("ob-detail").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+    }
+
+    // ================= STEP 4: SIMULATE =================
+    function wireSimulate() {
+      $("sim-all").addEventListener("click", () => { S.sim.parts?.forEach(p => S.sim.selected.add(p.account_id)); renderParts(); });
+      $("sim-none").addEventListener("click", () => { S.sim.selected.clear(); renderParts(); });
+      $("sim-cadence").addEventListener("input", (e) => { $("sim-cadence-l").textContent = cadenceSeconds(+e.target.value).toFixed(1) + "s"; });
+      $("btn-sim-start").addEventListener("click", startSim);
+      $("btn-sim-stop").addEventListener("click", stopSim);
+    }
+    function cadenceSeconds(slider) { return clamp(21 - slider, 1, 20) / 6; } // 1..20 -> ~3.3s..0.17s
+    async function enterSimulate() {
+      try {
+        const [parts, status] = await Promise.all([ api("/simulation/participants"), api("/simulation") ]);
+        S.sim.parts = (parts.participants||[]).filter(p => S.bank && p.bank_id === S.bank.id);
+        // Default: select all if nothing chosen yet.
+        if (!S.sim.selected.size) S.sim.parts.forEach(p => S.sim.selected.add(p.account_id));
+        renderParts();
+        applyStatus(status);
+        if (status.running) startSimPolling();
+      } catch (e) { toast(e.message, true); }
+    }
+    function renderParts() {
+      const wrap = $("sim-parts");
+      const parts = S.sim.parts || [];
+      $("sim-sel-count").textContent = parts.length ? `${S.sim.selected.size}/${parts.length} selected` : "";
+      if (!parts.length) { wrap.innerHTML = `<div class="empty">No customer accounts yet — populate the bank first.</div>`; return; }
+      wrap.innerHTML = "";
+      parts.slice(0, 200).forEach(p => {
+        const on = S.sim.selected.has(p.account_id);
+        const el = document.createElement("div"); el.className = "part" + (on ? " on" : "");
+        el.innerHTML = `<span class="cb">${on?"✓":""}</span><span style="flex:1"><span class="pn">${esc(p.customer_name||"Customer")} · ${esc(p.account_name||p.type)}</span><br/><span class="pm">${esc(p.iban||p.account_id)}</span></span><span class="pm">${esc(p.currency)}</span>`;
+        el.addEventListener("click", () => { if (S.sim.selected.has(p.account_id)) S.sim.selected.delete(p.account_id); else S.sim.selected.add(p.account_id); renderParts(); });
+        wrap.appendChild(el);
+      });
+    }
+    function applyStatus(st) {
+      const wasZero = !S.sim.generated;
+      S.sim.generated = st.generated || 0;
+      if (wasZero && S.sim.generated > 0) renderRail();
+      $("m-generated").textContent = (st.generated||0).toLocaleString();
+      $("m-accts").textContent = (st.target_count||0).toLocaleString();
+      $("m-status").textContent = st.running ? "Running" : "Idle";
+      $("m-status-l").innerHTML = st.running ? `<span class="live-dot"></span>Live · ${st.avg_seconds}s cadence` : "Simulator state";
+      $("feed-dot").style.display = st.running ? "" : "none";
+      $("btn-sim-start").disabled = st.running;
+      $("btn-sim-stop").disabled = !st.running;
+    }
+    async function startSim() {
+      if (!S.sim.selected.size) { toast("Select at least one account", true); return; }
+      const targets = [...S.sim.selected].map(aid => ({ bank_id: S.bank.id, account_id: aid }));
+      const avg = cadenceSeconds(+$("sim-cadence").value);
+      try {
+        const st = await api("/simulation/start", { method:"POST", body:{ avg_seconds: avg, targets } });
+        applyStatus(st);
+        S.sim.lastSeq = st.last_seq || 0;
+        $("sim-feed").innerHTML = "";
+        startSimPolling();
+        toast(`Simulating ${targets.length} accounts`);
+      } catch (e) { toast(e.message, true); }
+    }
+    async function stopSim() {
+      try { applyStatus(await api("/simulation/stop", { method:"POST" })); stopSimPolling(); toast("Simulation stopped"); }
+      catch (e) { toast(e.message, true); }
+    }
+    function startSimPolling() { stopSimPolling(); S.sim.timer = setInterval(pollFeed, 1000); pollFeed(); }
+    function stopSimPolling() { if (S.sim.timer) { clearInterval(S.sim.timer); S.sim.timer = null; } }
+    async function pollFeed() {
+      if (!S.bank) return;
+      try {
+        const data = await api(`/simulation/feed?after=${S.sim.lastSeq}`);
+        applyStatus({ running:data.running, generated:data.generated, target_count:S.sim.selected.size, avg_seconds:cadenceSeconds(+$("sim-cadence").value) });
+        const evs = (data.events||[]).filter(e => e.bank_id === S.bank.id);
+        if (data.last_seq) S.sim.lastSeq = data.last_seq;
+        const now = Date.now();
+        evs.forEach(e => { S.sim.recvTimes.push(now); prependEvent(e); });
+        // rate per minute over last 60s
+        S.sim.recvTimes = S.sim.recvTimes.filter(t => now - t < 60000);
+        $("m-rate").textContent = S.sim.recvTimes.length.toLocaleString();
+        updateSpark(evs.length);
+      } catch (_) {}
+    }
+    function prependEvent(e) {
+      const feed = $("sim-feed");
+      if (feed.querySelector(".empty")) feed.innerHTML = "";
+      const v = parseFloat(e.amount);
+      const pos = e.side === "credit";
+      const el = document.createElement("div"); el.className = "fev";
+      el.style.setProperty("--bankc", e.bank_color || "var(--accent)");
+      el.innerHTML = `<span class="dotbank"></span>`
+        + `<span class="fmain"><span class="fn">${esc(e.customer_name||"Customer")}</span><span class="fd">${esc(e.description||"")}${e.iban?" · "+esc((e.iban||"").slice(-6)):""}</span></span>`
+        + `<span class="fright"><div class="fa ${pos?"pos":"neg"}">${pos?"+":"−"}${Math.abs(v).toFixed(2)}</div><div class="fb">bal ${parseFloat(e.balance_after).toFixed(2)}</div></span>`;
+      feed.insertBefore(el, feed.firstChild);
+      while (feed.children.length > 60) feed.removeChild(feed.lastChild);
+    }
+    function updateSpark(count) {
+      S.sim.buckets.push(count);
+      if (S.sim.buckets.length > 40) S.sim.buckets.shift();
+      const max = Math.max(1, ...S.sim.buckets);
+      const spark = $("sim-spark");
+      spark.innerHTML = S.sim.buckets.map(c => `<span class="sb" style="height:${Math.max(6, Math.round(c/max*100))}%"></span>`).join("");
+    }
+
+    // ---------------- init ----------------
+    async function init() {
+      renderRail();
+      renderPresets();
+      fillCountry();
+      fillCurrency(S.form.country);
+      $("f-flag").src = flag(S.form.country);
+      wireCreateForm();
+      wirePopulate();
+      wireIntegrate();
+      wireSimulate();
+      $("f-primary-hex").value = S.form.primary; $("f-secondary-hex").value = S.form.secondary;
+      applyPreset(PRESETS[0]);
+
+      // Load capability, persona & product metadata.
+      try {
+        const [caps, types, cards, current, savings, loans] = await Promise.all([
+          api("/banks/_meta/capabilities"),
+          api("/banks/_meta/customer-types"),
+          api("/banks/_meta/card-products"),
+          api("/banks/_meta/current-account-products"),
+          api("/banks/_meta/savings-account-products"),
+          api("/banks/_meta/loan-products"),
+        ]);
+        S.meta.caps = caps; S.meta.customerTypes = types || [];
+        S.meta.cardProducts = cards || []; S.meta.currentProducts = current || [];
+        S.meta.savingsProducts = savings || []; S.meta.loanProducts = loans || [];
+        fillSelect("f-txgen", caps.txgen); fillSelect("f-settlement", caps.settlement); fillSelect("f-auth", caps.auth);
+        // Default: enable the whole catalogue so a new bank is fully featured out of the box.
+        selectAllCatalogue();
+        renderProductPicks(); renderTypePicks();
+      } catch (_) {}
+
+      // Restore previously selected bank, if any.
+      await loadExisting();
+      let savedId = null; try { savedId = localStorage.getItem("banksym.bankId"); } catch (_) {}
+      if (savedId) {
+        const found = S.banks.find(b => b.id === savedId);
+        if (found) { S.bank = found; renderRail(); loadExisting(); refreshStats(); }
+      }
+      let savedStep = 1; try { savedStep = +localStorage.getItem("banksym.studioStep") || 1; } catch (_) {}
+      if (savedStep > 1 && S.bank) goStep(savedStep); else goStep(1);
+    }
+    function fillSelect(id, values) {
+      const sel = $(id); if (!sel) return; sel.innerHTML = "";
+      (values||[]).forEach(v => sel.appendChild(new Option(v, v)));
+    }
+
+    init();
+  })();
+  </script>
+</body>
+</html>

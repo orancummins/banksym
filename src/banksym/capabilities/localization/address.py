@@ -340,6 +340,10 @@ _NAME_PACKS: dict[str, _NamePack] = {
         given_names=["Sanne", "Daan", "Julia", "Sem", "Lotte", "Milan", "Tess", "Finn"],
         family_names=["De Jong", "Jansen", "De Vries", "Van den Berg", "Bakker", "Janssen", "Visser", "Smit"],
     ),
+    "PL": _NamePack(
+        given_names=["Zofia", "Jakub", "Julia", "Kacper", "Maja", "Szymon", "Zuzanna", "Filip"],
+        family_names=["Nowak", "Kowalski", "Wiśniewski", "Wójcik", "Kowalczyk", "Kamiński", "Lewandowski", "Zieliński"],
+    ),
     "US": _NamePack(
         given_names=["Ava", "Noah", "Charlotte", "Liam", "Harper", "Elijah", "Evelyn", "James"],
         family_names=["Johnson", "Smith", "Brown", "Miller", "Davis", "Wilson", "Moore", "Taylor"],

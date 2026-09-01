@@ -198,6 +198,20 @@ class GenerateHistoryResponse(BaseModel):
     balance: str
 
 
+class GenerateBankHistoryRequest(BaseModel):
+    """Generate transaction history across every customer account in a bank."""
+
+    generator: str = "rule_based"
+    start: date
+    end: date
+    seed: int | None = None
+
+
+class GenerateBankHistoryResponse(BaseModel):
+    accounts_processed: int
+    entries_booked: int
+
+
 # -- Auth --------------------------------------------------------------------------
 class RegisterCredentialRequest(BaseModel):
     username: str

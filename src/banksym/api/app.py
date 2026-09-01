@@ -132,6 +132,14 @@ def create_app() -> FastAPI:
 
     @app.get("/", include_in_schema=False)
     def ui_root() -> FileResponse:
+        return FileResponse(_UI_DIR / "studio.html", headers={"Cache-Control": "no-cache"})
+
+    @app.get("/studio", include_in_schema=False)
+    def ui_studio() -> FileResponse:
+        return FileResponse(_UI_DIR / "studio.html", headers={"Cache-Control": "no-cache"})
+
+    @app.get("/architecture-map", include_in_schema=False)
+    def ui_architecture_map() -> FileResponse:
         return FileResponse(_UI_DIR / "index.html")
 
     @app.get("/home", include_in_schema=False)

@@ -41,7 +41,7 @@ pytest
 uvicorn banksym.api.app:app --reload
 ```
 
-Open http://127.0.0.1:8000/docs for the API.
+Open http://127.0.0.1:8083/docs for the API.
 
 ## Run scripts
 
