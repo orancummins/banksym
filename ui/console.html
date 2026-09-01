@@ -537,6 +537,10 @@
 
     async function selectBank(bankId) {
       state.bankId = bankId;
+      // Bumped on every switch. Responses that arrive after a later switch has
+      // started are discarded, so a slow request for the previous bank cannot
+      // overwrite the panel with its numbers.
+      state.bankToken = (state.bankToken || 0) + 1;
       state.customerId = null;
       state.accountId = null;
       document.getElementById("open-account-btn").disabled = true;
@@ -545,7 +549,12 @@
       try { localStorage.setItem("banksym.bankId", bankId); } catch (_) {}
       const navPsd2 = document.getElementById("nav-psd2");
       if (navPsd2) navPsd2.href = `/psd2?bank=${encodeURIComponent(bankId)}`;
+      const token = state.bankToken;
       const bank = await api(`/banks/${bankId}`);
+      // Everything below writes to the DOM. Without this check an earlier, slower
+      // switch would repaint the branding, logo and name over a newer selection --
+      // leaving the header showing one bank while the panels show another.
+      if (token !== state.bankToken) return;
       state.bank = bank;
       const typeLabel = new Map((state.customerTypes || []).map((t) => [t.id, t.label]));
       const supportedCustomerTypes = (bank.supported_customer_types && bank.supported_customer_types.length)
@@ -604,8 +613,14 @@
 
     // ---- population stats --------------------------------------------------
     async function loadStats() {
+      const bankId = state.bankId;
+      const token = state.bankToken;
       try {
-        const s = await api(`/banks/${state.bankId}/stats`);
+        const s = await api(`/banks/${bankId}/stats`);
+        // loadStats is deliberately not awaited by its caller, so two quick bank
+        // switches can have two requests in flight at once. Without this guard the
+        // slower one wins and the panel shows the wrong bank's figures.
+        if (token !== state.bankToken) return;
         const panel = document.getElementById("stats-panel");
         panel.style.display = "";
         const kpis = [
@@ -648,7 +663,9 @@
 
     // ---- customers ---------------------------------------------------------
     async function loadCustomers() {
+      const token = state.bankToken;
       const all = await api(`/banks/${state.bankId}/customers`);
+      if (token !== state.bankToken) return;
       const customers = all.filter(c => c.source !== "batch");
       state.manualCustomerIds = new Set(customers.map(c => c.id));
       if (state.customerId && !state.manualCustomerIds.has(state.customerId)) {
@@ -689,8 +706,10 @@
 
     // ---- accounts ----------------------------------------------------------
     async function loadAccounts() {
+      const token = state.bankToken;
       const q = state.customerId ? `?customer_id=${state.customerId}` : "";
       const all = await api(`/banks/${state.bankId}/accounts${q}`);
+      if (token !== state.bankToken) return;
       // When no specific customer is selected, show only manual-customer accounts to avoid flooding the list.
       const accounts = state.customerId
         ? all

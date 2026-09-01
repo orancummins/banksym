@@ -13,6 +13,7 @@ from datetime import datetime
 import banksym.capabilities.auth.simple  # noqa: F401
 import banksym.capabilities.localization.packs  # noqa: F401
 import banksym.capabilities.protocols.berlingroup.adapter  # noqa: F401
+import banksym.capabilities.protocols.fdx.adapter  # noqa: F401
 import banksym.capabilities.protocols.openfinance.adapter  # noqa: F401
 import banksym.capabilities.settlement.interbank  # noqa: F401
 import banksym.capabilities.settlement.netting  # noqa: F401

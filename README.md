@@ -37,12 +37,40 @@ Two protocol adapters ship today, both serving the same core bank:
 
 | Adapter | Prefix | Shape |
 |---|---|---|
-| `berlin_group` | `/xs2a/{bank_id}/v1` | PSD2 NextGenPSD2: IBANs, consent resources, SCA |
-| `open_finance` | `/openfinance/{bank_id}/v1` | US account aggregation: opaque ids and masks, credit cards first-class, enriched transactions |
+| `berlin_group` | `/xs2a/{bank_id}/v1` | PSD2 NextGenPSD2 (EU): IBANs, consent resources, SCA |
+| `fdx` | `/fdx/{bank_id}/v6` | Financial Data Exchange (US): polymorphic account and transaction envelopes, OAuth2 bearer |
+| `open_finance` | `/openfinance/{bank_id}/v1` | Generic aggregation: opaque ids and masks, enriched transactions |
 
 They are separate adapters rather than one parameterised surface because an
-integration written against one genuinely will not work against the other. Open
-Finance exposes:
+integration written against one genuinely will not work against the others.
+
+### FDX
+
+The US open banking standard, and what the Citi and Chase tenants expose.
+
+```
+GET /fdx/{bank_id}/v6/accounts?customerId=
+GET /fdx/{bank_id}/v6/accounts/{account_id}
+GET /fdx/{bank_id}/v6/accounts/{account_id}/transactions?startTime=&endTime=
+GET /fdx/{bank_id}/v6/customers/current
+```
+
+Three things FDX does differently, and which a client has to handle:
+
+- **Polymorphic envelopes.** A response wraps exactly one typed object, so a client
+  dispatches on the key: `depositAccount` vs `locAccount`, `depositTransaction` vs
+  `locTransaction`.
+- **A credit card is a line of credit,** not a deposit account with a negative
+  balance. It carries `balanceType: LIABILITY` and reports the amount owed as a
+  positive `currentBalance`.
+- **Direction is not the sign.** `amount` is always positive; `debitCreditMemo`
+  (`DEBIT`/`CREDIT`) says which way the money went. Reading the amount alone
+  inverts every deposit.
+
+### Open Finance
+
+A simpler generic aggregation surface, kept for integrations that do not need
+FDX's typed envelopes:
 
 ```
 GET /openfinance/{bank_id}/v1/institution
