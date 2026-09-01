@@ -176,6 +176,11 @@ class PostTransactionRequest(BaseModel):
     ``side`` ``"credit"`` moves money into the account (from the bank's internal "External world"
     account); ``"debit"`` moves money out. ``currency`` defaults to the account's own currency and
     must match it.
+
+    ``booked_at`` backdates the entry, which is what importing a historical fixture dataset
+    needs. The merchant/category/location/channel fields ride on the journal entry metadata and
+    surface on the account's transaction history, so an imported history is indistinguishable
+    from a generated one.
     """
 
     amount: Decimal = Field(gt=0)
@@ -183,6 +188,32 @@ class PostTransactionRequest(BaseModel):
     side: Literal["debit", "credit"] = "credit"
     description: str | None = None
     reference: str | None = None
+    booked_at: datetime | None = None
+    merchant_name: str | None = None
+    category: str | None = None
+    location: str | None = None
+    channel: str | None = None
+
+
+class ImportTransactionItem(PostTransactionRequest):
+    """One line of a bulk import, naming the account it belongs to."""
+
+    account_id: str
+
+
+class ImportTransactionsRequest(BaseModel):
+    """Bulk-import a dated transaction history across many accounts of one bank.
+
+    Importing a realistic multi-account history one HTTP call at a time is slow enough to
+    discourage using real fixture data, which is the point of a test bank.
+    """
+
+    transactions: list[ImportTransactionItem]
+
+
+class ImportTransactionsResponse(BaseModel):
+    imported: int
+    accounts: int
 
 
 # -- Generation ---------------------------------------------------------------------

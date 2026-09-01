@@ -19,7 +19,7 @@ banksym/
     service/       # CoreBankingService — the single public interface plugins use
   tenancy/         # Bank (tenant): branding, country, locale, enabled capabilities
   capabilities/    # pluggable capabilities (each: interface + registry + impls)
-    protocols/     # ProtocolAdapter (Berlin Group XS2A: AIS + PIS)
+    protocols/     # ProtocolAdapter (Berlin Group XS2A: AIS + PIS; Open Finance)
     auth/          # AuthProvider / ScaProvider (simple password, auto-approve SCA)
     txgen/         # TransactionGenerator (rule-based, persona-driven) + persona catalog
     localization/  # LocalizationProvider (country packs: DE/ES/FR/GB/NL)
@@ -30,6 +30,41 @@ banksym/
   api/             # FastAPI app + admin/instantiation API
 ui/                # Self-contained HTML: architecture map (/) + bank builder (/builder)
 ```
+
+## APIs
+
+Two protocol adapters ship today, both serving the same core bank:
+
+| Adapter | Prefix | Shape |
+|---|---|---|
+| `berlin_group` | `/xs2a/{bank_id}/v1` | PSD2 NextGenPSD2: IBANs, consent resources, SCA |
+| `open_finance` | `/openfinance/{bank_id}/v1` | US account aggregation: opaque ids and masks, credit cards first-class, enriched transactions |
+
+They are separate adapters rather than one parameterised surface because an
+integration written against one genuinely will not work against the other. Open
+Finance exposes:
+
+```
+GET /openfinance/{bank_id}/v1/institution
+GET /openfinance/{bank_id}/v1/customers
+GET /openfinance/{bank_id}/v1/customers/{customer_id}/accounts
+GET /openfinance/{bank_id}/v1/accounts/{account_id}
+GET /openfinance/{bank_id}/v1/accounts/{account_id}/transactions?fromDate=&toDate=
+```
+
+All endpoints require `Authorization: Bearer <token>`. Any token is accepted — this
+is a test bank, and rejecting tokens would only obstruct the integrations it exists
+to support — but the header is required so client code carries credentials the way
+it would against a real aggregator.
+
+### Importing a fixture history
+
+`POST /banks/{bank_id}/transactions/import` bulk-loads a dated, categorised history
+across many accounts. Entries can be back-dated and carry
+`merchant_name` / `category` / `channel` / `location`, so an imported history is
+indistinguishable from a generated one when read back through a protocol adapter.
+Overdrafts are permitted during import, since a replayed history arrives out of
+reach of its own funding entries and a credit card is legitimately negative.
 
 ## Quickstart
 

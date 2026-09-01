@@ -73,9 +73,18 @@ def test_payment_initiation_settles(client: TestClient):
     base = f"/xs2a/{bank_id}/v1"
     product = "sepa-credit-transfers"
 
-    balance_before = float(
-        client.get(f"/banks/{bank_id}/accounts").json()[0]["balance"].split()[0]
-    )
+    def debtor_balance() -> float:
+        """Read the balance of the account under test.
+
+        Indexing accounts[0] made this depend on account creation order and on state
+        left behind by other test modules sharing the in-memory database, so adding a
+        test file elsewhere could break it.
+        """
+        accounts = client.get(f"/banks/{bank_id}/accounts").json()
+        account = next(a for a in accounts if a["id"] == account_id)
+        return float(account["balance"].split()[0])
+
+    balance_before = debtor_balance()
 
     payment = client.post(
         f"{base}/payments/{product}",
@@ -103,9 +112,7 @@ def test_payment_initiation_settles(client: TestClient):
     status = client.get(f"{base}/payments/{product}/{payment_id}/status").json()
     assert status["transactionStatus"] == "ACSC"
 
-    balance_after = float(
-        client.get(f"/banks/{bank_id}/accounts").json()[0]["balance"].split()[0]
-    )
+    balance_after = debtor_balance()
     assert round(balance_before - balance_after, 2) == 42.50
 
 

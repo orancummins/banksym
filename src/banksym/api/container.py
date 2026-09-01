@@ -7,11 +7,13 @@ registries. This is the one place allowed to know about every layer.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 
 # Importing implementations triggers their @registry.register side effects.
 import banksym.capabilities.auth.simple  # noqa: F401
 import banksym.capabilities.localization.packs  # noqa: F401
 import banksym.capabilities.protocols.berlingroup.adapter  # noqa: F401
+import banksym.capabilities.protocols.openfinance.adapter  # noqa: F401
 import banksym.capabilities.settlement.interbank  # noqa: F401
 import banksym.capabilities.settlement.netting  # noqa: F401
 import banksym.capabilities.settlement.rtgs  # noqa: F401
@@ -43,6 +45,7 @@ from banksym.capabilities.settlement.base import (
 )
 from banksym.capabilities.txgen.base import txgen_registry
 from banksym.core.domain.account import AccountType
+from banksym.core.domain.ledger import JournalEntry, Posting
 from banksym.core.domain.transaction import TransactionRecord
 from banksym.core.kernel.ids import new_id
 from banksym.core.kernel.money import Money
@@ -135,6 +138,11 @@ class Container:
         side: str = "credit",
         description: str | None = None,
         reference: str | None = None,
+        booked_at: datetime | None = None,
+        merchant_name: str | None = None,
+        category: str | None = None,
+        location: str | None = None,
+        channel: str | None = None,
     ) -> TransactionRecord:
         """Book a single transaction against an account, facing the bank's "External world".
 
@@ -142,6 +150,10 @@ class Container:
         booked in the account's own currency (an optional ``currency`` must match it). Returns the
         resulting account-facing transaction record. Raises :class:`ValueError` on a currency
         mismatch and propagates core :class:`BankSymError` (e.g. insufficient funds on a debit).
+
+        ``booked_at`` backdates the entry, which importing a historical fixture dataset requires.
+        The merchant/category/location/channel fields are carried on the journal entry's metadata
+        and surface on the account-facing :class:`TransactionRecord`.
         """
         account = self.banking.get_account(bank_id, account_id)
         ccy = (currency or account.currency).upper()
@@ -154,26 +166,37 @@ class Container:
             bank_id, ccy, AccountType.INTERNAL, "External world"
         )
         desc = description or ("Credit" if side == "credit" else "Debit")
-        if side == "credit":
-            self.banking.transfer(
-                bank_id,
-                counterparty.id,
-                account_id,
-                money,
-                description=desc,
-                reference=reference,
-                allow_overdraft=True,
+        metadata = {
+            key: value
+            for key, value in (
+                ("merchant_name", merchant_name),
+                ("category", category),
+                ("location", location),
+                ("channel", channel),
             )
-        else:
-            self.banking.transfer(
-                bank_id,
-                account_id,
-                counterparty.id,
-                money,
-                description=desc,
-                reference=reference,
-            )
-        return self.banking.transaction_history(bank_id, account_id)[-1]
+            if value
+        }
+        # Built directly rather than via transfer() so the entry can be backdated and
+        # carry merchant metadata. Overdraft is always permitted here: an imported
+        # history is replayed out of chronological reach of its own funding entries,
+        # and a credit card account is legitimately negative by design.
+        credit_leg, debit_leg = (
+            (account_id, counterparty.id) if side == "credit" else (counterparty.id, account_id)
+        )
+        entry = JournalEntry(
+            bank_id=bank_id,
+            description=desc,
+            reference=reference,
+            metadata=metadata,
+            postings=[
+                Posting(account_id=debit_leg, amount=-money),
+                Posting(account_id=credit_leg, amount=money),
+            ],
+            **({"booked_at": booked_at} if booked_at is not None else {}),
+        )
+        self.banking.post_journal_entry(entry)
+        history = self.banking.transaction_history(bank_id, account_id)
+        return next(r for r in reversed(history) if r.journal_id == entry.id)
 
     def approve_consent(
         self,

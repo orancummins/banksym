@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from sqlalchemy import Engine, create_engine, inspect, text
+from pathlib import Path
+
+from sqlalchemy import Engine, create_engine, inspect, make_url, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -23,8 +25,16 @@ def make_engine(database_url: str) -> Engine:
             return create_engine(
                 database_url, connect_args=connect_args, poolclass=StaticPool
             )
+        _ensure_sqlite_parent_dir(database_url)
         return create_engine(database_url, connect_args=connect_args)
     return create_engine(database_url)
+
+
+def _ensure_sqlite_parent_dir(database_url: str) -> None:
+    """Create the directory for a file-based SQLite database so first startup can't fail."""
+    database = make_url(database_url).database
+    if database:
+        Path(database).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
 
 
 def init_db(engine: Engine) -> None:

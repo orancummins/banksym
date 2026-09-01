@@ -19,6 +19,8 @@ from banksym.api.schemas import (
     CustomerResponse,
     GenerateHistoryRequest,
     GenerateHistoryResponse,
+    ImportTransactionsRequest,
+    ImportTransactionsResponse,
     OpenAccountRequest,
     PostTransactionRequest,
     TransactionResponse,
@@ -287,6 +289,11 @@ def post_transaction(
             side=body.side,
             description=body.description,
             reference=body.reference,
+            booked_at=body.booked_at,
+            merchant_name=body.merchant_name,
+            category=body.category,
+            location=body.location,
+            channel=body.channel,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -308,6 +315,49 @@ def post_transaction(
         location=record.location,
         channel=record.channel,
     )
+
+
+@router.post(
+    "/transactions/import",
+    response_model=ImportTransactionsResponse,
+    status_code=201,
+    summary="Bulk-import a dated transaction history",
+)
+def import_transactions(
+    body: ImportTransactionsRequest,
+    bank_id: BankIdDep,
+    container: ContainerDep,
+) -> ImportTransactionsResponse:
+    """Import a dated, categorised transaction history across many accounts at once.
+
+    Intended for replaying a fixture dataset into a bank so integrations can be developed
+    against known data. Entries are booked in the order supplied; back-dated entries are
+    accepted, and overdrafts are permitted so a history can be replayed without having to
+    fund each account first.
+    """
+    accounts: set[str] = set()
+    try:
+        for item in body.transactions:
+            container.post_external_transaction(
+                bank_id,
+                item.account_id,
+                amount=item.amount,
+                currency=item.currency,
+                side=item.side,
+                description=item.description,
+                reference=item.reference,
+                booked_at=item.booked_at,
+                merchant_name=item.merchant_name,
+                category=item.category,
+                location=item.location,
+                channel=item.channel,
+            )
+            accounts.add(item.account_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except BankSymError as exc:
+        raise to_http_error(exc) from exc
+    return ImportTransactionsResponse(imported=len(body.transactions), accounts=len(accounts))
 
 
 @router.post(
