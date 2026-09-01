@@ -34,6 +34,8 @@
     .topbar .tag { margin-left: auto; font-size: 12px; opacity: .85; }
     main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 28px; }
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 400px; padding: 28px; box-shadow: 0 10px 30px rgba(16,24,40,.10); border-top: 4px solid var(--brand-secondary); }
+    .brand-logo.with-image { padding: 12px 20px; background: #fff; border: 1px solid rgba(0,0,0,.08); }
+    .brand-logo-img { max-height: 40px; max-width: 260px; width: auto; height: auto; display: block; object-fit: contain; }
     .brand-logo { display: flex; align-items: center; justify-content: center; text-align: center; margin: 0 auto 18px; padding: 16px 24px; min-height: 60px; max-width: 320px; border-radius: 14px; background: linear-gradient(135deg, var(--brand), var(--brand-secondary)); color: var(--on-brand, #fff); font-weight: 700; font-size: 22px; letter-spacing: -.01em; line-height: 1.15; word-break: break-word; }
     .card h1 { font-size: 19px; margin: 0 0 4px; letter-spacing: -.01em; }
     .card .lead { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
@@ -331,8 +333,25 @@
           document.documentElement.style.setProperty("--on-brand", textOnColor(bank.primary_color));
         }
         document.documentElement.style.setProperty("--brand-secondary", bank.secondary_color || bank.primary_color || "#ff5f00");
-        // Logo is generated from the bank's name + brand colours (no uploaded image).
-        $("logo").textContent = bank.display_name || "Your bank";
+        // Show the bank's own mark when it has one; otherwise the generated name
+        // badge. A failed image load falls back rather than leaving an empty box.
+        const logoEl = $("logo");
+        const nameBadge = () => {
+          logoEl.classList.remove("with-image");
+          logoEl.textContent = bank.display_name || "Your bank";
+        };
+        if (bank.logo_url) {
+          logoEl.classList.add("with-image");
+          logoEl.textContent = "";
+          const img = document.createElement("img");
+          img.className = "brand-logo-img";
+          img.alt = bank.display_name || "Bank logo";
+          img.onerror = nameBadge;
+          img.src = bank.logo_url;
+          logoEl.append(img);
+        } else {
+          nameBadge();
+        }
       } catch (_) { /* branding is best-effort */ }
     }
 

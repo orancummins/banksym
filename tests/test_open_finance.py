@@ -174,3 +174,42 @@ def test_unknown_institution_and_account_are_404(client):
 def test_berlin_group_still_works_alongside(client):
     """Adding a protocol must not disturb the existing one."""
     assert client.get("/architecture").status_code == 200
+
+
+# --- tenant logos -----------------------------------------------------------
+
+
+def test_bank_logos_are_served_locally(client):
+    """Logos are vendored, not hot-linked, so branding survives with no network."""
+    for name in ("citi.svg", "chase.svg"):
+        r = client.get(f"/logos/{name}")
+        assert r.status_code == 200, name
+        assert r.headers["content-type"].startswith("image/svg+xml")
+        assert r.content
+
+
+def test_logo_route_will_not_serve_files_outside_its_directory(client):
+    """A crafted filename must not reach anything but ui/logos."""
+    for attempt in ("..%2F..%2Fpyproject.toml", "..%2Fbanksym.png", "nope.svg"):
+        assert client.get(f"/logos/{attempt}").status_code == 404
+
+
+def test_vendored_logos_carry_no_active_content():
+    """SVG can carry script. These are decoration and must stay inert."""
+    import pathlib
+
+    logos = pathlib.Path(__file__).resolve().parent.parent / "ui" / "logos"
+    for svg in logos.glob("*.svg"):
+        body = svg.read_text(errors="ignore").lower()
+        for danger in ("<script", "javascript:", "onload=", "onerror=", "<foreignobject"):
+            assert danger not in body, f"{svg.name} contains {danger}"
+
+
+def test_a_bank_can_carry_a_logo_url(client):
+    bank = client.post(
+        "/banks",
+        json={"display_name": "Logo Bank", "country": "US", "base_currency": "USD",
+              "logo_url": "/logos/citi.svg"},
+    ).json()
+    assert bank["logo_url"] == "/logos/citi.svg"
+    assert client.get(f"/banks/{bank['id']}").json()["logo_url"] == "/logos/citi.svg"

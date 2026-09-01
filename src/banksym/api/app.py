@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 
 from banksym import __version__
@@ -149,6 +149,21 @@ def create_app() -> FastAPI:
     @app.get("/banksym2.png", include_in_schema=False)
     def ui_banksym2_png() -> FileResponse:
         return FileResponse(_UI_DIR / "banksym2.png")
+
+    @app.get("/logos/{filename}", include_in_schema=False)
+    def ui_bank_logo(filename: str) -> FileResponse:
+        """Serve a bank tenant's logo from ui/logos/.
+
+        Tenant logos are served locally rather than hot-linked so a bank still
+        renders its own branding with no network. The name is resolved strictly
+        inside ui/logos to keep a crafted filename from reaching other files.
+        """
+        directory = (_UI_DIR / "logos").resolve()
+        target = (directory / filename).resolve()
+        if directory not in target.parents or not target.is_file():
+            raise HTTPException(status_code=404, detail="Logo not found")
+        media = "image/svg+xml" if target.suffix == ".svg" else None
+        return FileResponse(target, media_type=media)
 
     @app.get("/home-hero.svg", include_in_schema=False)
     def ui_home_hero_svg() -> FileResponse:

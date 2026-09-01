@@ -57,6 +57,17 @@ is a test bank, and rejecting tokens would only obstruct the integrations it exi
 to support — but the header is required so client code carries credentials the way
 it would against a real aggregator.
 
+### Tenant logos
+
+A bank with a `logo_url` shows that mark wherever its identity is rendered; a bank
+without one falls back to a badge generated from its display name and brand
+colours, and so does a logo that fails to load. Assets live in `ui/logos/` and are
+served from `GET /logos/{filename}`, so branding still renders with no network.
+
+To add one: drop an SVG in `ui/logos/` and set the bank's `logo_url` to
+`/logos/<name>.svg`. See `ui/logos/README.md` for the marks currently vendored and
+their licensing.
+
 ### Importing a fixture history
 
 `POST /banks/{bank_id}/transactions/import` bulk-loads a dated, categorised history

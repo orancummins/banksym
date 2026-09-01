@@ -44,6 +44,11 @@
     header nav a.active { color: #fff; background: rgba(255,255,255,.14); }
     .bank-identity { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding: 16px 18px; background: linear-gradient(90deg, color-mix(in srgb, var(--brand) 6%, var(--surface)), color-mix(in srgb, var(--brand-secondary) 6%, var(--surface))); border: 1px solid var(--border); border-left: 4px solid var(--brand-secondary); border-radius: 12px; box-shadow: var(--shadow); }
     .bank-logo-badge { display: inline-flex; align-items: center; justify-content: center; padding: 14px 24px; border-radius: 12px; background: linear-gradient(135deg, var(--brand), var(--brand-secondary)); color: var(--on-brand, #fff); font-weight: 700; font-size: 22px; letter-spacing: -.01em; min-height: 56px; max-width: 320px; text-align: center; line-height: 1.15; }
+    /* A bank with a logo_url shows its mark instead of the generated name badge.
+       Kept on a white plate so marks designed for light backgrounds stay legible
+       whatever the tenant's brand colours are. */
+    .bank-logo-badge.with-image { padding: 10px 18px; background: #fff; border: 1px solid rgba(0,0,0,.08); }
+    .bank-logo-img { max-height: 36px; max-width: 260px; width: auto; height: auto; display: block; object-fit: contain; }
     .bank-identity .bi-name { font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
     .bank-identity .bi-sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
     .bank-identity .bi-caps { color: var(--muted); font-size: 12px; margin-top: 4px; }
@@ -452,6 +457,29 @@
       await selectBank(state.bankId);
     }
 
+    // Render a bank's identity: its logo_url if it has one, otherwise a badge built
+    // from the display name and brand colours. The image is best-effort -- if it
+    // fails to load (offline, dead link) the text badge is restored, so a broken
+    // asset never leaves an empty box on screen.
+    function setBankLogo(el, bank, brand, secondary) {
+      const nameBadge = () => {
+        el.classList.remove("with-image");
+        el.textContent = bank.display_name || "Bank";
+        el.style.background = `linear-gradient(135deg, ${brand}, ${secondary})`;
+        el.style.color = textOnColor(brand);
+      };
+      if (!bank.logo_url) { nameBadge(); return; }
+      el.classList.add("with-image");
+      el.style.background = "";
+      el.textContent = "";
+      const img = document.createElement("img");
+      img.className = "bank-logo-img";
+      img.alt = bank.display_name || "Bank logo";
+      img.onerror = nameBadge;
+      img.src = bank.logo_url;
+      el.append(img);
+    }
+
     // Render the custom bank dropdown, grouping banks by country and showing brand logo chips.
     function renderBankDropdown(banks, selectedId) {
       const panel = document.getElementById("bank-dd-panel");
@@ -544,11 +572,9 @@
       acctCurrency.innerHTML = "";
       currencies.forEach((c) => acctCurrency.append(new Option(c, c)));
       acctCurrency.value = bank.base_currency;
-      // Logo is generated from the bank's name + colour (no uploaded image).
+      // Prefer the tenant's own logo; fall back to a badge generated from its name.
       const logo = document.getElementById("bank-logo");
-      logo.textContent = bank.display_name;
-      logo.style.background = `linear-gradient(135deg, ${brand}, ${secondary})`;
-      logo.style.color = textOnColor(brand);
+      setBankLogo(logo, bank, brand, secondary);
       const caps = Object.entries(bank.capabilities || {}).map(([k, v]) => `${k}=${v}`).join(" · ");
       document.getElementById("bank-caps").textContent = caps ? `capabilities: ${caps}` : "";
       fill(
