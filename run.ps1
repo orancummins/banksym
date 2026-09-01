@@ -20,7 +20,7 @@ $ErrorActionPreference = 'Stop'
 
 # --- Configuration -----------------------------------------------------------
 $BankSymHost = if ($env:BANKSYM_HOST) { $env:BANKSYM_HOST } else { '127.0.0.1' }
-$Port = if ($env:BANKSYM_PORT) { $env:BANKSYM_PORT } else { '8000' }
+$Port = if ($env:BANKSYM_PORT) { $env:BANKSYM_PORT } else { '8083' }
 $App = 'banksym.api.app:app'
 
 # Run relative to this script's directory.

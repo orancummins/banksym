@@ -41,6 +41,7 @@ class UpdateBankRequest(BaseModel):
     base_currency: str | None = None
     logo_url: str | None = None
     primary_color: str | None = None
+    secondary_color: str | None = None
     enabled_protocols: list[str] | None = None
     capabilities: dict[str, str] | None = None
 
@@ -227,6 +228,20 @@ class GenerateHistoryRequest(BaseModel):
 class GenerateHistoryResponse(BaseModel):
     entries_booked: int
     balance: str
+
+
+class GenerateBankHistoryRequest(BaseModel):
+    """Generate transaction history across every customer account in a bank."""
+
+    generator: str = "rule_based"
+    start: date
+    end: date
+    seed: int | None = None
+
+
+class GenerateBankHistoryResponse(BaseModel):
+    accounts_processed: int
+    entries_booked: int
 
 
 # -- Auth --------------------------------------------------------------------------

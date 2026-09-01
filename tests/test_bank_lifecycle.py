@@ -53,12 +53,14 @@ def test_update_bank_changes_fields():
         locale="fr",
         base_currency="EUR",
         primary_color="#123456",
+        secondary_color="#654321",
         enabled_protocols=["berlin_group"],
         capabilities={"txgen": "rule_based"},
     )
     assert updated.id == bank.id
     assert updated.branding.display_name == "Acme Bank EU"
     assert updated.branding.primary_color == "#123456"
+    assert updated.branding.secondary_color == "#654321"
     assert updated.country == "FR"
     assert updated.locale == "fr"
     assert updated.enabled_protocols == ["berlin_group"]

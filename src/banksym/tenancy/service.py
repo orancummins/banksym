@@ -187,6 +187,7 @@ class BankService:
         base_currency: str | None = None,
         logo_url: str | None = None,
         primary_color: str | None = None,
+        secondary_color: str | None = None,
         enabled_protocols: list[str] | None = None,
         capabilities: dict[str, str] | None = None,
     ) -> Bank:
@@ -211,6 +212,8 @@ class BankService:
             bank.branding.logo_url = logo_url
         if primary_color is not None:
             bank.branding.primary_color = primary_color
+        if secondary_color is not None:
+            bank.branding.secondary_color = secondary_color
         if country is not None:
             bank.country = country
         if locale is not None:

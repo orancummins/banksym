@@ -9,7 +9,7 @@ set -euo pipefail
 
 # --- Configuration -----------------------------------------------------------
 HOST="${BANKSYM_HOST:-127.0.0.1}"
-PORT="${BANKSYM_PORT:-8000}"
+PORT="${BANKSYM_PORT:-8083}"
 APP="banksym.api.app:app"
 
 # Resolve the directory this script lives in, so it works from anywhere.
